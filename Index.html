@@ -1,0 +1,3785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#090d16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ROTASTIC">
+
+  <title>ROTASTIC — Abu Nakhla Physician Duty Scheduler</title>
+
+  <script src="https://cdn.tailwindcss.com">
+/*
+ROTASTIC PUSH DEPLOYMENT NOTE
+To send push notifications to every colleague's phone:
+1. Deploy the app over HTTPS.
+2. Register a service worker and collect each device's Web Push subscription.
+3. Store subscriptions in a shared backend (e.g. Supabase/Firebase/custom server).
+4. Set window.ROTASTIC_PUSH_BROADCAST_ENDPOINT to the secured server endpoint
+   that fans out Web Push notifications to all subscribed devices.
+*/
+
+</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-base: #090d16;
+      --surface-card: #0f1624;
+      --border-subtle: rgba(148, 163, 184, 0.12);
+      --teal-primary: #14b8a6;
+    }
+
+    * {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-base);
+      color: #e2e8f0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+      margin: 0;
+    }
+
+    select, input, button {
+      -webkit-user-select: auto !important;
+      user-select: auto !important;
+    }
+
+    .brand-script { font-family: 'Caveat', cursive; }
+
+    .clean-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .doc-pill {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .doc-pill.expanded {
+      white-space: normal !important;
+      word-break: break-word;
+      background-color: rgba(20, 184, 166, 0.15) !important;
+      border-color: #14b8a6 !important;
+      box-shadow: 0 0 10px rgba(20, 184, 166, 0.25);
+    }
+
+    
+
+    .news-stage {
+      position: relative;
+      height: 2.6rem;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .news-drop-item {
+      position: relative;
+      width: 100%;
+      min-height: 2.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      white-space: nowrap;
+      line-height: 1.35;
+      word-spacing: normal;
+      letter-spacing: normal;
+    }
+
+    .news-carousel-item {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transform: translateX(0);
+      white-space: nowrap;
+      will-change: transform, opacity;
+      pointer-events: none;
+    }
+
+    .news-carousel-item.is-active {
+      animation: news-carousel-crawl 6s linear forwards;
+    }
+
+    .news-center-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem 0.9rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      background: rgba(13, 148, 136, 0.12);
+      color: #99f6e4;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    @keyframes news-carousel-crawl {
+      0% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      38% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-115%);
+      }
+    }
+
+    .news-drop-item:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes pulse-siren {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.2; transform: scale(1.3); filter: drop-shadow(0 0 8px #ef4444); }
+    }
+
+    .siren-badge {
+      display: inline-flex;
+      align-items: center;
+      animation: pulse-siren 0.7s infinite ease-in-out;
+    }
+
+    .mobile-nav-bar {
+      padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    #pdfExportWrapper {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      width: 1120px;
+      z-index: -100;
+      background: #ffffff;
+      display: block;
+    }
+
+    #pdfReportTemplate {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000;
+      background: #fff;
+      width: 1120px;
+      padding: 16px;
+    }
+
+    #pdfReportTemplate table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    #pdfReportTemplate th,
+    #pdfReportTemplate td {
+      border: 1px solid #1e293b;
+      padding: 4px 6px;
+      font-size: 8.5px;
+      line-height: 1.2;
+    }
+
+    @media print {
+      body { background: white; color: black; }
+      .no-print { display: none !important; }
+    }
+  
+    @keyframes news-headline-crawl {
+      0% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      36% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-120%);
+      }
+    }
+
+    .news-headline-item {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      opacity: 1;
+      transform: translateX(0);
+      animation: news-headline-crawl 6.8s linear forwards;
+      will-change: transform;
+    }
+
+    .news-centre-name {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem 0.9rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      background: rgba(13, 148, 136, 0.12);
+      color: #99f6e4;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .news-alert-title {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      opacity: 1;
+    }
+
+    .news-message-hold-crawl {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      opacity: 1;
+      transform: translateX(0);
+      animation: news-message-crawl 6.8s linear forwards;
+      will-change: transform;
+    }
+
+    @keyframes news-message-crawl {
+      0% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      38% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-120%);
+      }
+    }
+</style>
+</head>
+
+<body class="antialiased">
+
+<header class="bg-[#0b101c]/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-30 no-print">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm border border-teal-400/30">
+        <span class="text-white font-bold text-base">R</span>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-tight leading-none">ROTASTIC</h1>
+        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Abu Nakhla Health Centre</p>
+      </div>
+    </div>
+
+    <nav class="hidden md:flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800/80">
+      <button id="deskTabBtnSchedule" onclick="switchTab('schedule')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-teal-500/15 text-teal-300 transition">
+        <i class="fa-regular fa-calendar-days mr-1.5"></i>Rota
+      </button>
+
+      <button id="deskTabBtnGenerator" onclick="switchTab('generator')" style="display:none;" class="admin-tab px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-teal-400"></i>Generate
+      </button>
+
+      <button id="deskTabBtnLeaves" onclick="switchTab('leaves')" class="colleague-tab px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-arrow-right-arrow-left mr-1.5 text-amber-400"></i>Leaves & Sick
+      </button>
+
+      <button id="deskTabBtnLeavePlanner" onclick="switchTab('leaveplanner')" class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-calendar-week mr-1.5 text-emerald-400"></i>Planner
+      </button>
+
+      <button id="deskTabBtnAnnouncements" onclick="switchTab('announcements')" style="display:none;" class="admin-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition">
+        <i class="fa-solid fa-bullhorn mr-1.5 text-amber-400"></i>Announcements
+      </button>
+
+      <button id="deskTabBtnMetrics" onclick="switchTab('metrics')" style="display:none;" class="admin-tab px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-chart-pie mr-1.5 text-slate-400"></i>Metrics
+      </button>
+
+      <button id="deskTabBtnUserSettings" onclick="switchTab('usersettings')" class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-gear mr-1.5"></i>Settings
+      </button>
+    </nav>
+
+    <div id="adminBadgeWrapper" class="flex items-center space-x-2">
+      <button onclick="handleViewBadgeClick()" id="adminBadgeBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700 flex items-center space-x-1.5 transition">
+        <i id="adminLockIcon" class="fa-solid fa-lock text-amber-400 text-[10px]"></i>
+        <span id="adminBadgeText">Admin Login</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="swapsNewsTicker" class="hidden bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-b border-amber-500/30 px-3 text-xs text-amber-200">
+  <div class="max-w-6xl mx-auto flex items-center min-h-[46px]">
+    <span class="flex items-center font-extrabold uppercase text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded mr-3 tracking-wider flex-shrink-0">
+      <i class="fa-solid fa-bullhorn mr-1"></i>Announcements
+    </span>
+    <div class="news-stage flex-1">
+      <div id="tickerContent" class="news-drop-item font-semibold"></div>
+    </div>
+  </div>
+</div>
+
+<main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-4">
+
+  <div id="userApprovalToast" class="hidden p-4 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-xs flex items-center justify-between shadow-xl">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center flex-shrink-0 text-base">✅</div>
+      <div>
+        <span class="text-emerald-300 font-extrabold uppercase text-[10px] tracking-wider block">Notification Update</span>
+        <span id="userApprovalToastMessage" class="text-slate-100 font-semibold"></span>
+      </div>
+    </div>
+    <button onclick="dismissUserApprovalToast()" class="text-slate-400 hover:text-white">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div id="tabSchedule" class="space-y-4">
+
+    <div id="inlineSetupBanner" class="p-4 rounded-2xl bg-teal-950/50 border border-teal-500/40 space-y-3">
+      <div class="flex items-center space-x-2.5 text-teal-300">
+        <i class="fa-solid fa-user-circle text-lg"></i>
+        <span class="text-xs font-bold uppercase tracking-wider">Physician Profile Setup</span>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Please select your doctor profile below to customize your schedule duties, drive time, and notifications. This prompt only appears once.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div>
+          <label class="block text-[10px] font-bold text-teal-400 uppercase tracking-wider mb-1">
+            Please choose doctor <span class="text-rose-400">*</span>
+          </label>
+          <select id="inlineDocSelect" onchange="checkInlineAdminSelection()" class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400">
+            <option value="">-- Please choose doctor --</option>
+          </select>
+        </div>
+
+        <div id="inlinePinWrapper" style="display:none;">
+          <label class="block text-[10px] font-bold text-teal-300 uppercase tracking-wider mb-1">
+            Verification PIN <span class="text-rose-400">*</span>
+          </label>
+          <input type="password" id="inlineAdminPin" inputmode="numeric" placeholder="Enter security PIN" class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400">
+        </div>
+      </div>
+
+      <button onclick="saveInlineProfile()" class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-check"></i>
+        <span>Save & Set Profile</span>
+      </button>
+    </div>
+
+    <div class="clean-card rounded-2xl p-4 sm:p-5 space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div>
+          <div class="flex items-center flex-wrap gap-2">
+            <span id="greetingIcon" class="text-amber-400 text-sm"><i class="fa-solid fa-sun"></i></span>
+            <h2 id="cozyGreetingText" class="text-sm sm:text-base font-bold text-white tracking-tight">Good day, Doctor</h2>
+            <span id="weatherBadge" class="hidden inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-semibold text-slate-300">
+              <span id="weatherEmoji">☀️</span>
+              <span id="weatherTemp">--°C</span>
+              <span id="weatherCondition" class="text-slate-500"></span>
+            </span>
+          </div>
+          <p id="holidayGreetingLine" class="hidden text-xs mt-1 font-semibold"></p>
+          <p id="cozyDutySentence" class="text-xs text-slate-300 mt-1 leading-relaxed">
+            Wishing you a safe and productive shift at Abu Nakhla Health Centre.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between flex-wrap gap-2 pt-1 pb-1">
+      <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1">
+        <button onclick="filterDay(0)" class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30">Sun</button>
+        <button onclick="filterDay(1)" class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent">Mon</button>
+        <button onclick="filterDay(2)" class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent">Tue</button>
+        <button onclick="filterDay(3)" class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent">Wed</button>
+        <button onclick="filterDay(4)" class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent">Thu</button>
+        <button onclick="filterDay(-1)" class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent">All Week</button>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="exportToImageReport()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1">
+          <i class="fa-regular fa-image text-[10px]"></i>
+          <span>Export Image (PNG)</span>
+        </button>
+
+        <button onclick="exportToPDFReport()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1">
+          <i class="fa-solid fa-file-pdf text-[10px]"></i>
+          <span>Export PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="scheduleMatrixContainer" class="space-y-4"></div>
+  </div>
+
+  <!-- LEAVES -->
+  <div id="tabLeaves" class="hidden space-y-4">
+    <div class="clean-card rounded-2xl p-5 border-amber-500/20">
+
+      <div class="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-start space-x-3 mb-5">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5 flex-shrink-0"></i>
+        <div class="text-xs">
+          <span class="font-extrabold text-amber-300 uppercase tracking-wide block">Leave submission</span>
+          <p class="text-slate-300 mt-0.5 leading-relaxed">
+            Use one form for all leave types. Sick leave follows the urgent notification pathway automatically.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-calendar-plus text-teal-400 mr-2"></i>Submit a Leave
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-1">
+              Select the leave category, physician and dates. Sick leave will immediately trigger urgent rota alerts.
+            </p>
+          </div>
+          <div id="selectedLeaveEmoji" class="text-3xl">🏖️</div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-[10px] text-slate-400 font-semibold uppercase mb-1">Leave Type</label>
+            <select id="unifiedLeaveType" onchange="onUnifiedLeaveTypeChange()" class="w-full bg-slate-900 text-white p-2.5 rounded-lg border border-slate-700 outline-none focus:border-teal-400">
+              <option value="annual" data-emoji="🏖️">🏖️ Annual Leave</option>
+              <option value="casual" data-emoji="⚡">⚡ Casual / Emergency Leave</option>
+              <option value="sick" data-emoji="🤒">🤒 Sick Leave</option>
+              <option value="hajj" data-emoji="🕋">🕋 Hajj / Pilgrimage Leave</option>
+              <option value="training" data-emoji="🎓">🎓 Training Leave</option>
+              <option value="unpaid" data-emoji="💸">💸 Unpaid Leave</option>
+              <option value="maternity" data-emoji="👶">👶 Maternity Leave</option>
+              <option value="paternity" data-emoji="🍼">🍼 Paternity Leave</option>
+              <option value="bereavement" data-emoji="🕊️">🕊️ Bereavement Leave</option>
+              <option value="study" data-emoji="📚">📚 Study / Examination Leave</option>
+              <option value="other" data-emoji="📝">📝 Other Approved Leave</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 font-semibold uppercase mb-1">Doctor</label>
+            <select id="unifiedLeaveDoc" class="w-full bg-slate-900 text-white p-2.5 rounded-lg border border-slate-700 outline-none"></select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 font-semibold uppercase mb-1">Start Date</label>
+            <input type="date" id="unifiedLeaveStart" class="w-full bg-slate-900 text-white p-2.5 rounded-lg border border-slate-700 outline-none">
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 font-semibold uppercase mb-1">End Date</label>
+            <input type="date" id="unifiedLeaveEnd" class="w-full bg-slate-900 text-white p-2.5 rounded-lg border border-slate-700 outline-none">
+          </div>
+        </div>
+
+        <div id="sickLeaveExtraFields" class="hidden mt-3 p-3 rounded-xl bg-rose-950/30 border border-rose-500/30">
+          <div class="flex items-center space-x-2 mb-2">
+            <i class="fa-solid fa-bell text-rose-400"></i>
+            <span class="text-[10px] font-extrabold text-rose-300 uppercase tracking-wider">Urgent Sick Leave Pathway</span>
+          </div>
+
+          <p class="text-[11px] text-slate-300 mb-3 leading-relaxed">
+            Dr. Mohamed M. will be notified immediately. The assigned shift leader will also receive the alert. If no shift leader is assigned yet, the alert will be held and delivered the moment one is assigned.
+          </p>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 font-semibold uppercase mb-1">Shift Affected</label>
+            <select id="unifiedSickShift" class="w-full bg-slate-900 text-white p-2.5 rounded-lg border border-slate-700 outline-none">
+              <option value="AM Shift (07:00–14:00)">AM Shift (07:00–14:00)</option>
+              <option value="PM Shift (16:00–22:00)">PM Shift (16:00–22:00)</option>
+              <option value="Twilight AM (09:00–16:00)">Twilight AM (09:00–16:00)</option>
+              <option value="Twilight PM (14:00–20:00)">Twilight PM (14:00–20:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="block text-[10px] text-slate-400 font-semibold uppercase mb-1">Notes (optional)</label>
+          <textarea id="unifiedLeaveNotes" rows="3" placeholder="Any supporting note or context..." class="w-full bg-slate-900 text-white p-2.5 rounded-lg border border-slate-700 outline-none resize-none"></textarea>
+        </div>
+
+        <button onclick="submitUnifiedLeave()" class="mt-4 w-full py-2.5 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition">
+          Submit Leave
+        </button>
+      </div>
+
+      <div class="mt-5 bg-slate-900/40 rounded-xl border border-slate-800 p-4">
+        <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center">
+          <i class="fa-solid fa-clock-rotate-left text-slate-400 mr-2"></i>Recent Leave Submissions
+        </h3>
+        <div id="recentLeaveSubmissions" class="space-y-2 text-xs text-slate-400"></div>
+      </div>
+
+      <div class="mt-5 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center mb-3">
+          <i class="fa-solid fa-arrow-right-arrow-left text-teal-400 mr-2"></i>Request Shift Swap
+        </h3>
+
+        <div class="space-y-2.5 text-xs">
+          <select id="swapDocFrom" class="w-full bg-slate-900 text-white p-2 rounded-lg border border-slate-800 outline-none"></select>
+          <select id="swapDocTo" class="w-full bg-slate-900 text-white p-2 rounded-lg border border-slate-800 outline-none"></select>
+          <input type="date" id="swapDate" class="w-full bg-slate-900 text-white p-2 rounded-lg border border-slate-800 outline-none">
+          <select id="swapShift" class="w-full bg-slate-900 text-white p-2 rounded-lg border border-slate-800 outline-none">
+            <option value="AM">AM Shift</option>
+            <option value="PM">PM Shift</option>
+            <option value="Twilight AM">Twilight AM</option>
+            <option value="Twilight PM">Twilight PM</option>
+          </select>
+        </div>
+
+        <button onclick="submitSwapForLeadApproval()" class="mt-4 w-full py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition">
+          Submit Swap for Approval
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLANNER -->
+  <div id="tabLeavePlanner" class="hidden space-y-4">
+    <div class="clean-card rounded-2xl p-5">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+            <i class="fa-solid fa-calendar-week text-emerald-400 mr-2"></i>Live Leave Planner
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Full monthly calendar. Submitted leave appears here automatically.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="changePlannerMonth(-1)" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300">
+            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+          </button>
+
+          <select id="plannerMonthSelect" onchange="renderAnnualLeaveCalendar()" class="bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 outline-none font-bold">
+            <option value="0">January</option>
+            <option value="1">February</option>
+            <option value="2">March</option>
+            <option value="3">April</option>
+            <option value="4">May</option>
+            <option value="5">June</option>
+            <option value="6">July</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">October</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+          </select>
+
+          <select id="plannerYearSelect" onchange="renderAnnualLeaveCalendar()" class="bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 outline-none font-bold">
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
+
+          <button onclick="changePlannerMonth(1)" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300">
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="pt-4">
+        <div id="plannerMonthHeading" class="text-center mb-3">
+          <h3 class="text-base font-extrabold text-white">October 2026</h3>
+        </div>
+
+        <div class="grid grid-cols-7 gap-1.5 mb-1.5 text-center">
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Sun</div>
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Mon</div>
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Tue</div>
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Wed</div>
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Thu</div>
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Fri</div>
+          <div class="text-[9px] font-bold uppercase text-slate-500 py-1">Sat</div>
+        </div>
+
+        <div id="monthlyLeaveCalendar" class="grid grid-cols-7 gap-1.5"></div>
+      </div>
+
+      <div class="mt-5 pt-4 border-t border-slate-800">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center">
+            <i class="fa-solid fa-list-check text-teal-400 mr-2"></i>
+            Leave roster for <span id="plannerRosterMonth" class="ml-1 text-teal-300">October 2026</span>
+          </h3>
+        </div>
+        <div id="plannerMonthLeaveRoster" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tabUserSettings" class="hidden space-y-4">
+    <div class="clean-card rounded-2xl p-5 max-w-xl mx-auto space-y-6">
+      <div>
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-1 flex items-center">
+          <i class="fa-solid fa-gear text-teal-400 mr-2"></i>Settings
+        </h2>
+        <p class="text-xs text-slate-400">Manage doctor identity and application preferences.</p>
+      </div>
+
+      <select id="userPrefDocSelect" class="w-full bg-slate-900 text-white p-2.5 rounded-xl border border-slate-700 outline-none"></select>
+
+      <button onclick="saveUserPreferences()" class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition uppercase tracking-wider text-xs">
+        Save Preferences
+      </button>
+
+      <div id="adminAnnouncementSettingsShortcut" class="hidden pt-4 border-t border-slate-800">
+        <button onclick="switchTab('announcements')" class="w-full py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 font-bold rounded-xl transition uppercase tracking-wider text-xs">
+          <i class="fa-solid fa-bullhorn mr-1.5"></i>Broadcast Announcement
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERATOR -->
+  <div id="tabGenerator" class="hidden space-y-5">
+    <div class="clean-card rounded-2xl p-4 border-amber-500/30 bg-amber-950/10">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+            <i class="fa-solid fa-bullhorn mr-1.5"></i>Announcements
+          </div>
+          <p class="text-xs text-slate-300 mt-1">
+            Broadcast a message to all ROTASTIC users.
+          </p>
+        </div>
+        <button onclick="switchTab('announcements')" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl transition whitespace-nowrap">
+          <i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast Announcement
+        </button>
+      </div>
+    </div>
+
+    <div class="clean-card rounded-2xl p-5 border-amber-500/30">
+      <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-800 gap-3">
+        <div>
+          <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center">
+            <i class="fa-solid fa-user-pen mr-2"></i>Clinical Lead Review & Approval Console
+          </h3>
+        </div>
+
+        <button onclick="approveRotaAsClinicalLead()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition">
+          <i class="fa-solid fa-check-double mr-1.5"></i>Approve Rota
+        </button>
+      </div>
+
+      <div class="pt-3 space-y-2">
+        <input type="text" id="moursiChangeNotes" placeholder="Desired changes..." class="w-full bg-slate-900 text-white text-xs px-3 py-2 rounded-xl border border-slate-700 outline-none focus:border-teal-400">
+        <button onclick="regenerateWithMoursiNotes()" class="w-full px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition">
+          Regenerate with Notes
+        </button>
+      </div>
+    </div>
+
+    <div class="clean-card rounded-2xl p-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Week Start</label>
+          <input type="date" id="cycleStartDate" value="2026-10-11" class="w-full bg-transparent text-white font-medium text-xs outline-none">
+        </div>
+
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <label class="block text-[10px] font-semibold text-amber-400 uppercase mb-1">Assign AM Shift Lead</label>
+          <select id="assignShiftLeadAM" onchange="onAdminAssignShiftLead('AM')" class="w-full bg-slate-900 text-white font-medium text-xs outline-none"></select>
+        </div>
+
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <label class="block text-[10px] font-semibold text-indigo-400 uppercase mb-1">Assign PM Shift Lead</label>
+          <select id="assignShiftLeadPM" onchange="onAdminAssignShiftLead('PM')" class="w-full bg-slate-900 text-white font-medium text-xs outline-none"></select>
+        </div>
+
+        <div class="flex items-end">
+          <button onclick="generateDutySchedule(); switchTab('schedule');" class="w-full px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition">
+            Generate Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANNOUNCEMENTS -->
+  <div id="tabAnnouncements" class="hidden space-y-4">
+    <div class="clean-card rounded-2xl p-5 border-amber-500/20">
+      <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-800">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+            <i class="fa-solid fa-bullhorn text-amber-400 mr-2"></i>New Announcement
+          </h2>
+          
+        </div>
+        <span id="announcementAuthorBadge" class="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-300">
+          Admin
+        </span>
+      </div>
+
+      <div class="pt-4 space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Announcement</label>
+          <textarea id="adminAnnouncementText" rows="4" maxlength="280"
+            placeholder="Type an announcement for all ROTASTIC users..."
+            class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-amber-400 resize-none"></textarea>
+          <div class="flex items-center justify-between mt-1">
+            <span class="text-[10px] text-slate-500">Maximum 280 characters</span>
+            <span id="announcementCharCount" class="text-[10px] text-slate-500">0/280</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button onclick="broadcastAdminAnnouncement()" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition">
+            <i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast Now
+          </button>
+          <button onclick="clearCurrentAnnouncement()" class="sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition">
+            <i class="fa-solid fa-eraser mr-1.5"></i>Clear Current
+          </button>
+        </div>
+
+        <div id="announcementAdminStatus" class="hidden p-3 rounded-xl text-xs"></div>
+      </div>
+    </div>
+
+    <div class="clean-card rounded-2xl p-5">
+      <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center">
+        <i class="fa-solid fa-clock-rotate-left text-teal-400 mr-2"></i>Recent Announcements
+      </h3>
+      <div id="announcementHistoryList" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div id="tabMetrics" class="hidden space-y-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="clean-card rounded-2xl p-4">
+        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Physicians Scheduled</span>
+        <div id="metricActiveDoctors" class="text-2xl font-extrabold text-white mt-1">0</div>
+      </div>
+
+      <div class="clean-card rounded-2xl p-4">
+        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Total Shift Attendances</span>
+        <div id="metricTotalShifts" class="text-2xl font-extrabold text-teal-300 mt-1">0</div>
+      </div>
+
+      <div class="clean-card rounded-2xl p-4">
+        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">AM Attendances</span>
+        <div id="metricAMShifts" class="text-2xl font-extrabold text-amber-300 mt-1">0</div>
+      </div>
+
+      <div class="clean-card rounded-2xl p-4">
+        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">PM Attendances</span>
+        <div id="metricPMShifts" class="text-2xl font-extrabold text-indigo-300 mt-1">0</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="clean-card rounded-2xl p-4 sm:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Shifts per Physician</h2>
+            <p class="text-[11px] text-slate-400 mt-0.5">Unique AM/PM attendances during the rota week.</p>
+          </div>
+
+          <select id="metricsShiftChartMode" onchange="renderMetricsCharts()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+            <option value="stacked">AM vs PM</option>
+            <option value="total">Total Shifts</option>
+          </select>
+        </div>
+
+        <div class="relative h-[420px]">
+          <canvas id="doctorShiftChart"></canvas>
+        </div>
+      </div>
+
+      <div class="clean-card rounded-2xl p-4 sm:p-5">
+        <div class="mb-4">
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">Duty Mix</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Distribution of clinical and emergency assignments.</p>
+        </div>
+
+        <div class="relative h-[420px]">
+          <canvas id="dutyTypePieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="clean-card rounded-2xl p-4 sm:p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">Physician Workload Inspector</h2>
+          <p class="text-[11px] text-slate-400">Select a doctor for a duty-by-duty breakdown.</p>
+        </div>
+
+        <select id="metricsDoctorFilter" onchange="renderIndividualDoctorMetrics()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none"></select>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-1 bg-slate-900/60 rounded-xl border border-slate-800 p-4">
+          <div id="individualDoctorSummary"></div>
+        </div>
+
+        <div class="lg:col-span-2 relative h-[320px]">
+          <canvas id="individualDoctorChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="clean-card rounded-2xl p-4 sm:p-5">
+      <h2 class="text-sm font-bold text-white uppercase mb-3">Complete Workload Matrix</h2>
+
+      <div class="overflow-x-auto no-scrollbar">
+        <table class="w-full text-left text-xs border-collapse min-w-[1050px]">
+          <thead>
+            <tr class="text-[10px] text-slate-400 uppercase border-b border-slate-800">
+              <th class="p-2.5">Doctor</th>
+              <th class="p-2.5 text-center">Shifts</th>
+              <th class="p-2.5 text-center">AM</th>
+              <th class="p-2.5 text-center">PM</th>
+              <th class="p-2.5 text-center">Male ER</th>
+              <th class="p-2.5 text-center">Female ER</th>
+              <th class="p-2.5 text-center">Paeds ER</th>
+              <th class="p-2.5 text-center">WBC</th>
+              <th class="p-2.5 text-center">ANC/NCD</th>
+              <th class="p-2.5 text-center">CB Lead</th>
+              <th class="p-2.5 text-center">CB Response</th>
+              <th class="p-2.5 text-center">Twilight</th>
+              <th class="p-2.5 text-center">Room Clinics</th>
+            </tr>
+          </thead>
+          <tbody id="metricsTableBody" class="divide-y divide-slate-800/60 font-medium"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b12]/95 backdrop-blur-md border-t border-slate-800/80 flex items-center justify-around py-2 px-3 shadow-lg mobile-nav-bar no-print">
+  <button onclick="switchTab('schedule')" class="flex flex-col items-center text-teal-400 transition">
+    <i class="fa-regular fa-calendar-days text-base mb-0.5"></i>
+    <span class="text-[10px] font-semibold">Rota</span>
+  </button>
+
+  <button onclick="switchTab('generator')" style="display:none;" class="admin-tab flex flex-col items-center text-slate-400 transition">
+    <i class="fa-solid fa-wand-magic-sparkles text-base mb-0.5 text-teal-400"></i>
+    <span class="text-[10px] font-medium">Generate</span>
+  </button>
+
+  <button onclick="switchTab('leaves')" class="colleague-tab flex flex-col items-center text-slate-400 transition">
+    <i class="fa-solid fa-arrow-right-arrow-left text-base mb-0.5 text-amber-400"></i>
+    <span class="text-[10px] font-medium">Leaves</span>
+  </button>
+
+  <button onclick="switchTab('leaveplanner')" class="flex flex-col items-center text-slate-400 transition">
+    <i class="fa-solid fa-calendar-week text-base mb-0.5 text-emerald-400"></i>
+    <span class="text-[10px] font-medium">Planner</span>
+  </button>
+
+  <button onclick="switchTab('announcements')" style="display:none;" class="admin-tab flex flex-col items-center text-amber-300 transition">
+    <i class="fa-solid fa-bullhorn text-base mb-0.5 text-amber-400"></i>
+    <span class="text-[10px] font-bold">New</span>
+  </button>
+
+  <button onclick="switchTab('metrics')" style="display:none;" class="admin-tab flex flex-col items-center text-slate-400 transition">
+    <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
+    <span class="text-[10px] font-medium">Metrics</span>
+  </button>
+
+  <button onclick="switchTab('usersettings')" class="flex flex-col items-center text-slate-400 transition">
+    <i class="fa-solid fa-gear text-base mb-0.5"></i>
+    <span class="text-[10px] font-medium">Settings</span>
+  </button>
+</nav>
+
+<div id="adminModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-[#0f1624] rounded-2xl max-w-sm w-full p-5 border border-slate-800 text-left">
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-sm font-bold text-white flex items-center">
+        <i class="fa-solid fa-key text-amber-400 mr-2"></i>Administration Access
+      </h3>
+
+      <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <input type="password" id="adminPasskeyInput" inputmode="numeric" placeholder="Enter Admin Password" class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400">
+
+    <button onclick="verifyAdminPasskey()" class="w-full mt-3 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition">
+      Verify & Unlock
+    </button>
+
+    <div id="adminModalStatus" class="text-[11px] text-center font-semibold pt-2"></div>
+  </div>
+</div>
+
+<div id="pdfExportWrapper">
+  <div id="pdfReportTemplate">
+    <h2 style="font-size:14px;font-weight:bold;text-align:center;margin:0 0 8px;">
+      Abu Nakhla Health Center - Weekly Duty Schedule for Physicians
+    </h2>
+
+    <table>
+      <thead>
+        <tr style="background:#f1f5f9;text-align:center;font-weight:bold;">
+          <th>Date</th>
+          <th>AM ER / Twilight</th>
+          <th>AM Rooms</th>
+          <th>Notices</th>
+          <th>PM ER / Twilight</th>
+          <th>PM Rooms</th>
+          <th>Code Blue</th>
+          <th>Leave</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const Storage = {
+  get(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  },
+
+  set(key, val) {
+    try {
+      localStorage.setItem(key, val);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  getJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  },
+
+  setJSON(key, obj) {
+    try {
+      localStorage.setItem(key, JSON.stringify(obj));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+};
+
+var PIN_DR_ZAID = "2601";
+var PIN_DR_MOURSI = "4827";
+
+var activeUserDocName = Storage.get('rotastic_user_doc_name', '');
+var currentViewMode = Storage.get('rotastic_view_mode', 'colleague');
+var isNextScheduleReleased = Storage.get('rotastic_next_schedule_released', 'false') === 'true';
+
+var activeDayIndex = 0;
+var currentSchedule = [];
+
+var DOCTORS = [
+  { id:'moursi', name:'Dr Mohamed M.', leaves:[] },
+  { id:'husam', name:'Dr Husam A.', leaves:['2026-10-13','2026-10-14'] },
+  { id:'bilal', name:'Dr Bilal C.', leaves:[] },
+  { id:'maher', name:'Dr Maher A.', leaves:[] },
+  { id:'aghafoor', name:'Dr Abdulgafoor K.', leaves:[] },
+  { id:'laith', name:'Dr Laith A.', leaves:[] },
+  { id:'arashid', name:'Dr Abdulrashid S.', leaves:[] },
+  { id:'nislam', name:'Dr Syed I.', leaves:[] },
+  { id:'selman', name:'Dr Selman E.', leaves:[] },
+  { id:'shadi', name:'Dr Shadi A.', leaves:[] },
+  { id:'imran', name:'Dr Imran A.', leaves:[] },
+  { id:'msyed', name:'Dr Mohammed S.', leaves:[] },
+  { id:'enan', name:'Dr Enan M.', leaves:['2026-10-11','2026-10-12','2026-10-13','2026-10-14','2026-10-15'] },
+  { id:'gshafi', name:'Dr Gani M.', leaves:[] },
+  { id:'faisal', name:'Dr Faisal C.', leaves:[] },
+  { id:'qaisar', name:'Dr Muhammad K.', leaves:[] },
+  { id:'amin', name:'Dr Aminullah Z.', leaves:[] },
+  { id:'saima', name:'Dr Saima N.', leaves:[] },
+  { id:'tayseer', name:'Dr Tayseer A.', leaves:[] },
+  { id:'oula', name:'Dr Oula T.', leaves:[] },
+  { id:'saba', name:'Dr Saba T.', leaves:['2026-10-11','2026-10-12','2026-10-13','2026-10-14','2026-10-15'] },
+  { id:'fazila', name:'Dr Fazila K.', leaves:[] },
+  { id:'rida', name:'Dr Rida C.', leaves:[] },
+  { id:'maya', name:'Dr Maya S.', leaves:[] },
+  { id:'laila', name:'Dr Laila A.', leaves:['2026-10-11','2026-10-12','2026-10-13','2026-10-14','2026-10-15'] },
+  { id:'zaid', name:'Dr Zaid SE.', leaves:[] },
+  { id:'saleh', name:'Dr Salah M.', leaves:[] }
+];
+
+const DOCTOR_GENDER = {
+  'Dr Mohamed M.': 'male',
+  'Dr Husam A.': 'male',
+  'Dr Bilal C.': 'male',
+  'Dr Maher A.': 'male',
+  'Dr Abdulgafoor K.': 'male',
+  'Dr Laith A.': 'male',
+  'Dr Abdulrashid S.': 'male',
+  'Dr Syed I.': 'male',
+  'Dr Selman E.': 'male',
+  'Dr Shadi A.': 'male',
+  'Dr Imran A.': 'male',
+  'Dr Mohammed S.': 'male',
+  'Dr Enan M.': 'male',
+  'Dr Gani M.': 'male',
+  'Dr Faisal C.': 'male',
+  'Dr Muhammad K.': 'male',
+  'Dr Aminullah Z.': 'male',
+  'Dr Tayseer A.': 'male',
+  'Dr Zaid SE.': 'male',
+  'Dr Salah M.': 'male',
+
+  'Dr Saima N.': 'female',
+  'Dr Oula T.': 'female',
+  'Dr Saba T.': 'female',
+  'Dr Fazila K.': 'female',
+  'Dr Rida C.': 'female',
+  'Dr Maya S.': 'female',
+  'Dr Laila A.': 'female'
+};
+
+function getDoctorPronouns(docName) {
+  const gender = DOCTOR_GENDER[docName];
+
+  if (gender === 'male') {
+    return { subject: 'he', object: 'him', possessive: 'his' };
+  }
+
+  if (gender === 'female') {
+    return { subject: 'she', object: 'her', possessive: 'her' };
+  }
+
+  return { subject: 'they', object: 'them', possessive: 'their' };
+}
+
+
+const WEIRD_MEDICAL_FACTS = [
+  { title:"The Ether Dome", fact:"In 1846, William T. G. Morton publicly demonstrated ether anaesthesia at Massachusetts General Hospital, helping transform surgery from an endurance event into something recognisably modern." },
+  { title:"The Handwashing Scandal", fact:"Ignaz Semmelweis showed in the 1840s that handwashing sharply reduced maternal deaths. Many colleagues resisted the idea that doctors themselves could carry disease between patients." },
+  { title:"Before Modern Anaesthesia", fact:"Speed once mattered enormously in surgery. Surgeons were famous for operating extremely quickly because every extra second meant more suffering for an awake patient." },
+  { title:"Ancient Brain Surgery", fact:"Trepanation was performed thousands of years ago. Some ancient skulls show clear bone healing, proving that at least some patients survived." },
+  { title:"Lister vs Germs", fact:"Joseph Lister promoted antiseptic surgery using carbolic acid in the 1860s. Before antisepsis, an operation could be technically successful yet followed by disastrous infection." },
+  { title:"The Accidental X-Ray", fact:"Wilhelm Röntgen discovered X-rays in 1895. One of the earliest famous X-ray images showed the bones of his wife's hand, including her wedding ring." },
+  { title:"The Pacemaker Accident", fact:"Wilson Greatbatch discovered a key pacemaker principle after accidentally using the wrong resistor and noticing that his circuit produced rhythmic electrical pulses." },
+  { title:"When Barber Meant Surgeon", fact:"For centuries, barber-surgeons in Europe performed bloodletting, wound care and amputations. The red-and-white barber pole has historical associations with blood and bandaging." },
+  { title:"A Very Committed Self-Operation", fact:"In 1961, Soviet physician Leonid Rogozov developed appendicitis in Antarctica and performed an appendectomy on himself with assistants helping hold instruments and a mirror." },
+  { title:"Why the Stethoscope Exists", fact:"René Laennec invented the early stethoscope in 1816 after using a rolled paper tube rather than placing his ear directly against a patient's chest." },
+  { title:"Naming Anaesthesia", fact:"Physician and writer Oliver Wendell Holmes Sr. suggested the word 'anaesthesia' after the famous 1846 ether demonstration." },
+  { title:"Vaccination and Cows", fact:"Edward Jenner's work with cowpox helped establish vaccination against smallpox. The word vaccination derives from 'vacca', Latin for cow." }
+];
+
+var currentMedicalFactIndex = Math.floor(Math.random() * WEIRD_MEDICAL_FACTS.length);
+
+function isCurrentUserAdmin() {
+  if (activeUserDocName === 'Dr Zaid SE.' || activeUserDocName === 'Dr Mohamed M.') return true;
+
+  var token = Storage.get('rotastic_admin_token', null);
+
+  if (!token) return false;
+  if (token === 'permanent') return true;
+
+  var expiry = parseInt(token, 10);
+  return !isNaN(expiry) && Date.now() < expiry;
+}
+
+function isAdminViewActive() {
+  return currentViewMode === 'admin' && isCurrentUserAdmin();
+}
+
+function populateSettingsProfileDropdown() {
+  const allOptions = '<option value="">-- Select physician --</option>' +
+    DOCTORS.map(d => `<option value="${d.name}" ${d.name === activeUserDocName ? 'selected' : ''}>${d.name}</option>`).join('');
+
+  ['userPrefDocSelect','unifiedLeaveDoc','swapDocFrom','swapDocTo','assignShiftLeadAM','assignShiftLeadPM'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = allOptions;
+  });
+
+  const storedAMLead = Storage.get('rotastic_shift_lead_AM', '');
+  const storedPMLead = Storage.get('rotastic_shift_lead_PM', '');
+  const leadAM = document.getElementById('assignShiftLeadAM');
+  const leadPM = document.getElementById('assignShiftLeadPM');
+  if (leadAM && storedAMLead) leadAM.value = storedAMLead;
+  if (leadPM && storedPMLead) leadPM.value = storedPMLead;
+
+  const inline = document.getElementById('inlineDocSelect');
+  if (inline && inline.options.length <= 1) {
+    inline.innerHTML = '<option value="">-- Please choose doctor --</option>' +
+      DOCTORS.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+  }
+}
+
+function applyViewMode() {
+  var adminMode = isAdminViewActive();
+
+  document.querySelectorAll('.admin-tab').forEach(function(el) {
+    el.style.setProperty('display', adminMode ? 'flex' : 'none', 'important');
+  });
+
+  document.querySelectorAll('.colleague-tab').forEach(function(el) {
+    el.style.setProperty('display', adminMode ? 'none' : 'flex', 'important');
+  });
+
+  const annDesktop = document.getElementById('deskTabBtnAnnouncements');
+  if (annDesktop) {
+    annDesktop.style.setProperty('display', adminMode ? 'flex' : 'none', 'important');
+  }
+
+  const settingsAnnouncementShortcut = document.getElementById('adminAnnouncementSettingsShortcut');
+  if (settingsAnnouncementShortcut) {
+    settingsAnnouncementShortcut.classList.toggle('hidden', !adminMode);
+  }
+
+  var badgeText = document.getElementById('adminBadgeText');
+  var icon = document.getElementById('adminLockIcon');
+
+  if (badgeText && icon) {
+    if (adminMode) {
+      badgeText.innerText = 'Colleague View';
+      icon.className = 'fa-solid fa-user-doctor text-teal-400 text-[10px]';
+    } else {
+      badgeText.innerText = isCurrentUserAdmin() ? 'Admin View' : 'Admin Login';
+      icon.className = 'fa-solid fa-lock text-amber-400 text-[10px]';
+    }
+  }
+
+  populateSettingsProfileDropdown();
+
+  // Announcement viewing is universal. Only the composer tab is admin-only.
+  const publicAnnouncementBar = document.getElementById('swapsNewsTicker');
+  const activeAnnouncement = sanitizeAnnouncementText(
+    Storage.get('rotastic_breaking_news_item', null)
+  );
+
+  if (publicAnnouncementBar && activeAnnouncement) {
+    publicAnnouncementBar.classList.remove('hidden');
+  }
+}
+
+function switchTab(tab) {
+  var adminMode = isAdminViewActive();
+
+  if (!adminMode && (tab === 'generator' || tab === 'metrics' || tab === 'announcements')) {
+    tab = 'schedule';
+  }
+
+  if (adminMode && tab === 'leaves') {
+    tab = 'schedule';
+  }
+
+  const tabs = {
+    schedule: document.getElementById('tabSchedule'),
+    leaves: document.getElementById('tabLeaves'),
+    leaveplanner: document.getElementById('tabLeavePlanner'),
+    usersettings: document.getElementById('tabUserSettings'),
+    generator: document.getElementById('tabGenerator'),
+    announcements: document.getElementById('tabAnnouncements'),
+    metrics: document.getElementById('tabMetrics')
+  };
+
+  Object.keys(tabs).forEach(key => {
+    if (tabs[key]) tabs[key].classList.toggle('hidden', key !== tab);
+  });
+
+  applyViewMode();
+
+  if (tab === 'metrics' && adminMode) renderMetricsView();
+  if (tab === 'announcements' && adminMode) renderAnnouncementAdminView();
+  if (tab === 'leaveplanner') renderAnnualLeaveCalendar();
+}
+
+function handleViewBadgeClick() {
+  if (isAdminViewActive()) {
+    currentViewMode = 'colleague';
+    Storage.set('rotastic_view_mode', 'colleague');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  if (isCurrentUserAdmin()) {
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  openAdminModal();
+}
+
+function openAdminModal() {
+  document.getElementById('adminModal').classList.remove('hidden');
+  document.getElementById('adminPasskeyInput').value = '';
+  document.getElementById('adminModalStatus').innerText = '';
+}
+
+function closeAdminModal() {
+  document.getElementById('adminModal').classList.add('hidden');
+}
+
+function verifyAdminPasskey() {
+  var input = document.getElementById('adminPasskeyInput').value.trim();
+  var statusEl = document.getElementById('adminModalStatus');
+
+  if (input === PIN_DR_ZAID || input === PIN_DR_MOURSI) {
+    var expiry = Date.now() + (8 * 60 * 60 * 1000);
+
+    Storage.set('rotastic_admin_token', expiry.toString());
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+
+    applyViewMode();
+    renderScheduleView();
+
+    statusEl.innerHTML = '<span class="text-emerald-400">Passkey verified — Admin View unlocked.</span>';
+
+    setTimeout(function() {
+      closeAdminModal();
+      switchTab('schedule');
+    }, 300);
+  } else {
+    statusEl.innerHTML = '<span class="text-rose-400">Incorrect password.</span>';
+  }
+}
+
+function checkInlineAdminSelection() {
+  const val = document.getElementById('inlineDocSelect').value;
+  const wrapper = document.getElementById('inlinePinWrapper');
+  wrapper.style.display = (val === 'Dr Zaid SE.' || val === 'Dr Mohamed M.') ? 'block' : 'none';
+}
+
+function saveInlineProfile() {
+  const selectedDoc = document.getElementById('inlineDocSelect').value;
+  const pinVal = document.getElementById('inlineAdminPin').value.trim();
+
+  if (!selectedDoc) {
+    alert("Please choose your name.");
+    return;
+  }
+
+  if (selectedDoc === 'Dr Zaid SE.' && pinVal !== PIN_DR_ZAID) {
+    alert("Incorrect security PIN for Dr. Zaid.");
+    return;
+  }
+
+  if (selectedDoc === 'Dr Mohamed M.' && pinVal !== PIN_DR_MOURSI) {
+    alert("Incorrect security PIN for Dr. Moursi.");
+    return;
+  }
+
+  activeUserDocName = selectedDoc;
+  Storage.set('rotastic_user_doc_name', selectedDoc);
+  Storage.set('rotastic_setup_completed', 'true');
+
+  if (selectedDoc === 'Dr Zaid SE.' || selectedDoc === 'Dr Mohamed M.') {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+  } else {
+    currentViewMode = 'colleague';
+    try { localStorage.removeItem('rotastic_admin_token'); } catch(e) {}
+  }
+
+  Storage.set('rotastic_view_mode', currentViewMode);
+
+  const banner = document.getElementById('inlineSetupBanner');
+  if (banner) banner.remove();
+
+  applyViewMode();
+  initGreetingAndHolidays();
+  renderScheduleView();
+  showNotificationsForCurrentUser();
+}
+
+function checkOnboardingState() {
+  var completed = Storage.get('rotastic_setup_completed', 'false') === 'true';
+  var banner = document.getElementById('inlineSetupBanner');
+
+  if (completed && activeUserDocName && banner) banner.remove();
+}
+
+function saveUserPreferences() {
+  const val = document.getElementById('userPrefDocSelect').value;
+
+  if (!val) {
+    alert("Please select a doctor profile.");
+    return;
+  }
+
+  activeUserDocName = val;
+  Storage.set('rotastic_user_doc_name', val);
+
+  if (val === 'Dr Zaid SE.' || val === 'Dr Mohamed M.') {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+  } else {
+    currentViewMode = 'colleague';
+    try { localStorage.removeItem('rotastic_admin_token'); } catch(e) {}
+  }
+
+  Storage.set('rotastic_view_mode', currentViewMode);
+
+  applyViewMode();
+  initGreetingAndHolidays();
+  renderScheduleView();
+  showNotificationsForCurrentUser();
+  switchTab('schedule');
+}
+
+function getQatarTodayISO() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Qatar',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+
+    const map = {};
+    parts.forEach(function(p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
+    });
+
+    return map.year + '-' + map.month + '-' + map.day;
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function doctorMatches(rawName, doctorName) {
+  if (!rawName || !doctorName) return false;
+  return cleanDoctorName(rawName) === cleanDoctorName(doctorName);
+}
+
+function getRoomAssignmentsForDoctor(shift, doctorName) {
+  const rooms = [];
+
+  Object.keys((shift && shift.rooms) || {}).forEach(function(room) {
+    if (doctorMatches(shift.rooms[room], doctorName)) {
+      rooms.push(room);
+    }
+  });
+
+  return rooms;
+}
+
+function collectSpecialClinicDuties(shift, doctorName) {
+  if (!shift) return [];
+
+  const duties = [];
+
+  const clinicMap = [
+    ['wbcDoc', 'Well-Baby Clinic 👶'],
+    ['ancDoc', 'ANC 🤰'],
+    ['ncdDoc', 'NCD clinic 🩺'],
+    ['isoDoc', 'Isolation clinic 😷'],
+    ['hearingDoc', 'Hearing clinic 👂'],
+    ['smokingDoc', 'Smoking Cessation Clinic 🚭'],
+    ['iucdDoc', 'IUCD clinic 🌸']
+  ];
+
+  clinicMap.forEach(function(item) {
+    if (doctorMatches(shift[item[0]], doctorName)) {
+      duties.push(item[1]);
+    }
+  });
+
+  // Some rota entries encode special clinic labels inside room assignments.
+  Object.keys(shift.rooms || {}).forEach(function(room) {
+    const raw = String(shift.rooms[room] || '');
+    if (!doctorMatches(raw, doctorName)) return;
+
+    if (/\bIUCD\b/i.test(raw)) duties.push('IUCD clinic 🌸');
+    if (/\bSDI\b/i.test(raw)) duties.push('special procedure clinic 🩺');
+    if (/smoking/i.test(raw)) duties.push('Smoking Cessation Clinic 🚭');
+  });
+
+  return Array.from(new Set(duties));
+}
+
+function collectEmergencyDuties(shift, doctorName) {
+  if (!shift) return [];
+
+  const duties = [];
+
+  if (doctorMatches(shift.med, doctorName)) duties.push('Male Emergency Room 🚑');
+  if (doctorMatches(shift.fed, doctorName)) duties.push('Female Emergency Room 🚑');
+  if (doctorMatches(shift.ped, doctorName)) duties.push('Paediatric Emergency Room 🧸🚑');
+
+  return duties;
+}
+
+function collectCodeBlueDuties(cb, doctorName) {
+  if (!cb) return [];
+
+  const duties = [];
+
+  if (doctorMatches(cb.tl, doctorName)) duties.push('Code Blue Team Lead 💙⚡');
+  if (doctorMatches(cb.tm2, doctorName)) duties.push('Code Blue responder 💙');
+  if (doctorMatches(cb.tm3, doctorName)) duties.push('Code Blue responder 💙');
+
+  return duties;
+}
+
+function buildShiftBriefing(scheduleDay, doctorName, period) {
+  if (!scheduleDay || !doctorName) return null;
+
+  const shift = scheduleDay[period];
+  const cb = period === 'am' ? scheduleDay.cbAM : scheduleDay.cbPM;
+  const isAM = period === 'am';
+
+  if (!shift) return null;
+
+  const emergency = collectEmergencyDuties(shift, doctorName);
+  const clinics = collectSpecialClinicDuties(shift, doctorName);
+  const codeBlue = collectCodeBlueDuties(cb, doctorName);
+  const rooms = getRoomAssignmentsForDoctor(shift, doctorName);
+
+  const isTwilight = doctorMatches(shift.timed1Doc, doctorName);
+  const isSecondaryTimed = doctorMatches(shift.timed2Doc, doctorName);
+
+  const present =
+    emergency.length ||
+    clinics.length ||
+    codeBlue.length ||
+    rooms.length ||
+    isTwilight ||
+    isSecondaryTimed ||
+    doctorMatches(scheduleDay[isAM ? 'shiftLeadAM' : 'shiftLeadPM'], doctorName);
+
+  if (!present) return null;
+
+  let shiftTitle = isAM ? 'AM shift' : 'PM shift';
+  let hours = isAM ? '07:00–14:00' : '16:00–22:00';
+  let shiftEmoji = isAM ? '☀️' : '🌙';
+
+  if (isTwilight) {
+    shiftTitle = isAM ? 'AM Twilight shift' : 'PM Twilight shift';
+    hours = isAM ? '09:00–16:00' : '14:00–20:00';
+    shiftEmoji = isAM ? '🌤️' : '🌆';
+  } else if (isSecondaryTimed) {
+    shiftTitle = isAM ? '09:00–16:00 shift' : '14:00–20:00 shift';
+    hours = isAM ? '09:00–16:00' : '14:00–20:00';
+    shiftEmoji = isAM ? '🌤️' : '🌆';
+  }
+
+  const parts = [];
+
+  if (emergency.length) {
+    parts.push('You are covering ' + emergency.join(' and ') + '.');
+  }
+
+  if (clinics.length) {
+    parts.push('You are covering ' + clinics.join(' and ') + '.');
+  }
+
+  if (codeBlue.length) {
+    parts.push('You are also assigned as ' + codeBlue.join(' and ') + '.');
+  }
+
+  const isShiftLead = doctorMatches(
+    scheduleDay[isAM ? 'shiftLeadAM' : 'shiftLeadPM'],
+    doctorName
+  );
+
+  if (isShiftLead) {
+    parts.push('You are the ' + (isAM ? 'AM' : 'PM') + ' Shift Lead today 😎📣.');
+  }
+
+  // Room is shown as the useful fallback if no higher-priority clinical duty is present.
+  if (!emergency.length && !clinics.length && rooms.length) {
+    parts.push(
+      rooms.length === 1
+        ? 'Your clinic room today is Room ' + rooms[0] + ' 🏥.'
+        : 'Your clinic rooms today are Rooms ' + rooms.join(' and ') + ' 🏥.'
+    );
+  } else if (rooms.length) {
+    parts.push(
+      rooms.length === 1
+        ? 'Your allocated room is Room ' + rooms[0] + ' 🏥.'
+        : 'Your allocated rooms are ' + rooms.join(', ') + ' 🏥.'
+    );
+  }
+
+  if (!parts.length) {
+    parts.push('You are scheduled for clinical duty today 🩺.');
+  }
+
+  return {
+    title: shiftEmoji + ' You are on the ' + shiftTitle + ' (' + hours + ') today.',
+    details: parts.join(' ')
+  };
+}
+
+function isDoctorOnLeaveToday(doctorName, isoDate) {
+  const doctor = DOCTORS.find(function(d) {
+    return d.name === doctorName;
+  });
+
+  if (doctor && Array.isArray(doctor.leaves) && doctor.leaves.indexOf(isoDate) !== -1) {
+    return true;
+  }
+
+  const submitted = Storage.getJSON('rotastic_leave_submissions', []);
+
+  return submitted.some(function(r) {
+    if (r.doc !== doctorName) return false;
+    if (!r.startDate) return false;
+
+    const end = r.endDate || r.startDate;
+    return isoDate >= r.startDate && isoDate <= end;
+  });
+}
+
+function getTodayScheduleDay() {
+  const todayISO = getQatarTodayISO();
+
+  return currentSchedule.find(function(day) {
+    return day.isoDate === todayISO;
+  }) || null;
+}
+
+
+const ABU_NAKHLA_LAT = 25.18232;
+const ABU_NAKHLA_LNG = 51.37983;
+
+function getSecondTuesdayOfFebruary(year) {
+  const d = new Date(Date.UTC(year, 1, 1));
+  const firstDay = d.getUTCDay();
+  const daysToTuesday = (2 - firstDay + 7) % 7;
+  const firstTuesday = 1 + daysToTuesday;
+  return year + '-02-' + String(firstTuesday + 7).padStart(2, '0');
+}
+
+function getQatarHolidayInfo(isoDate) {
+  if (!isoDate) return null;
+
+  const year = parseInt(isoDate.slice(0, 4), 10);
+  const md = isoDate.slice(5);
+
+  if (md === '12-18') {
+    return {
+      name: 'Qatar National Day',
+      greeting: 'Happy Qatar National Day! 🇶🇦🎉✨',
+      className: 'text-rose-300'
+    };
+  }
+
+  if (isoDate === getSecondTuesdayOfFebruary(year)) {
+    return {
+      name: 'Qatar National Sports Day',
+      greeting: 'Happy Qatar National Sports Day! 🏃‍♀️🏃‍♂️🇶🇦💪',
+      className: 'text-emerald-300'
+    };
+  }
+
+  // Configured Qatar Eid holiday windows for the current rota years.
+  const eidFitr = {
+    '2026-03-20': true,
+    '2026-03-21': true,
+    '2026-03-22': true,
+    '2026-03-23': true
+  };
+
+  const eidAdha = {
+    '2026-05-27': true,
+    '2026-05-28': true,
+    '2026-05-29': true,
+    '2026-05-30': true
+  };
+
+  if (eidFitr[isoDate]) {
+    return {
+      name: 'Eid Al-Fitr',
+      greeting: 'Eid Mubarak — wishing you a joyful Eid Al-Fitr! 🌙✨🍬🎊',
+      className: 'text-amber-300'
+    };
+  }
+
+  if (eidAdha[isoDate]) {
+    return {
+      name: 'Eid Al-Adha',
+      greeting: 'Eid Mubarak — wishing you a blessed Eid Al-Adha! 🕋🌙✨🤍',
+      className: 'text-amber-300'
+    };
+  }
+
+  return null;
+}
+
+function weatherCodeToPresentation(code, isDay) {
+  const daytime = isDay !== 0;
+
+  if (code === 0) return { emoji: daytime ? '☀️' : '🌙', label: 'Clear' };
+  if (code === 1 || code === 2) return { emoji: daytime ? '🌤️' : '☁️', label: 'Partly cloudy' };
+  if (code === 3) return { emoji: '☁️', label: 'Cloudy' };
+  if (code === 45 || code === 48) return { emoji: '🌫️', label: 'Hazy' };
+  if ([51,53,55,56,57].indexOf(code) !== -1) return { emoji: '🌦️', label: 'Drizzle' };
+  if ([61,63,65,66,67,80,81,82].indexOf(code) !== -1) return { emoji: '🌧️', label: 'Rain' };
+  if ([95,96,99].indexOf(code) !== -1) return { emoji: '⛈️', label: 'Thunderstorm' };
+
+  return { emoji: '🌡️', label: 'Weather' };
+}
+
+async function updateAbuNakhlaWeather() {
+  const badge = document.getElementById('weatherBadge');
+  const tempEl = document.getElementById('weatherTemp');
+  const emojiEl = document.getElementById('weatherEmoji');
+  const conditionEl = document.getElementById('weatherCondition');
+
+  if (!badge || !tempEl || !emojiEl || !conditionEl) return;
+
+  try {
+    const url =
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=' + ABU_NAKHLA_LAT +
+      '&longitude=' + ABU_NAKHLA_LNG +
+      '&current=temperature_2m,weather_code,is_day' +
+      '&timezone=Asia%2FQatar';
+
+    const response = await fetch(url, { cache: 'no-store' });
+
+    if (!response.ok) throw new Error('Weather request failed');
+
+    const data = await response.json();
+    const current = data.current || {};
+    const presentation = weatherCodeToPresentation(current.weather_code, current.is_day);
+
+    if (typeof current.temperature_2m === 'number') {
+      tempEl.innerText = Math.round(current.temperature_2m) + '°C';
+    } else {
+      tempEl.innerText = '--°C';
+    }
+
+    emojiEl.innerText = presentation.emoji;
+    conditionEl.innerText = presentation.label;
+    badge.classList.remove('hidden');
+  } catch (e) {
+    // Weather is optional; leave the greeting fully functional if offline.
+    badge.classList.add('hidden');
+  }
+}
+
+function getBriefingPriority(scheduleDay, doctorName, period) {
+  const shift = scheduleDay && scheduleDay[period];
+  if (!shift) return -1;
+
+  let score = 0;
+
+  if (doctorMatches(shift.timed1Doc, doctorName)) score += 100;
+  if (doctorMatches(shift.timed2Doc, doctorName)) score += 90;
+
+  if (doctorMatches(shift.med, doctorName)) score += 80;
+  if (doctorMatches(shift.fed, doctorName)) score += 80;
+  if (doctorMatches(shift.ped, doctorName)) score += 85;
+
+  const special = collectSpecialClinicDuties(shift, doctorName);
+  score += special.length * 70;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctorName);
+  score += rooms.length * 45;
+
+  const cb = period === 'am' ? scheduleDay.cbAM : scheduleDay.cbPM;
+  if (cb) {
+    if (doctorMatches(cb.tl, doctorName)) score += 40;
+    if (doctorMatches(cb.tm2, doctorName) || doctorMatches(cb.tm3, doctorName)) score += 25;
+  }
+
+  const lead = scheduleDay[period === 'am' ? 'shiftLeadAM' : 'shiftLeadPM'];
+  if (doctorMatches(lead, doctorName)) score += 50;
+
+  return score;
+}
+
+function chooseSingleDailyBriefing(scheduleDay, doctorName) {
+  const am = buildShiftBriefing(scheduleDay, doctorName, 'am');
+  const pm = buildShiftBriefing(scheduleDay, doctorName, 'pm');
+
+  if (am && !pm) return am;
+  if (pm && !am) return pm;
+  if (!am && !pm) return null;
+
+  // Defensive rule: doctors must never work both AM and PM on the same day.
+  // If legacy rota data accidentally places a doctor in both, show only the
+  // more clinically significant assignment instead of presenting two shifts.
+  const amScore = getBriefingPriority(scheduleDay, doctorName, 'am');
+  const pmScore = getBriefingPriority(scheduleDay, doctorName, 'pm');
+
+  if (pmScore > amScore) return pm;
+  return am;
+}
+
+function renderTodayBriefing() {
+  const greetingEl = document.getElementById('cozyGreetingText');
+  const sentenceEl = document.getElementById('cozyDutySentence');
+  const iconEl = document.getElementById('greetingIcon');
+  const holidayLine = document.getElementById('holidayGreetingLine');
+
+  const now = new Date();
+  const qatarHour = parseInt(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      hour: '2-digit',
+      hour12: false
+    }).format(now),
+    10
+  );
+
+  let greeting = 'Good morning';
+  let iconClass = 'fa-solid fa-sun text-amber-400';
+
+  if (qatarHour >= 12 && qatarHour < 17) {
+    greeting = 'Good afternoon';
+    iconClass = 'fa-solid fa-cloud-sun text-amber-400';
+  } else if (qatarHour >= 17) {
+    greeting = 'Good evening';
+    iconClass = 'fa-solid fa-moon text-indigo-400';
+  }
+
+  const todayISO = getQatarTodayISO();
+  const holiday = getQatarHolidayInfo(todayISO);
+
+  if (greetingEl) {
+    greetingEl.innerText = greeting + ', ' + (activeUserDocName || 'Doctor');
+  }
+
+  if (iconEl) {
+    iconEl.className = iconClass;
+  }
+
+  if (holidayLine) {
+    if (holiday) {
+      holidayLine.innerText = holiday.greeting;
+      holidayLine.className = 'text-xs mt-1 font-semibold ' + holiday.className;
+      holidayLine.classList.remove('hidden');
+    } else {
+      holidayLine.classList.add('hidden');
+      holidayLine.innerText = '';
+    }
+  }
+
+  updateAbuNakhlaWeather();
+
+  if (!sentenceEl) return;
+
+  if (!activeUserDocName) {
+    sentenceEl.innerHTML =
+      '👋 Select your physician profile to see your personal briefing for today.';
+    return;
+  }
+
+  if (isDoctorOnLeaveToday(activeUserDocName, todayISO)) {
+    sentenceEl.innerHTML =
+      '<span class="text-emerald-300 font-bold">🏖️🌴 You are off today — enjoy your leave! 😎☀️</span> ' +
+      '<span class="text-slate-400">Rest, recharge, and enjoy the day. 🍹✨</span>';
+    return;
+  }
+
+  const today = getTodayScheduleDay();
+
+  if (!today) {
+    sentenceEl.innerHTML =
+      '🩺 There is no published duty entry for you today. Enjoy the breathing space ☕🙂';
+    return;
+  }
+
+  const briefing = chooseSingleDailyBriefing(today, activeUserDocName);
+
+  if (!briefing) {
+    sentenceEl.innerHTML =
+      '✨ You have no assigned clinical duty on today’s published rota. Enjoy the lighter day! ☕🙂';
+    return;
+  }
+
+  sentenceEl.innerHTML =
+    '<span class="block mb-1"><strong class="text-white">' +
+    briefing.title +
+    '</strong> <span class="text-slate-300">' +
+    briefing.details +
+    '</span></span>';
+}
+
+function initGreetingAndHolidays() {
+  renderTodayBriefing();
+}
+
+function nextMedicalFact() {
+  currentMedicalFactIndex = (currentMedicalFactIndex + 1) % WEIRD_MEDICAL_FACTS.length;
+  renderMedicalFact();
+}
+
+function randomMedicalFact() {
+  currentMedicalFactIndex = Math.floor(Math.random() * WEIRD_MEDICAL_FACTS.length);
+  renderMedicalFact();
+}
+
+function renderMedicalFact() {
+  const fact = WEIRD_MEDICAL_FACTS[currentMedicalFactIndex];
+  const title = document.getElementById('medicalFactTitle');
+  const text = document.getElementById('medicalFactText');
+
+  if (title) title.innerText = fact.title;
+  if (text) text.innerText = fact.fact;
+}
+
+function buildAwaitingApprovalScreen() {
+  const fact = WEIRD_MEDICAL_FACTS[currentMedicalFactIndex];
+
+  return `
+    <div class="clean-card rounded-2xl p-6 sm:p-9 my-5 border-dashed border-slate-700">
+      <div class="text-center">
+        <div class="w-24 h-24 rounded-full mx-auto bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 shadow-[0_0_35px_rgba(245,158,11,0.08)]">
+          <i class="fa-solid fa-mug-hot text-5xl text-amber-300"></i>
+        </div>
+
+        <h3 class="text-lg sm:text-xl font-extrabold text-white">Awaiting Schedule Approval</h3>
+
+        <p class="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto mt-2 leading-relaxed">
+          The rota is currently enjoying a clinically indicated coffee break while awaiting final Clinical Lead approval.
+        </p>
+
+        <div class="inline-flex items-center mt-4 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-extrabold uppercase tracking-[0.16em] text-amber-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-2"></span>
+          Governance review in progress
+        </div>
+      </div>
+
+      <div class="mt-7 bg-gradient-to-br from-indigo-950/50 via-slate-900 to-teal-950/30 border border-indigo-400/20 rounded-2xl p-4 sm:p-5 text-left">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-300 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-flask-vial"></i>
+            </div>
+
+            <div>
+              <span class="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-300">Strange but true medical history</span>
+              <h4 id="medicalFactTitle" class="font-extrabold text-white text-sm mt-1">${fact.title}</h4>
+            </div>
+          </div>
+
+          <span class="text-xl">🧠</span>
+        </div>
+
+        <p id="medicalFactText" class="text-xs text-slate-300 leading-relaxed mt-3">${fact.fact}</p>
+
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button onclick="nextMedicalFact()" class="px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-400/20 text-indigo-200 text-[10px] font-bold transition">
+            <i class="fa-solid fa-forward mr-1"></i>Another Weird Fact
+          </button>
+
+          <button onclick="randomMedicalFact()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-[10px] font-bold transition">
+            <i class="fa-solid fa-dice mr-1"></i>Surprise Me
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function isPhysicianReportedSick(docName, isoDate, shiftPeriod) {
+  if (!docName || docName === '-' || docName.indexOf('Unused') === 0) return false;
+
+  const sickReports = Storage.getJSON('rotastic_sick_leave_records', []);
+
+  return sickReports.some(report => {
+    if (report.doc !== cleanDoctorName(docName) || report.date !== isoDate) return false;
+    if (report.shift.indexOf('Full Day') !== -1) return true;
+    return shiftPeriod && report.shift.toUpperCase().indexOf(shiftPeriod.toUpperCase()) !== -1;
+  });
+}
+
+function renderDocBadgeWithSiren(docName, isoDate, shiftPeriod) {
+  if (!docName || docName === '-' || docName.indexOf('Unused') === 0) return '-';
+
+  const cleanName = cleanDoctorName(docName);
+  const isSick = isPhysicianReportedSick(cleanName, isoDate, shiftPeriod);
+
+  return cleanName + (isSick ? ' <span class="siren-badge ml-1">🚨<span class="text-[8px] font-black bg-rose-600 text-white px-1 rounded ml-0.5">SICK</span></span>' : '');
+}
+
+function toggleDocExpand(el) {
+  el.classList.toggle('expanded');
+}
+
+function generateDutySchedule() {
+  const configuredShiftLeadAM = document.getElementById('assignShiftLeadAM')?.value || Storage.get('rotastic_shift_lead_AM', '') || '';
+  const configuredShiftLeadPM = document.getElementById('assignShiftLeadPM')?.value || Storage.get('rotastic_shift_lead_PM', '') || '';
+
+  currentSchedule = [
+    {
+      day:'Sunday', date:'11/10/2026', isoDate:'2026-10-11', amNotices:13, pmNotices:10, onLeaveCount:4, outsideCount:2,
+      shiftLeadAM:configuredShiftLeadAM, shiftLeadPM:configuredShiftLeadPM,
+      am:{ med:'Dr Abdulrashid S.', fed:'Dr Oula T.', ped:'Dr Laith A.', timed1Doc:'Dr Maher A.', timed2Doc:'Dr Husam A.', wbcDoc:'Dr Selman E.', rooms:{9:'Dr Mohamed M.',10:'Dr Husam A.',12:'Dr Laith A.',13:'Dr Abdulrashid S.',14:'Dr Syed I. P',39:'Dr Abdulgafoor K.',21:'-',22:'Dr Maher A.',24:'Dr Bilal C.',25:'Dr Saima N.',26:'Dr Tayseer A.',27:'Dr Oula T. P'} },
+      pm:{ med:'Dr Shadi A.', fed:'Dr Maya S.', ped:'Dr Mohammed S.', timed1Doc:'No Clinic', ncdDoc:'Dr Imran A.', wbcDoc:'Dr Gani M.', rooms:{9:'Dr Faisal C.',10:'Dr Mohammed S.',12:'-',13:'Dr Imran A.',14:'Dr Shadi A. P',39:'-',21:'-',22:'Dr Muhammad K.',24:'Dr Aminullah Z.',25:'Dr Fazila K.',26:'Dr Rida C.',27:'Dr Maya S. P'} },
+      cbAM:{tl:'Dr Abdulrashid S.',tm2:'Dr Selman E.',tm3:'Dr Bilal C.'},
+      cbPM:{tl:'Dr Imran A.',tm2:'Dr Muhammad K.',tm3:'Dr Shadi A.'},
+      leaves:['Laila A.','Saba T.','Enan M.','Salah M.']
+    },
+    {
+      day:'Monday', date:'12/10/2026', isoDate:'2026-10-12', amNotices:12, pmNotices:11, onLeaveCount:4, outsideCount:2,
+      shiftLeadAM:configuredShiftLeadAM, shiftLeadPM:configuredShiftLeadPM,
+      am:{ med:'Dr Husam A.', fed:'Dr Saima N.', ped:'Dr Syed I.', timed1Doc:'Dr Laith A.', timed2Doc:'Dr Abdulgafoor K.', ancDoc:'Dr Tayseer A.', rooms:{9:'Dr Zaid SE.',10:'Dr Bilal C.',12:'Dr Syed I.',13:'Dr Husam A.',14:'Dr Maher A. P',39:'Dr Abdulgafoor K.',21:'Dr Oula T. (IUCD)',22:'Dr Laith A.',24:'-',25:'Dr Selman E.',26:'Dr Abdulrashid S.',27:'Dr Saima N. P'} },
+      pm:{ med:'Dr Mohammed S.', fed:'Dr Fazila K.', ped:'Dr Aminullah Z.', timed1Doc:'No Clinic', wbcDoc:'Dr Faisal C.', rooms:{9:'Dr Mohamed M.',10:'Dr Muhammad K.',12:'Dr Shadi A.',13:'Dr Imran A.',14:'Dr Mohammed S. P',39:'-',21:'-',22:'Dr Gani M.',24:'Dr Rida C. (SDI)',25:'Dr Fazila K.',26:'Dr Aminullah Z.',27:'Dr Maya S. P'} },
+      cbAM:{tl:'Dr Abdulrashid S.',tm2:'Dr Husam A.',tm3:'Dr Syed I.'},
+      cbPM:{tl:'Dr Imran A.',tm2:'Dr Faisal C.',tm3:'Dr Shadi A.'},
+      leaves:['Laila A.','Saba T.','Enan M.','Salah M.']
+    },
+    {
+      day:'Tuesday', date:'13/10/2026', isoDate:'2026-10-13', amNotices:12, pmNotices:10, onLeaveCount:5, outsideCount:2,
+      shiftLeadAM:configuredShiftLeadAM, shiftLeadPM:configuredShiftLeadPM,
+      am:{ med:'Dr Selman E.', fed:'Dr Tayseer A.', ped:'Dr Maher A.', timed1Doc:'Dr Abdulrashid S.', timed2Doc:'Dr Syed I.', ancDoc:'Dr Oula T.', wbcDoc:'Dr Mohamed M.', rooms:{9:'Dr Selman E.',10:'Dr Maher A.',12:'Dr Zaid SE.',13:'Dr Abdulrashid S.',14:'Dr Laith A. P',39:'Dr Abdulgafoor K.',21:'-',22:'Dr Syed I.',24:'-',25:'Dr Bilal C.',26:'Dr Saima N.',27:'Dr Tayseer A. P'} },
+      pm:{ med:'Dr Shadi A.', fed:'Dr Rida C.', ped:'Dr Gani M.', timed1Doc:'No Clinic', ancDoc:'Dr Rida C.', wbcDoc:'Dr Muhammad K.', rooms:{9:'Dr Gani M.',10:'Dr Aminullah Z.',12:'-',13:'Dr Shadi A.',14:'Dr Mohammed S. P',39:'-',21:'-',22:'Dr Imran A.',24:'-',25:'Dr Maya S.',26:'Dr Faisal C.',27:'Dr Fazila K. P'} },
+      cbAM:{tl:'Dr Laith A.',tm2:'Dr Bilal C.',tm3:'Dr Tayseer A.'},
+      cbPM:{tl:'Dr Gani M.',tm2:'Dr Shadi A.',tm3:'Dr Fazila K.'},
+      leaves:['Husam A.','Laila A.','Saba T.','Enan M.','Salah M.']
+    },
+    {
+      day:'Wednesday', date:'14/10/2026', isoDate:'2026-10-14', amNotices:11, pmNotices:11, onLeaveCount:5, outsideCount:2,
+      shiftLeadAM:configuredShiftLeadAM, shiftLeadPM:configuredShiftLeadPM,
+      am:{ med:'Dr Aminullah Z.', fed:'Dr Maya S.', ped:'Dr Faisal C.', timed1Doc:'Dr Imran A.', ncdDoc:'Dr Shadi A.', wbcDoc:'No Clinic', rooms:{9:'Dr Mohamed M.',10:'Dr Gani M.',12:'Dr Aminullah Z.',13:'Dr Faisal C.',14:'Dr Muhammad K. P',39:'-',21:'-',22:'Dr Mohammed S.',24:'Dr Maya S.',25:'Dr Imran A.',26:'Dr Fazila K.',27:'Dr Rida C. P'} },
+      pm:{ med:'Dr Laith A.', fed:'Dr Saima N.', ped:'Dr Bilal C.', timed1Doc:'Dr Bilal C.', rooms:{9:'Dr Bilal C.',10:'Dr Abdulrashid S.',12:'Dr Zaid SE.',13:'Dr Selman E.',14:'Dr Laith A. P',39:'-',21:'-',22:'Dr Syed I.',24:'Dr Maher A.',25:'Dr Tayseer A.',26:'Dr Saima N.',27:'Dr Oula T. P'} },
+      cbAM:{tl:'Dr Fazila K.',tm2:'Dr Muhammad K.',tm3:'Dr Faisal C.'},
+      cbPM:{tl:'Dr Abdulrashid S.',tm2:'Dr Tayseer A.',tm3:'Dr Oula T.'},
+      leaves:['Husam A.','Laila A.','Saba T.','Enan M.','Salah M.']
+    },
+    {
+      day:'Thursday', date:'15/10/2026', isoDate:'2026-10-15', amNotices:11, pmNotices:12, onLeaveCount:4, outsideCount:2,
+      shiftLeadAM:configuredShiftLeadAM, shiftLeadPM:configuredShiftLeadPM,
+      am:{ med:'Dr Imran A.', fed:'Dr Fazila K.', ped:'Dr Muhammad K.', timed1Doc:'Dr Aminullah Z.', ancDoc:'Dr Maya S.', wbcDoc:'No Clinic', rooms:{9:'Dr Mohamed M.',10:'Dr Faisal C.',12:'Dr Imran A.',13:'Dr Muhammad K.',14:'Dr Aminullah Z. P',39:'-',21:'-',22:'Dr Gani M.',24:'Dr Shadi A.',25:'Dr Mohammed S.',26:'Dr Rida C.',27:'Dr Fazila K. P'} },
+      pm:{ med:'Dr Syed I.', fed:'Dr Tayseer A.', ped:'Dr Abdulrashid S.', timed1Doc:'Dr Maher A.', wbcDoc:'Dr Bilal C.', rooms:{9:'Dr Husam A.',10:'Dr Syed I.',12:'Dr Maher A.',13:'Dr Selman E.',14:'Dr Zaid SE. P',39:'-',21:'-',22:'Dr Laith A.',24:'Dr Abdulrashid S.',25:'Dr Oula T.',26:'Dr Tayseer A.',27:'Dr Saima N. P'} },
+      cbAM:{tl:'Dr Fazila K.',tm2:'Dr Shadi A.',tm3:'Dr Faisal C.'},
+      cbPM:{tl:'Dr Abdulrashid S.',tm2:'Dr Oula T.',tm3:'Dr Bilal C.'},
+      leaves:['Laila A.','Saba T.','Enan M.','Salah M.']
+    }
+  ];
+
+  renderScheduleView();
+  renderTodayBriefing();
+  if (isAdminViewActive()) renderMetricsView();
+}
+
+function renderScheduleView() {
+  const container = document.getElementById('scheduleMatrixContainer');
+  if (!container) return;
+
+  if (!isAdminViewActive() && !isNextScheduleReleased) {
+    container.innerHTML = buildAwaitingApprovalScreen();
+    return;
+  }
+
+  const filtered = activeDayIndex === -1 ? currentSchedule : [currentSchedule[activeDayIndex] || currentSchedule[0]];
+
+  container.innerHTML = filtered.map(s => {
+    function roomPill(roomNum, docName, shiftPeriod) {
+      const formatted = renderDocBadgeWithSiren(docName, s.isoDate, shiftPeriod);
+      return `<span onclick="toggleDocExpand(this)" class="doc-pill truncate p-1 rounded bg-slate-950/60 border border-slate-800/80 text-slate-300">Rm ${roomNum}: <strong class="text-slate-100">${formatted}</strong></span>`;
+    }
+
+    return `
+      <div class="clean-card rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
+          <div>
+            <h2 class="text-base font-bold text-white">${s.day}</h2>
+            <p class="text-xs text-slate-400">${s.date}</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-300">
+            <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">☀️ AM: <strong>${s.amNotices}</strong></span>
+            <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">🌙 PM: <strong>${s.pmNotices}</strong></span>
+            <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">🏖️ Leave: <strong>${s.onLeaveCount}</strong></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${renderShiftCard(s, 'am', roomPill)}
+          ${renderShiftCard(s, 'pm', roomPill)}
+        </div>
+
+        <div class="pt-2 text-[11px] text-slate-500 border-t border-slate-800/60">
+          On Leave: <strong class="text-rose-300">${s.leaves.join(', ')}</strong>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderShiftCard(s, period, roomPill) {
+  const sh = s[period];
+  const cb = period === 'am' ? s.cbAM : s.cbPM;
+  const isAM = period === 'am';
+
+  return `
+    <div class="bg-slate-900/40 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+      <div class="flex items-center justify-between text-xs font-semibold text-slate-300 pb-2 border-b border-slate-800/60">
+        <span class="${isAM ? 'text-teal-400' : 'text-indigo-300'}">
+          <i class="${isAM ? 'fa-regular fa-sun text-amber-400' : 'fa-solid fa-moon text-indigo-400'} mr-1.5"></i>
+          ${isAM ? 'AM 07:00 – 14:00' : 'PM 16:00 – 22:00'}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+        <div class="bg-slate-900 p-2 rounded-lg border border-slate-800/60 truncate">
+          <span class="text-slate-500 block text-[9px] uppercase">Male ER</span>
+          <strong class="text-white">${renderDocBadgeWithSiren(sh.med, s.isoDate, isAM ? 'AM' : 'PM')}</strong>
+        </div>
+
+        <div class="bg-slate-900 p-2 rounded-lg border border-slate-800/60 truncate">
+          <span class="text-slate-500 block text-[9px] uppercase">Female ER</span>
+          <strong class="text-white">${renderDocBadgeWithSiren(sh.fed, s.isoDate, isAM ? 'AM' : 'PM')}</strong>
+        </div>
+
+        <div class="bg-slate-900 p-2 rounded-lg border border-slate-800/60 truncate">
+          <span class="text-slate-500 block text-[9px] uppercase">Paeds ER</span>
+          <strong class="text-white">${renderDocBadgeWithSiren(sh.ped, s.isoDate, isAM ? 'AM' : 'PM')}</strong>
+        </div>
+      </div>
+
+      <div class="text-[11px] text-slate-400">
+        Twilight: <strong class="text-slate-200">${renderDocBadgeWithSiren(sh.timed1Doc, s.isoDate, isAM ? 'AM' : 'PM')}</strong>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 text-xs">
+        <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider block">Code Blue</span>
+        <p class="text-[11px] text-slate-300 mt-0.5">
+          <strong>Lead: ${renderDocBadgeWithSiren(cb.tl, s.isoDate, isAM ? 'AM' : 'PM')}</strong>
+          | TM2: ${renderDocBadgeWithSiren(cb.tm2, s.isoDate, isAM ? 'AM' : 'PM')}
+          | TM3: ${renderDocBadgeWithSiren(cb.tm3, s.isoDate, isAM ? 'AM' : 'PM')}
+        </p>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60">
+        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-400">
+          ${[9,22,10,24,12,25,13,26,14,27,39,21].map(r => roomPill(r, sh.rooms[r], isAM ? 'AM' : 'PM')).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function filterDay(idx) {
+  activeDayIndex = idx;
+
+  document.querySelectorAll('.day-pill').forEach(function(pill, i) {
+    const active = (idx === -1 && i === 5) || idx === i;
+    pill.className = active
+      ? 'day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30'
+      : 'day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent';
+  });
+
+  renderScheduleView();
+}
+
+function cleanDoctorName(name) {
+  if (!name) return '';
+
+  return String(name)
+    .replace(/\s+P$/, '')
+    .replace(/\s+\(IUCD\)$/i, '')
+    .replace(/\s+\(SDI\)$/i, '')
+    .replace(/\s+😎$/, '')
+    .trim();
+}
+
+function isRealDoctor(name) {
+  const cleaned = cleanDoctorName(name);
+
+  return !!cleaned &&
+    cleaned !== '-' &&
+    cleaned !== 'No Clinic' &&
+    cleaned !== 'To be determined' &&
+    cleaned.indexOf('Unused') !== 0;
+}
+
+function makeEmptyMetric(docName) {
+  return {
+    doctor:docName, shifts:0, amShifts:0, pmShifts:0,
+    maleER:0, femaleER:0, paedsER:0, wbc:0, ancNcd:0,
+    codeBlueLead:0, codeBlueResponder:0, twilightAM:0, twilightPM:0,
+    roomClinics:0
+  };
+}
+
+function buildDutyStats() {
+  const stats = {};
+
+  DOCTORS.forEach(d => stats[d.name] = makeEmptyMetric(d.name));
+
+  function ensure(name) {
+    name = cleanDoctorName(name);
+    if (!isRealDoctor(name)) return null;
+    if (!stats[name]) stats[name] = makeEmptyMetric(name);
+    return stats[name];
+  }
+
+  currentSchedule.forEach(day => {
+    ['am','pm'].forEach(period => {
+      const shift = day[period];
+      const doctorsOnShift = {};
+
+      function register(name) {
+        name = cleanDoctorName(name);
+        if (isRealDoctor(name)) {
+          doctorsOnShift[name] = true;
+          ensure(name);
+        }
+      }
+
+      [shift.med,shift.fed,shift.ped,shift.timed1Doc,shift.timed2Doc,shift.wbcDoc,shift.ancDoc,shift.ncdDoc,shift.isoDoc,shift.hearingDoc].forEach(register);
+
+      Object.keys(shift.rooms || {}).forEach(room => register(shift.rooms[room]));
+
+      const cb = period === 'am' ? day.cbAM : day.cbPM;
+
+      if (cb) {
+        register(cb.tl);
+        register(cb.tm2);
+        register(cb.tm3);
+      }
+
+      Object.keys(doctorsOnShift).forEach(name => {
+        const rec = ensure(name);
+        rec.shifts++;
+        if (period === 'am') rec.amShifts++;
+        else rec.pmShifts++;
+      });
+
+      function inc(name, field) {
+        const rec = ensure(name);
+        if (rec) rec[field]++;
+      }
+
+      inc(shift.med,'maleER');
+      inc(shift.fed,'femaleER');
+      inc(shift.ped,'paedsER');
+      inc(shift.wbcDoc,'wbc');
+      inc(shift.ancDoc,'ancNcd');
+      inc(shift.ncdDoc,'ancNcd');
+
+      if (period === 'am') inc(shift.timed1Doc,'twilightAM');
+      else inc(shift.timed1Doc,'twilightPM');
+
+      Object.keys(shift.rooms || {}).forEach(room => inc(shift.rooms[room],'roomClinics'));
+
+      if (cb) {
+        inc(cb.tl,'codeBlueLead');
+        inc(cb.tm2,'codeBlueResponder');
+        inc(cb.tm3,'codeBlueResponder');
+      }
+    });
+  });
+
+  return Object.values(stats).sort((a,b) =>
+    b.shifts - a.shifts ||
+    b.roomClinics - a.roomClinics ||
+    a.doctor.localeCompare(b.doctor)
+  );
+}
+
+var doctorShiftChartInstance = null;
+var dutyTypePieChartInstance = null;
+var individualDoctorChartInstance = null;
+
+function renderMetricsView() {
+  if (!isAdminViewActive()) return;
+
+  const stats = buildDutyStats();
+  const active = stats.filter(r => r.shifts > 0);
+
+  document.getElementById('metricActiveDoctors').innerText = active.length;
+  document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s + r.shifts, 0);
+  document.getElementById('metricAMShifts').innerText = active.reduce((s,r) => s + r.amShifts, 0);
+  document.getElementById('metricPMShifts').innerText = active.reduce((s,r) => s + r.pmShifts, 0);
+
+  renderMetricsTable(stats);
+  populateMetricsDoctorFilter(stats);
+  renderMetricsCharts();
+  renderIndividualDoctorMetrics();
+}
+
+function renderMetricsTable(stats) {
+  const body = document.getElementById('metricsTableBody');
+
+  body.innerHTML = stats.map(row => `
+    <tr class="hover:bg-slate-900/70 transition">
+      <td class="p-2.5 whitespace-nowrap">
+        <button onclick="inspectDoctorFromTable('${row.doctor.replace(/'/g,"\\'")}')" class="font-bold text-white hover:text-teal-300 transition text-left">${row.doctor}</button>
+      </td>
+      <td class="p-2.5 text-center font-extrabold text-teal-300">${row.shifts}</td>
+      <td class="p-2.5 text-center text-amber-300">${row.amShifts}</td>
+      <td class="p-2.5 text-center text-indigo-300">${row.pmShifts}</td>
+      <td class="p-2.5 text-center">${row.maleER}</td>
+      <td class="p-2.5 text-center">${row.femaleER}</td>
+      <td class="p-2.5 text-center">${row.paedsER}</td>
+      <td class="p-2.5 text-center">${row.wbc}</td>
+      <td class="p-2.5 text-center">${row.ancNcd}</td>
+      <td class="p-2.5 text-center">${row.codeBlueLead}</td>
+      <td class="p-2.5 text-center">${row.codeBlueResponder}</td>
+      <td class="p-2.5 text-center">${row.twilightAM + row.twilightPM}</td>
+      <td class="p-2.5 text-center">${row.roomClinics}</td>
+    </tr>
+  `).join('');
+}
+
+function populateMetricsDoctorFilter(stats) {
+  const select = document.getElementById('metricsDoctorFilter');
+  const old = select.value;
+
+  select.innerHTML = stats.map(row => `<option value="${row.doctor}">${row.doctor} — ${row.shifts} shifts</option>`).join('');
+
+  if (stats.some(r => r.doctor === old)) select.value = old;
+}
+
+function renderMetricsCharts() {
+  if (!window.Chart) return;
+
+  const stats = buildDutyStats().filter(r => r.shifts > 0);
+  const mode = document.getElementById('metricsShiftChartMode')?.value || 'stacked';
+  const labels = stats.map(r => r.doctor.replace(/^Dr\s+/, ''));
+
+  if (doctorShiftChartInstance) doctorShiftChartInstance.destroy();
+
+  doctorShiftChartInstance = new Chart(document.getElementById('doctorShiftChart'), {
+    type:'bar',
+    data:{
+      labels,
+      datasets: mode === 'total'
+        ? [{
+            label:'Total shifts',
+            data:stats.map(r=>r.shifts),
+            backgroundColor:'rgba(20,184,166,0.65)',
+            borderColor:'#2dd4bf',
+            borderWidth:1,
+            borderRadius:5
+          }]
+        : [
+            {
+              label:'AM',
+              data:stats.map(r=>r.amShifts),
+              backgroundColor:'rgba(251,191,36,0.7)',
+              borderRadius:5
+            },
+            {
+              label:'PM',
+              data:stats.map(r=>r.pmShifts),
+              backgroundColor:'rgba(129,140,248,0.7)',
+              borderRadius:5
+            }
+          ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      indexAxis:'y',
+      scales:{
+        x:{
+          beginAtZero:true,
+          stacked:mode==='stacked',
+          ticks:{precision:0,color:'#94a3b8'},
+          grid:{color:'rgba(148,163,184,0.08)'}
+        },
+        y:{
+          stacked:mode==='stacked',
+          ticks:{color:'#cbd5e1',font:{size:10}},
+          grid:{display:false}
+        }
+      },
+      plugins:{
+        legend:{labels:{color:'#cbd5e1'}}
+      }
+    }
+  });
+
+  const totals = stats.reduce((a,r) => {
+    a.maleER += r.maleER;
+    a.femaleER += r.femaleER;
+    a.paedsER += r.paedsER;
+    a.wbc += r.wbc;
+    a.ancNcd += r.ancNcd;
+    a.codeBlueLead += r.codeBlueLead;
+    a.codeBlueResponder += r.codeBlueResponder;
+    a.twilightAM += r.twilightAM;
+    a.twilightPM += r.twilightPM;
+    a.roomClinics += r.roomClinics;
+    return a;
+  }, {maleER:0,femaleER:0,paedsER:0,wbc:0,ancNcd:0,codeBlueLead:0,codeBlueResponder:0,twilightAM:0,twilightPM:0,roomClinics:0});
+
+  if (dutyTypePieChartInstance) dutyTypePieChartInstance.destroy();
+
+  dutyTypePieChartInstance = new Chart(document.getElementById('dutyTypePieChart'), {
+    type:'doughnut',
+    data:{
+      labels:['Male ER','Female ER','Paeds ER','WBC','ANC / NCD','Code Blue Lead','Code Blue Response','Twilight AM','Twilight PM','Room Clinics'],
+      datasets:[{
+        data:[totals.maleER,totals.femaleER,totals.paedsER,totals.wbc,totals.ancNcd,totals.codeBlueLead,totals.codeBlueResponder,totals.twilightAM,totals.twilightPM,totals.roomClinics],
+        backgroundColor:['#14b8a6','#f472b6','#38bdf8','#22c55e','#a78bfa','#f59e0b','#fb7185','#fde047','#818cf8','#64748b'],
+        borderColor:'#0f1624',
+        borderWidth:3
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          position:'bottom',
+          labels:{color:'#cbd5e1',padding:14,boxWidth:12,font:{size:10}}
+        }
+      }
+    }
+  });
+}
+
+function renderIndividualDoctorMetrics() {
+  if (!window.Chart) return;
+
+  const select = document.getElementById('metricsDoctorFilter');
+  if (!select || !select.value) return;
+
+  const doctor = buildDutyStats().find(r => r.doctor === select.value);
+  if (!doctor) return;
+
+  document.getElementById('individualDoctorSummary').innerHTML = `
+    <span class="text-[10px] uppercase tracking-wider text-teal-400 font-bold">Selected Physician</span>
+    <h3 class="text-base font-extrabold text-white mt-1">${doctor.doctor}</h3>
+
+    <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+      <div class="rounded-lg bg-slate-950 border border-slate-800 p-2">
+        <strong class="text-lg text-white block">${doctor.shifts}</strong>
+        <span class="text-[9px] text-slate-500 uppercase">Total</span>
+      </div>
+
+      <div class="rounded-lg bg-slate-950 border border-slate-800 p-2">
+        <strong class="text-lg text-amber-300 block">${doctor.amShifts}</strong>
+        <span class="text-[9px] text-slate-500 uppercase">AM</span>
+      </div>
+
+      <div class="rounded-lg bg-slate-950 border border-slate-800 p-2">
+        <strong class="text-lg text-indigo-300 block">${doctor.pmShifts}</strong>
+        <span class="text-[9px] text-slate-500 uppercase">PM</span>
+      </div>
+    </div>
+  `;
+
+  if (individualDoctorChartInstance) individualDoctorChartInstance.destroy();
+
+  individualDoctorChartInstance = new Chart(document.getElementById('individualDoctorChart'), {
+    type:'bar',
+    data:{
+      labels:['Male ER','Female ER','Paeds ER','WBC','ANC/NCD','CB Lead','CB Response','Twilight AM','Twilight PM','Room Clinics'],
+      datasets:[{
+        data:[doctor.maleER,doctor.femaleER,doctor.paedsER,doctor.wbc,doctor.ancNcd,doctor.codeBlueLead,doctor.codeBlueResponder,doctor.twilightAM,doctor.twilightPM,doctor.roomClinics],
+        backgroundColor:'rgba(20,184,166,0.65)',
+        borderColor:'#2dd4bf',
+        borderWidth:1,
+        borderRadius:5
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        y:{beginAtZero:true,ticks:{precision:0,color:'#94a3b8'},grid:{color:'rgba(148,163,184,0.08)'}},
+        x:{ticks:{color:'#cbd5e1',font:{size:9}},grid:{display:false}}
+      },
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+
+function inspectDoctorFromTable(name) {
+  const select = document.getElementById('metricsDoctorFilter');
+  select.value = name;
+  renderIndividualDoctorMetrics();
+  select.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+const LEAVE_TYPE_META = {
+  annual: { label:'Annual Leave', emoji:'🏖️' },
+  casual: { label:'Casual / Emergency Leave', emoji:'⚡' },
+  sick: { label:'Sick Leave', emoji:'🤒' },
+  hajj: { label:'Hajj / Pilgrimage Leave', emoji:'🕋' },
+  training: { label:'Training Leave', emoji:'🎓' },
+  unpaid: { label:'Unpaid Leave', emoji:'💸' },
+  maternity: { label:'Maternity Leave', emoji:'👶' },
+  paternity: { label:'Paternity Leave', emoji:'🍼' },
+  bereavement: { label:'Bereavement Leave', emoji:'🕊️' },
+  study: { label:'Study / Examination Leave', emoji:'📚' },
+  other: { label:'Other Approved Leave', emoji:'📝' }
+};
+
+function onUnifiedLeaveTypeChange() {
+  const type = document.getElementById('unifiedLeaveType')?.value || 'annual';
+  const meta = LEAVE_TYPE_META[type] || LEAVE_TYPE_META.annual;
+  const emoji = document.getElementById('selectedLeaveEmoji');
+  const sickExtra = document.getElementById('sickLeaveExtraFields');
+
+  if (emoji) emoji.innerText = meta.emoji;
+  if (sickExtra) sickExtra.classList.toggle('hidden', type !== 'sick');
+}
+
+function requestBrowserNotificationPermission() {
+  if (!('Notification' in window)) return;
+
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().catch(function(){});
+  }
+}
+
+function sendBrowserNotification(title, body) {
+  if (!('Notification' in window)) return false;
+
+  if (Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body: body,
+        icon: undefined,
+        tag: 'rotastic-sick-alert'
+      });
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+function queueInAppNotification(recipient, message, type) {
+  const queue = Storage.getJSON('rotastic_notification_queue', []);
+  queue.push({
+    recipient: recipient,
+    message: message,
+    type: type || 'info',
+    createdAt: new Date().toISOString(),
+    read: false
+  });
+  Storage.setJSON('rotastic_notification_queue', queue);
+}
+
+function notifyRecipient(recipient, title, message, type) {
+  if (!recipient) return;
+
+  queueInAppNotification(recipient, message, type);
+  sendBrowserNotification(title, message);
+}
+
+function getAssignedShiftLeaderForSickReport(report) {
+  const period = String(report.shift || '').toUpperCase();
+
+  if (period.indexOf('TWILIGHT AM') !== -1 || period.indexOf('AM SHIFT') !== -1) {
+    return Storage.get('rotastic_shift_lead_AM', '') || '';
+  }
+
+  if (period.indexOf('TWILIGHT PM') !== -1 || period.indexOf('PM SHIFT') !== -1) {
+    return Storage.get('rotastic_shift_lead_PM', '') || '';
+  }
+
+  return '';
+}
+
+function createSickLeaveAlert(record) {
+  const publicAlertText =
+    `${record.doc} reported sick for this shift. Get well soon 💐🙏`;
+
+  Storage.set('rotastic_breaking_news_item', publicAlertText);
+  Storage.setJSON('rotastic_active_announcement_meta', {
+    kind: 'sick',
+    date: record.startDate,
+    shift: record.shift,
+    doctor: record.doc,
+    createdAt: new Date().toISOString()
+  });
+
+  notifyRecipient(
+    'Dr Mohamed M.',
+    'ROTASTIC Sick Leave Alert',
+    `${record.doc} reported sick for ${record.shift}.`,
+    'sick'
+  );
+
+  const leader = getAssignedShiftLeaderForSickReport(record);
+
+  if (leader) {
+    notifyRecipient(
+      leader,
+      'ROTASTIC Shift Lead Alert',
+      `${record.doc} reported sick for ${record.shift}.`,
+      'sick'
+    );
+
+    record.shiftLeaderNotified = true;
+    record.shiftLeaderNotifiedTo = leader;
+  } else {
+    record.shiftLeaderNotified = false;
+    record.shiftLeaderNotifiedTo = '';
+
+    const pending = Storage.getJSON('rotastic_pending_shift_lead_sick_alerts', []);
+    pending.push({
+      leaveId: record.id,
+      doc: record.doc,
+      startDate: record.startDate,
+      endDate: record.endDate,
+      shift: record.shift,
+      createdAt: record.createdAt
+    });
+    Storage.setJSON('rotastic_pending_shift_lead_sick_alerts', pending);
+  }
+
+  const sickReports = Storage.getJSON('rotastic_sick_leave_records', []);
+  sickReports.push({
+    doc: record.doc,
+    date: record.startDate,
+    shift: record.shift
+  });
+  Storage.setJSON('rotastic_sick_leave_records', sickReports);
+
+  requestBrowserNotificationPermission();
+  headlineTickerPhase = 'alert';
+  checkAndRenderBreakingNews();
+  requestAnimationFrame(function() {
+    checkAndRenderBreakingNews();
+  });
+  renderScheduleView();
+}
+
+function onAdminAssignShiftLead(period) {
+  const select = document.getElementById(period === 'AM' ? 'assignShiftLeadAM' : 'assignShiftLeadPM');
+  const leader = select ? select.value : '';
+
+  Storage.set('rotastic_shift_lead_' + period, leader);
+
+  currentSchedule.forEach(function(day) {
+    if (period === 'AM') day.shiftLeadAM = leader;
+    else day.shiftLeadPM = leader;
+  });
+
+  if (leader) {
+    flushPendingSickAlertsToShiftLeader(period, leader);
+  }
+
+  renderScheduleView();
+}
+
+function flushPendingSickAlertsToShiftLeader(period, leader) {
+  const pending = Storage.getJSON('rotastic_pending_shift_lead_sick_alerts', []);
+  if (!pending.length || !leader) return;
+
+  const remain = [];
+
+  pending.forEach(function(alert) {
+    const shiftUpper = String(alert.shift || '').toUpperCase();
+
+    const appliesToAM =
+      shiftUpper.indexOf('TWILIGHT AM') !== -1 ||
+      shiftUpper.indexOf('AM SHIFT') !== -1;
+
+    const appliesToPM =
+      shiftUpper.indexOf('TWILIGHT PM') !== -1 ||
+      shiftUpper.indexOf('PM SHIFT') !== -1;
+
+    const shouldNotify =
+      (period === 'AM' && appliesToAM) ||
+      (period === 'PM' && appliesToPM);
+
+    if (shouldNotify) {
+      notifyRecipient(
+        leader,
+        'ROTASTIC Pending Sick Leave Alert',
+        `${alert.doc} previously reported sick for ${alert.shift} on ${alert.startDate}. You are now the assigned ${period} shift leader; please review today's rota.`,
+        'sick'
+      );
+    } else {
+      remain.push(alert);
+    }
+  });
+
+  Storage.setJSON('rotastic_pending_shift_lead_sick_alerts', remain);
+}
+
+function submitUnifiedLeave() {
+  const type = document.getElementById('unifiedLeaveType')?.value;
+  const doc = document.getElementById('unifiedLeaveDoc')?.value;
+  const startDate = document.getElementById('unifiedLeaveStart')?.value;
+  const endDate = document.getElementById('unifiedLeaveEnd')?.value || startDate;
+  const notes = document.getElementById('unifiedLeaveNotes')?.value.trim() || '';
+  const shift = document.getElementById('unifiedSickShift')?.value || '';
+
+  if (!type || !doc || !startDate) {
+    alert('Please select leave type, doctor and start date.');
+    return;
+  }
+
+  if (endDate && endDate < startDate) {
+    alert('End date cannot be before start date.');
+    return;
+  }
+
+  const meta = LEAVE_TYPE_META[type] || LEAVE_TYPE_META.other;
+
+  const record = {
+    id: 'leave_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    type: type,
+    typeLabel: meta.label,
+    emoji: meta.emoji,
+    doc: doc,
+    startDate: startDate,
+    endDate: endDate,
+    notes: notes,
+    shift: type === 'sick' ? shift : '',
+    status: type === 'sick' ? 'Urgent - reported' : 'Submitted for approval',
+    createdAt: new Date().toISOString()
+  };
+
+  const records = Storage.getJSON('rotastic_leave_submissions', []);
+  records.unshift(record);
+  Storage.setJSON('rotastic_leave_submissions', records);
+
+  if (type === 'sick') {
+    createSickLeaveAlert(record);
+
+    // Save notification flags back into master record after alert processing.
+    const refreshed = Storage.getJSON('rotastic_leave_submissions', []);
+    const idx = refreshed.findIndex(r => r.id === record.id);
+    if (idx !== -1) {
+      refreshed[idx] = record;
+      Storage.setJSON('rotastic_leave_submissions', refreshed);
+    }
+
+    alert('Sick leave reported. Clinical Lead notified; shift-leader alert sent now or queued until assignment.');
+  } else {
+    notifyRecipient(
+      'Dr Mohamed M.',
+      'ROTASTIC Leave Submission',
+      `${doc} submitted ${meta.label} for ${startDate}${endDate !== startDate ? ' to ' + endDate : ''}.`,
+      'leave'
+    );
+
+    alert(meta.label + ' submitted for approval.');
+  }
+
+  renderRecentLeaveSubmissions();
+  renderAnnualLeaveCalendar();
+  renderTodayBriefing();
+
+  document.getElementById('unifiedLeaveNotes').value = '';
+}
+
+function renderRecentLeaveSubmissions() {
+  const box = document.getElementById('recentLeaveSubmissions');
+  if (!box) return;
+
+  const records = Storage.getJSON('rotastic_leave_submissions', []).slice(0, 8);
+
+  if (!records.length) {
+    box.innerHTML = '<div class="text-slate-500 text-[11px]">No leave submissions yet.</div>';
+    return;
+  }
+
+  box.innerHTML = records.map(function(r) {
+    const statusClass = r.type === 'sick' ? 'text-rose-300' : 'text-amber-300';
+
+    return `
+      <div class="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 flex items-start justify-between gap-3">
+        <div>
+          <div class="font-semibold text-slate-200">${r.emoji || '📝'} ${r.typeLabel} — ${r.doc}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">${r.startDate}${r.endDate && r.endDate !== r.startDate ? ' → ' + r.endDate : ''}${r.shift ? ' • ' + r.shift : ''}</div>
+        </div>
+        <span class="text-[9px] uppercase font-bold ${statusClass} whitespace-nowrap">${r.status || 'Submitted'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function showNotificationsForCurrentUser() {
+  if (!activeUserDocName) return;
+
+  const queue = Storage.getJSON('rotastic_notification_queue', []);
+  const relevant = queue.filter(function(n) {
+    return !n.read && (
+      n.recipient === activeUserDocName ||
+      String(n.recipient || '').split(' + ').indexOf(activeUserDocName) !== -1
+    );
+  });
+
+  if (!relevant.length) return;
+
+  const latest = relevant[relevant.length - 1];
+  const toast = document.getElementById('userApprovalToast');
+  const msg = document.getElementById('userApprovalToastMessage');
+
+  if (toast && msg) {
+    msg.innerText = latest.message;
+    toast.classList.remove('hidden');
+  }
+
+  queue.forEach(function(n) {
+    if (
+      n.recipient === activeUserDocName ||
+      String(n.recipient || '').split(' + ').indexOf(activeUserDocName) !== -1
+    ) {
+      n.read = true;
+    }
+  });
+
+  Storage.setJSON('rotastic_notification_queue', queue);
+}
+
+
+function canViewAnnouncements() {
+  return true;
+}
+
+
+const ROTASTIC_PUSH_BROADCAST_ENDPOINT =
+  window.ROTASTIC_PUSH_BROADCAST_ENDPOINT || '';
+
+async function sendAnnouncementPushToAll(messageText) {
+  if (!messageText) return { ok: false, reason: 'empty' };
+
+  // Real multi-device push requires a shared backend/Web Push service.
+  // If an endpoint is configured by deployment, send the announcement there.
+  if (ROTASTIC_PUSH_BROADCAST_ENDPOINT) {
+    try {
+      const response = await fetch(ROTASTIC_PUSH_BROADCAST_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'announcement',
+          title: 'ROTASTIC Announcement',
+          body: messageText,
+          centre: 'Abu Nakhla Health Centre',
+          createdAt: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Push broadcast request failed');
+      }
+
+      return { ok: true, mode: 'backend' };
+    } catch (error) {
+      console.warn('ROTASTIC push broadcast failed:', error);
+      return { ok: false, reason: 'backend-failed' };
+    }
+  }
+
+  // Local-device notification fallback only.
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('ROTASTIC Announcement', {
+        body: messageText,
+        icon: undefined
+      });
+      return { ok: true, mode: 'local-only' };
+    }
+  } catch (error) {
+    console.warn('Local announcement notification failed:', error);
+  }
+
+  return { ok: false, reason: 'no-push-backend' };
+}
+
+function canBroadcastAnnouncements() {
+  return activeUserDocName === 'Dr Mohamed M.' || activeUserDocName === 'Dr Zaid SE.';
+}
+
+function renderAnnouncementAdminView() {
+  const badge = document.getElementById('announcementAuthorBadge');
+  const text = document.getElementById('adminAnnouncementText');
+  const status = document.getElementById('announcementAdminStatus');
+
+  if (badge) {
+    badge.innerText = activeUserDocName || 'Admin';
+  }
+
+  if (text) {
+    text.disabled = !canBroadcastAnnouncements();
+    text.placeholder = canBroadcastAnnouncements()
+      ? 'Type an announcement for all ROTASTIC users...'
+      : 'Only Dr Mohamed M. and Dr Zaid SE. can broadcast announcements.';
+  }
+
+  if (status) {
+    if (!canBroadcastAnnouncements()) {
+      status.className = 'p-3 rounded-xl text-xs bg-rose-950/40 border border-rose-500/30 text-rose-300';
+      status.innerText = 'You are in Admin View, but broadcasting is restricted to the Dr Mohamed M. or Dr Zaid SE. physician profiles.';
+      status.classList.remove('hidden');
+    } else {
+      status.classList.add('hidden');
+    }
+  }
+
+  renderAnnouncementHistory();
+}
+
+function broadcastAdminAnnouncement() {
+  if (!canBroadcastAnnouncements()) {
+    alert('Only Dr Mohamed M. and Dr Zaid SE. can broadcast announcements.');
+    return;
+  }
+
+  const input = document.getElementById('adminAnnouncementText');
+  const status = document.getElementById('announcementAdminStatus');
+  const message = (input?.value || '').trim();
+
+  if (!message) {
+    alert('Please type an announcement first.');
+    return;
+  }
+
+  const formatted = `📢 ${message}`;
+
+  Storage.set('rotastic_breaking_news_item', formatted);
+  sendAnnouncementPushToAll(formatted);
+  Storage.setJSON('rotastic_active_announcement_meta', {
+    kind: 'admin',
+    author: activeUserDocName,
+    createdAt: new Date().toISOString()
+  });
+
+  const history = Storage.getJSON('rotastic_announcement_history', []);
+  history.unshift({
+    id: 'ann_' + Date.now(),
+    author: activeUserDocName,
+    message: message,
+    createdAt: new Date().toISOString()
+  });
+  Storage.setJSON('rotastic_announcement_history', history.slice(0, 20));
+
+  if (input) input.value = '';
+  updateAnnouncementCharCount();
+  checkAndRenderBreakingNews();
+  renderAnnouncementHistory();
+
+  if (status) {
+    status.className = 'p-3 rounded-xl text-xs bg-emerald-950/40 border border-emerald-500/30 text-emerald-300';
+    status.innerText = 'Announcement broadcast successfully.';
+    status.classList.remove('hidden');
+  }
+}
+
+function clearCurrentAnnouncement() {
+  if (!canBroadcastAnnouncements()) {
+    alert('Only Dr Mohamed M. and Dr Zaid SE. can clear announcements.');
+    return;
+  }
+
+  try {
+    localStorage.removeItem('rotastic_breaking_news_item');
+    localStorage.removeItem('rotastic_active_announcement_meta');
+  } catch(e) {}
+
+  const ticker = document.getElementById('swapsNewsTicker');
+  if (ticker) ticker.classList.add('hidden');
+
+  const status = document.getElementById('announcementAdminStatus');
+  if (status) {
+    status.className = 'p-3 rounded-xl text-xs bg-slate-900 border border-slate-700 text-slate-300';
+    status.innerText = 'Current announcement cleared.';
+    status.classList.remove('hidden');
+  }
+}
+
+function renderAnnouncementHistory() {
+  const list = document.getElementById('announcementHistoryList');
+  if (!list) return;
+
+  const history = Storage.getJSON('rotastic_announcement_history', []);
+
+  if (!history.length) {
+    list.innerHTML = '<div class="text-[11px] text-slate-500">No announcements have been broadcast yet.</div>';
+    return;
+  }
+
+  list.innerHTML = history.map(function(item) {
+    const dt = new Date(item.createdAt);
+    const when = isNaN(dt.getTime())
+      ? ''
+      : dt.toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
+
+    return `
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div class="flex items-center justify-between gap-3 mb-1">
+          <span class="text-[10px] font-bold text-amber-300">${item.author}</span>
+          <span class="text-[9px] text-slate-500">${when}</span>
+        </div>
+        <div class="text-xs text-slate-200 leading-relaxed">📢 ${item.message}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateAnnouncementCharCount() {
+  const input = document.getElementById('adminAnnouncementText');
+  const count = document.getElementById('announcementCharCount');
+
+  if (input && count) {
+    count.innerText = input.value.length + '/280';
+  }
+}
+
+function sanitizeAnnouncementText(item) {
+  if (!item) return '';
+  return String(item).trim();
+}
+
+function getQatarNowParts() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Qatar',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+
+  const map = {};
+  parts.forEach(function(p) {
+    if (p.type !== 'literal') map[p.type] = p.value;
+  });
+
+  return {
+    date: `${map.year}-${map.month}-${map.day}`,
+    minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10)
+  };
+}
+
+let announcementCarouselTimer = null;
+let announcementCarouselIndex = 0;
+
+function buildAnnouncementCarouselItems(item) {
+  const history = Storage.getJSON('rotastic_announcement_history', []);
+  const activeItems = [];
+
+  if (item) {
+    activeItems.push(item);
+  }
+
+  // Include recent unique admin announcements if available.
+  history.slice().reverse().forEach(function(entry) {
+    const text = entry && (entry.text || entry.message || entry.announcement);
+    if (text && !activeItems.includes(text)) {
+      activeItems.push(String(text).trim());
+    }
+  });
+
+  // Keep the carousel focused and readable.
+  return activeItems.slice(0, 5);
+}
+
+function playAnnouncementCarousel(items) {
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+
+  if (!ticker || !content) return;
+
+  if (announcementCarouselTimer) {
+    clearTimeout(announcementCarouselTimer);
+    announcementCarouselTimer = null;
+  }
+
+  if (!items.length) {
+    ticker.classList.add('hidden');
+    content.innerHTML = '';
+    return;
+  }
+
+  ticker.classList.remove('hidden');
+
+  const sequence = [];
+  items.forEach(function(text) {
+    sequence.push({ type: 'announcement', text: text });
+    sequence.push({ type: 'center', text: 'Abu Nakhla' });
+  });
+
+  if (announcementCarouselIndex >= sequence.length) {
+    announcementCarouselIndex = 0;
+  }
+
+  const current = sequence[announcementCarouselIndex];
+
+  content.innerHTML = '';
+
+  const slide = document.createElement('div');
+  slide.className = 'news-carousel-item';
+
+  if (current.type === 'center') {
+    const badge = document.createElement('span');
+    badge.className = 'news-center-mark';
+    badge.textContent = current.text;
+    slide.appendChild(badge);
+  } else {
+    slide.textContent = current.text;
+  }
+
+  content.appendChild(slide);
+
+  requestAnimationFrame(function() {
+    slide.classList.add('is-active');
+  });
+
+  announcementCarouselTimer = setTimeout(function() {
+    announcementCarouselIndex = (announcementCarouselIndex + 1) % sequence.length;
+    playAnnouncementCarousel(items);
+  }, 6000);
+}
+
+
+function getQatarNowParts() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Qatar',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+
+  const map = {};
+  parts.forEach(function(p) {
+    if (p.type !== 'literal') map[p.type] = p.value;
+  });
+
+  return {
+    date: `${map.year}-${map.month}-${map.day}`,
+    minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10)
+  };
+}
+
+function hasAffectedShiftEnded(date, shiftLabel) {
+  if (!date || !shiftLabel) return false;
+
+  const now = getQatarNowParts();
+  const shift = String(shiftLabel).toUpperCase();
+
+  let end = null;
+
+  if (shift.includes('TWILIGHT AM')) {
+    end = 16 * 60;
+  } else if (shift.includes('TWILIGHT PM')) {
+    end = 20 * 60;
+  } else if (shift.includes('AM SHIFT')) {
+    end = 14 * 60;
+  } else if (shift.includes('PM SHIFT')) {
+    end = 22 * 60;
+  }
+
+  if (end === null) return false;
+
+  if (now.date > date) return true;
+  if (now.date < date) return false;
+
+  return now.minutes >= end;
+}
+
+
+let quietTickerIndex = 0;
+let abuNakhlaPrayerTimes = null;
+let abuNakhlaPrayerFetchDate = null;
+
+function getQatarClock() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Qatar',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+
+  const map = {};
+  parts.forEach(function(part) {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  });
+
+  return {
+    isoDate: `${map.year}-${map.month}-${map.day}`,
+    apiDate: `${map.day}-${map.month}-${map.year}`,
+    minutes: (parseInt(map.hour, 10) * 60) + parseInt(map.minute, 10)
+  };
+}
+
+function getCurrentShiftPeriod() {
+  const now = getQatarClock().minutes;
+
+  if (now >= 7 * 60 && now < 14 * 60) return 'AM';
+  if (now >= 16 * 60 && now < 22 * 60) return 'PM';
+
+  return null;
+}
+
+function formatPrayerTime12h(value) {
+  if (!value) return '';
+  const clean = String(value).split(' ')[0].trim();
+  const parts = clean.split(':');
+  if (parts.length < 2) return clean;
+
+  let hour = parseInt(parts[0], 10);
+  const minute = parts[1];
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+
+  return `${hour}:${minute} ${suffix}`;
+}
+
+async function fetchAbuNakhlaPrayerTimes() {
+  const now = getQatarClock();
+
+  if (abuNakhlaPrayerTimes && abuNakhlaPrayerFetchDate === now.isoDate) {
+    return abuNakhlaPrayerTimes;
+  }
+
+  try {
+    // Abu Nakhla Health Centre area, Qatar.
+    const latitude = 25.18232;
+    const longitude = 51.37983;
+    const url =
+      `https://api.aladhan.com/v1/timings/${now.apiDate}` +
+      `?latitude=${latitude}&longitude=${longitude}&method=8`;
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Prayer time request failed');
+
+    const payload = await response.json();
+    const timings = payload && payload.data && payload.data.timings;
+
+    if (!timings) throw new Error('Prayer times unavailable');
+
+    abuNakhlaPrayerTimes = {
+      Dhuhr: formatPrayerTime12h(timings.Dhuhr),
+      Maghrib: formatPrayerTime12h(timings.Maghrib)
+    };
+    abuNakhlaPrayerFetchDate = now.isoDate;
+
+    return abuNakhlaPrayerTimes;
+  } catch (error) {
+    return null;
+  }
+}
+
+function getQuietShiftMessages(prayerTimes) {
+  const shift = getCurrentShiftPeriod();
+  const messages = [
+    '😊 Hope you are having a nice and easy shift.',
+    '💧 Remember to stay hydrated.'
+  ];
+
+  if (shift === 'AM' && prayerTimes && prayerTimes.Dhuhr) {
+    messages.push(`🕌 Dhuhr prayer today is at ${prayerTimes.Dhuhr}.`);
+  } else if (shift === 'PM' && prayerTimes && prayerTimes.Maghrib) {
+    messages.push(`🕌 Maghrib prayer today is at ${prayerTimes.Maghrib}.`);
+  }
+
+  return messages;
+}
+
+function renderQuietShiftTicker() {
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+
+  if (!ticker || !content) return;
+
+  fetchAbuNakhlaPrayerTimes().then(function(prayerTimes) {
+    // If a real announcement appeared while the prayer request was loading,
+    // hand control back to the announcement renderer.
+    const activeAnnouncement = Storage.get('rotastic_breaking_news_item', '');
+    if (activeAnnouncement) {
+      headlineTickerPhase = 'alert';
+      checkAndRenderBreakingNews();
+      return;
+    }
+
+    const messages = getQuietShiftMessages(prayerTimes);
+    if (!messages.length) return;
+
+    if (quietTickerIndex >= messages.length) quietTickerIndex = 0;
+
+    ticker.classList.remove('hidden');
+    content.innerHTML = '';
+
+    const message = document.createElement('div');
+    message.className = 'news-message-hold-crawl';
+    message.textContent = messages[quietTickerIndex];
+    content.appendChild(message);
+
+    if (headlineTickerTimer) {
+      clearTimeout(headlineTickerTimer);
+    }
+
+    headlineTickerTimer = setTimeout(function() {
+      quietTickerIndex = (quietTickerIndex + 1) % messages.length;
+
+      content.innerHTML = '';
+
+      const centreWrap = document.createElement('div');
+      centreWrap.className = 'news-alert-title';
+
+      const centre = document.createElement('span');
+      centre.className = 'news-centre-name';
+      centre.textContent = 'Abu Nakhla Health Centre';
+
+      centreWrap.appendChild(centre);
+      content.appendChild(centreWrap);
+
+      headlineTickerTimer = setTimeout(function() {
+        renderQuietShiftTicker();
+      }, 2200);
+    }, 6800);
+  });
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'alert';
+
+function checkAndRenderBreakingNews() {
+  const rawItem = Storage.get('rotastic_breaking_news_item', '');
+  const item = rawItem ? String(rawItem).trim() : '';
+
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+
+  if (!ticker || !content) return;
+
+  if (headlineTickerTimer) {
+    clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = null;
+  }
+
+  if (!item) {
+    headlineTickerPhase = 'alert';
+    renderQuietShiftTicker();
+    return;
+  }
+
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+
+  if (headlineTickerPhase === 'alert') {
+    const alertTitle = document.createElement('div');
+    alertTitle.className = 'news-alert-title';
+    alertTitle.textContent = '⚠️🚨 SICK LEAVE ALERT ⚠️ 🚨';
+    content.appendChild(alertTitle);
+
+    headlineTickerTimer = setTimeout(function() {
+      headlineTickerPhase = 'message';
+      checkAndRenderBreakingNews();
+    }, 1800);
+    return;
+  }
+
+  if (headlineTickerPhase === 'message') {
+    const message = document.createElement('div');
+    message.className = 'news-message-hold-crawl';
+    message.textContent = item;
+    content.appendChild(message);
+
+    headlineTickerTimer = setTimeout(function() {
+      headlineTickerPhase = 'centre';
+      checkAndRenderBreakingNews();
+    }, 6800);
+    return;
+  }
+
+  const centreWrap = document.createElement('div');
+  centreWrap.className = 'news-alert-title';
+
+  const centre = document.createElement('span');
+  centre.className = 'news-centre-name';
+  centre.textContent = 'Abu Nakhla Health Centre';
+
+  centreWrap.appendChild(centre);
+  content.appendChild(centreWrap);
+
+  headlineTickerTimer = setTimeout(function() {
+    headlineTickerPhase = 'alert';
+    checkAndRenderBreakingNews();
+  }, 2200);
+}
+
+function approveRotaAsClinicalLead() {
+  isNextScheduleReleased = true;
+  Storage.set('rotastic_next_schedule_released', 'true');
+
+  const toast = document.getElementById('userApprovalToast');
+  document.getElementById('userApprovalToastMessage').innerText = 'The rota has been approved and released to colleagues.';
+  toast.classList.remove('hidden');
+
+  renderScheduleView();
+}
+
+function regenerateWithMoursiNotes() {
+  generateDutySchedule();
+  alert('Schedule regenerated with the current review settings.');
+}
+
+function dismissUserApprovalToast() {
+  document.getElementById('userApprovalToast').classList.add('hidden');
+}
+
+function submitSwapForLeadApproval() {
+  alert('Swap request submitted for Clinical Lead approval.');
+}
+
+function submitLeaveForLeadApproval() {
+  alert('Leave request submitted for Clinical Lead approval.');
+}
+
+function getLeaveTypeMetaByLabel(label) {
+  const all = Object.values(LEAVE_TYPE_META || {});
+  return all.find(function(x) { return x.label === label; }) || { emoji: '🏖️', label: label || 'Leave' };
+}
+
+function getAllPlannerLeaveEntries() {
+  const entries = [];
+
+  // Baseline rota leave dates already present in the physician directory.
+  DOCTORS.forEach(function(doc) {
+    (doc.leaves || []).forEach(function(date) {
+      entries.push({
+        id: 'base_' + doc.id + '_' + date,
+        doc: doc.name,
+        startDate: date,
+        endDate: date,
+        type: 'annual',
+        typeLabel: 'Annual Leave',
+        emoji: '🏖️',
+        status: 'Scheduled'
+      });
+    });
+  });
+
+  // Every submission is added directly to the planner.
+  const submitted = Storage.getJSON('rotastic_leave_submissions', []);
+
+  submitted.forEach(function(record) {
+    entries.push({
+      id: record.id,
+      doc: record.doc,
+      startDate: record.startDate,
+      endDate: record.endDate || record.startDate,
+      type: record.type,
+      typeLabel: record.typeLabel,
+      emoji: record.emoji || (LEAVE_TYPE_META[record.type]?.emoji || '📝'),
+      status: record.status || 'Submitted'
+    });
+  });
+
+  return entries;
+}
+
+function expandLeaveEntryDates(entry) {
+  if (!entry.startDate) return [];
+
+  const dates = [];
+  const start = new Date(entry.startDate + 'T12:00:00');
+  const end = new Date((entry.endDate || entry.startDate) + 'T12:00:00');
+
+  const cursor = new Date(start);
+
+  while (cursor <= end) {
+    const y = cursor.getFullYear();
+    const m = String(cursor.getMonth() + 1).padStart(2, '0');
+    const d = String(cursor.getDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${d}`);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return dates;
+}
+
+function changePlannerMonth(delta) {
+  const monthSelect = document.getElementById('plannerMonthSelect');
+  const yearSelect = document.getElementById('plannerYearSelect');
+
+  if (!monthSelect || !yearSelect) return;
+
+  let month = parseInt(monthSelect.value, 10);
+  let year = parseInt(yearSelect.value, 10);
+
+  month += delta;
+
+  if (month < 0) {
+    month = 11;
+    year -= 1;
+  } else if (month > 11) {
+    month = 0;
+    year += 1;
+  }
+
+  if (![...yearSelect.options].some(function(o) { return parseInt(o.value,10) === year; })) {
+    const opt = document.createElement('option');
+    opt.value = String(year);
+    opt.textContent = String(year);
+    yearSelect.appendChild(opt);
+  }
+
+  monthSelect.value = String(month);
+  yearSelect.value = String(year);
+
+  renderAnnualLeaveCalendar();
+}
+
+function renderAnnualLeaveCalendar() {
+  const monthSelect = document.getElementById('plannerMonthSelect');
+  const yearSelect = document.getElementById('plannerYearSelect');
+  const calendar = document.getElementById('monthlyLeaveCalendar');
+
+  if (!monthSelect || !yearSelect || !calendar) return;
+
+  let month = parseInt(monthSelect.value, 10);
+  let year = parseInt(yearSelect.value, 10);
+
+  if (isNaN(month)) {
+    month = new Date().getMonth();
+    monthSelect.value = String(month);
+  }
+
+  if (isNaN(year)) {
+    year = new Date().getFullYear();
+    yearSelect.value = String(year);
+  }
+
+  const monthNames = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+
+  const headingText = monthNames[month] + ' ' + year;
+
+  const heading = document.getElementById('plannerMonthHeading');
+  const rosterHeading = document.getElementById('plannerRosterMonth');
+
+  if (heading) heading.innerHTML = `<h3 class="text-base font-extrabold text-white">${headingText}</h3>`;
+  if (rosterHeading) rosterHeading.innerText = headingText;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayISO = getQatarTodayISO();
+
+  const allEntries = getAllPlannerLeaveEntries();
+  const byDate = {};
+  const monthRoster = [];
+
+  allEntries.forEach(function(entry) {
+    const dates = expandLeaveEntryDates(entry);
+
+    dates.forEach(function(date) {
+      if (!byDate[date]) byDate[date] = [];
+      byDate[date].push(entry);
+
+      if (date.startsWith(
+        String(year) + '-' + String(month + 1).padStart(2, '0')
+      )) {
+        monthRoster.push({
+          date: date,
+          entry: entry
+        });
+      }
+    });
+  });
+
+  const cells = [];
+
+  for (let i = 0; i < firstDay; i++) {
+    cells.push(`
+      <div class="min-h-[88px] sm:min-h-[105px] rounded-xl bg-slate-950/20 border border-slate-900"></div>
+    `);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const iso =
+      String(year) + '-' +
+      String(month + 1).padStart(2, '0') + '-' +
+      String(day).padStart(2, '0');
+
+    const leaves = byDate[iso] || [];
+    const isToday = iso === todayISO;
+
+    const leaveHtml = leaves.slice(0, 3).map(function(entry) {
+      return `
+        <div
+          title="${entry.typeLabel || 'Leave'} — ${entry.doc}"
+          class="mt-1 px-1.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[8px] sm:text-[9px] text-emerald-200 truncate"
+        >
+          ${entry.emoji || '🏖️'} ${entry.doc.replace(/^Dr\s+/, '')}
+        </div>
+      `;
+    }).join('');
+
+    const moreHtml = leaves.length > 3
+      ? `<div class="mt-1 text-[8px] text-slate-500">+${leaves.length - 3} more</div>`
+      : '';
+
+    cells.push(`
+      <div class="min-h-[88px] sm:min-h-[105px] rounded-xl border ${
+        isToday
+          ? 'border-teal-400/60 bg-teal-950/30'
+          : leaves.length
+            ? 'border-emerald-500/20 bg-slate-900/70'
+            : 'border-slate-800 bg-slate-900/40'
+      } p-1.5 sm:p-2 overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] sm:text-xs font-bold ${
+            isToday ? 'text-teal-300' : 'text-slate-300'
+          }">${day}</span>
+          ${isToday ? '<span class="text-[7px] sm:text-[8px] uppercase font-bold text-teal-400">Today</span>' : ''}
+        </div>
+        ${leaveHtml}
+        ${moreHtml}
+      </div>
+    `);
+  }
+
+  const totalCells = firstDay + daysInMonth;
+  const trailing = (7 - (totalCells % 7)) % 7;
+
+  for (let i = 0; i < trailing; i++) {
+    cells.push(`
+      <div class="min-h-[88px] sm:min-h-[105px] rounded-xl bg-slate-950/20 border border-slate-900"></div>
+    `);
+  }
+
+  calendar.innerHTML = cells.join('');
+
+  const roster = document.getElementById('plannerMonthLeaveRoster');
+
+  if (roster) {
+    if (!monthRoster.length) {
+      roster.innerHTML = `
+        <div class="p-4 rounded-xl bg-slate-900/40 border border-dashed border-slate-700 text-center text-xs text-slate-500">
+          No leave entries for ${headingText}. The full calendar remains visible and new submissions will appear automatically.
+        </div>
+      `;
+    } else {
+      // Deduplicate multi-day entries in roster, while calendar still shows every day.
+      const unique = {};
+      monthRoster.forEach(function(item) {
+        unique[item.entry.id] = item.entry;
+      });
+
+      roster.innerHTML = Object.values(unique)
+        .sort(function(a,b) { return a.startDate.localeCompare(b.startDate); })
+        .map(function(entry) {
+          return `
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div class="text-xs font-bold text-slate-100">
+                  ${entry.emoji || '🏖️'} ${entry.doc}
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">
+                  ${entry.typeLabel || 'Leave'} • ${entry.startDate}${
+                    entry.endDate && entry.endDate !== entry.startDate
+                      ? ' → ' + entry.endDate
+                      : ''
+                  }
+                </div>
+              </div>
+              <span class="text-[9px] uppercase tracking-wide font-bold text-emerald-300">
+                ${entry.status || 'Scheduled'}
+              </span>
+            </div>
+          `;
+        }).join('');
+    }
+  }
+}
+
+function initializePlannerToCurrentMonth() {
+  const monthSelect = document.getElementById('plannerMonthSelect');
+  const yearSelect = document.getElementById('plannerYearSelect');
+
+  if (!monthSelect || !yearSelect) return;
+
+  const todayISO = getQatarTodayISO();
+  const year = parseInt(todayISO.slice(0,4), 10);
+  const month = parseInt(todayISO.slice(5,7), 10) - 1;
+
+  monthSelect.value = String(month);
+
+  if (![...yearSelect.options].some(function(o) { return parseInt(o.value,10) === year; })) {
+    const opt = document.createElement('option');
+    opt.value = String(year);
+    opt.textContent = String(year);
+    yearSelect.appendChild(opt);
+  }
+
+  yearSelect.value = String(year);
+}
+
+function populatePdfExportTable() {
+  const tbody = document.getElementById('pdfTableBody');
+  tbody.innerHTML = '';
+
+  currentSchedule.forEach(s => {
+    const tr = document.createElement('tr');
+
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:bold">${s.day}<br><span style="font-size:7px;color:#475569">${s.date}</span></td>
+      <td><strong>Male ER:</strong> ${s.am.med}<br><strong>Female ER:</strong> ${s.am.fed}<br><strong>Paeds ER:</strong> ${s.am.ped}<br><strong>Twilight:</strong> ${s.am.timed1Doc}</td>
+      <td>Rm 9: ${s.am.rooms[9] || '-'}<br>Rm 10: ${s.am.rooms[10] || '-'}<br>Rm 14: ${s.am.rooms[14] || '-'}<br>Rm 27: ${s.am.rooms[27] || '-'}</td>
+      <td style="text-align:center">☀️ ${s.amNotices}<br>🌙 ${s.pmNotices}</td>
+      <td><strong>Male ER:</strong> ${s.pm.med}<br><strong>Female ER:</strong> ${s.pm.fed}<br><strong>Paeds ER:</strong> ${s.pm.ped}<br><strong>Twilight:</strong> ${s.pm.timed1Doc}</td>
+      <td>Rm 9: ${s.pm.rooms[9] || '-'}<br>Rm 10: ${s.pm.rooms[10] || '-'}<br>Rm 14: ${s.pm.rooms[14] || '-'}<br>Rm 27: ${s.pm.rooms[27] || '-'}</td>
+      <td><strong>AM:</strong> ${s.cbAM.tl}<br><strong>PM:</strong> ${s.cbPM.tl}</td>
+      <td>${s.leaves.join(', ')}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function exportToPDFReport() {
+  if (!currentSchedule.length) return;
+
+  populatePdfExportTable();
+
+  const element = document.getElementById('pdfReportTemplate');
+
+  html2pdf().set({
+    margin:[4,4,4,4],
+    filename:'Abu_Nakhla_Duty_Schedule.pdf',
+    image:{type:'jpeg',quality:0.98},
+    html2canvas:{scale:2,useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}
+  }).from(element).save();
+}
+
+function exportToImageReport() {
+  if (!currentSchedule.length) return;
+
+  populatePdfExportTable();
+
+  html2canvas(document.getElementById('pdfReportTemplate'), {
+    scale:2,
+    useCORS:true,
+    backgroundColor:'#ffffff'
+  }).then(canvas => {
+    canvas.toBlob(blob => {
+      saveAs(blob, 'Abu_Nakhla_Schedule.png');
+    });
+  });
+}
+
+
+window.addEventListener('DOMContentLoaded', function() {
+  // V21 clean-test reset: start as a generic/unconfigured user once.
+  if (Storage.get('rotastic_v21_generic_reset_done', 'false') !== 'true') {
+    try {
+      [
+        'rotastic_user_doc_name',
+        'rotastic_setup_completed',
+        'rotastic_view_mode',
+        'rotastic_admin_token',
+        'rotastic_breaking_news_item',
+        'rotastic_breaking_news_views',
+        'rotastic_active_announcement_meta',
+        'rotastic_announcement_history',
+        'rotastic_sick_leave_records',
+        'rotastic_pending_shift_lead_sick_alerts',
+        'rotastic_notification_queue',
+        'rotastic_leave_submissions',
+        'rotastic_shift_lead_AM',
+        'rotastic_shift_lead_PM'
+      ].forEach(function(key) {
+        localStorage.removeItem(key);
+      });
+    } catch(e) {}
+
+    Storage.set('rotastic_v21_generic_reset_done', 'true');
+
+    activeUserDocName = '';
+    currentViewMode = 'colleague';
+    isNextScheduleReleased = Storage.get('rotastic_next_schedule_released', 'false') === 'true';
+  }
+
+  populateSettingsProfileDropdown();
+  generateDutySchedule();
+  checkOnboardingState();
+  applyViewMode();
+  initGreetingAndHolidays();
+  initializePlannerToCurrentMonth();
+  renderAnnualLeaveCalendar();
+  renderRecentLeaveSubmissions();
+  onUnifiedLeaveTypeChange();
+  showNotificationsForCurrentUser();
+  checkAndRenderBreakingNews();
+
+  // Default leave form dates to today in Qatar for easier testing.
+  const today = getQatarTodayISO();
+  const startInput = document.getElementById('unifiedLeaveStart');
+  const endInput = document.getElementById('unifiedLeaveEnd');
+  if (startInput && !startInput.value) startInput.value = today;
+  if (endInput && !endInput.value) endInput.value = today;
+
+  const annInput = document.getElementById('adminAnnouncementText');
+  if (annInput) annInput.addEventListener('input', updateAnnouncementCharCount);
+});
+
+window.addEventListener('load', function() {
+  checkAndRenderBreakingNews();
+});
+
+</script>
+</body>
+</html>
