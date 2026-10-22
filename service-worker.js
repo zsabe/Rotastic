@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v201-launch';
+const CACHE = 'rotastic-v202-day-total';
 const CORE = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', event => {
