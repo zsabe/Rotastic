@@ -16998,19 +16998,50 @@ function getDisplayedLeaveDoctorsForDay(day) {
 }
 
 function getDayDisplayedLeaveCount(day) {
-  if (!day) return 0;
+  if (!day || !day.isoDate) return 0;
 
-  // Count unique doctors on leave for the whole day from every authoritative
-  // leave source already used by the rota, not only the visible day.leaves array.
-  const found = new Set(
-    getDisplayedLeaveDoctorsForDay(day)
-      .map(canonicalRotaName)
-      .filter(Boolean)
-  );
+  const isoDate = day.isoDate;
+  const found = new Set();
+  const addDoctor = function(value) {
+    const doctor = canonicalRotaName(cleanDoctorName(value));
+    if (doctor && isRealDoctor(doctor)) found.add(doctor);
+  };
 
-  (Array.isArray(DOCTORS) ? DOCTORS : []).forEach(function(item) {
-    const doctor = canonicalRotaName(item && item.name);
-    if (doctor && doctorIsOnLeaveForDay(doctor, day)) found.add(doctor);
+  // Anything already shown on the daily leave roster.
+  (getDisplayedLeaveDoctorsForDay(day) || []).forEach(addDoctor);
+  (Array.isArray(day.leaves) ? day.leaves : []).forEach(function(label) {
+    const raw = String(label || '');
+    const matched = (Array.isArray(DOCTORS) ? DOCTORS : []).find(function(doc) {
+      return rotasticLeaveLabelMatchesDoctor(raw, doc.name);
+    });
+    if (matched) addDoctor(matched.name);
+  });
+
+  // Built-in leave dates attached to doctor records.
+  (Array.isArray(DOCTORS) ? DOCTORS : []).forEach(function(doc) {
+    if (doc && Array.isArray(doc.leaves) && doc.leaves.includes(isoDate)) addDoctor(doc.name);
+  });
+
+  // Shared leave submissions. Sick leave is immediate; other leave counts
+  // when approved/scheduled/historical. Pending/rejected/cancelled requests do not.
+  const submissions = Storage.getJSON('rotastic_leave_submissions', []);
+  (Array.isArray(submissions) ? submissions : []).forEach(function(item) {
+    if (!item || !item.doc || !item.startDate) return;
+    const endDate = item.endDate || item.startDate;
+    if (isoDate < item.startDate || isoDate > endDate) return;
+
+    const type = String(item.type || '').toLowerCase();
+    const status = String(item.status || '').toLowerCase();
+    const rejected = /reject|declin|cancel|withdraw/.test(status);
+    const pending = /pending|request|await/.test(status);
+    const accepted = type === 'sick' || /approved|scheduled|historical/.test(status);
+    if (!rejected && (accepted || (!pending && !status))) addDoctor(item.doc);
+  });
+
+  // Immediate sick-leave mirror used by backend sync.
+  const sick = Storage.getJSON('rotastic_sick_leave_records', []);
+  (Array.isArray(sick) ? sick : []).forEach(function(item) {
+    if (item && item.doc && item.date === isoDate) addDoctor(item.doc);
   });
 
   return found.size;
