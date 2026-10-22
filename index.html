@@ -16998,7 +16998,22 @@ function getDisplayedLeaveDoctorsForDay(day) {
 }
 
 function getDayDisplayedLeaveCount(day) {
-  return getDisplayedLeaveDoctorsForDay(day).length;
+  if (!day) return 0;
+
+  // Count unique doctors on leave for the whole day from every authoritative
+  // leave source already used by the rota, not only the visible day.leaves array.
+  const found = new Set(
+    getDisplayedLeaveDoctorsForDay(day)
+      .map(canonicalRotaName)
+      .filter(Boolean)
+  );
+
+  (Array.isArray(DOCTORS) ? DOCTORS : []).forEach(function(item) {
+    const doctor = canonicalRotaName(item && item.name);
+    if (doctor && doctorIsOnLeaveForDay(doctor, day)) found.add(doctor);
+  });
+
+  return found.size;
 }
 
 function getShiftLeaveCount(day, period) {
