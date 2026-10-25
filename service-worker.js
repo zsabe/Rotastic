@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v224-secure-admin-signin';
+const CACHE = 'rotastic-v225-splash-failsafe';
 const CORE = [
   './',
   './index.html',
@@ -41,11 +41,15 @@ body.antialiased{background:#090d16!important;color:#e2e8f0!important}
 .clean-card{background:#0f1624!important;color:#e2e8f0!important;border-color:rgba(148,163,184,.12)!important}
 </style>`;
   const adminScripts = `<script src="./rotastic-admin-controls-v2.js?v=224" defer></script><script src="./rotastic-admin-hotfix.js?v=224" defer></script>`;
+  const splashFailsafe = `<script id="rotastic-splash-failsafe">(function(){function hide(){var s=document.getElementById('rotasticOpeningSplash');if(!s)return;s.classList.add('rotastic-splash-hide');s.style.opacity='0';s.style.visibility='hidden';s.style.pointerEvents='none';setTimeout(function(){if(s)s.style.display='none';},650);}function arm(){setTimeout(hide,5200);setTimeout(hide,7600);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',arm,{once:true});}else{arm();}})();</script>`;
   if (!html.includes('rotastic-original-dark-lock')) {
     html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${darkLock}</head>`) : darkLock + html;
   }
   if (!html.includes('rotastic-admin-controls-v2.js?v=224')) {
     html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${adminScripts}</head>`) : adminScripts + html;
+  }
+  if (!html.includes('rotastic-splash-failsafe')) {
+    html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${splashFailsafe}</head>`) : splashFailsafe + html;
   }
   const headers = new Headers(response.headers);
   headers.delete('content-length');
