@@ -1,5 +1,5 @@
-const CACHE = 'rotastic-v202-day-total';
-const CORE = ['./', './index.html', './manifest.webmanifest'];
+const CACHE = 'rotastic-v203-android';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
