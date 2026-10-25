@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v209-phcc-unavailability';
+const CACHE = 'rotastic-v210-review-metrics';
 const CORE = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const CORE = [
   './rotastic-sickness.js',
   './rotastic-schedule-sync.js',
   './rotastic-mfa.js',
+  './rotastic-experience.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -38,13 +39,12 @@ async function injectPrivateClient(response) {
   if (!type.includes('text/html')) return response;
   let html = await response.text();
   let scripts = '';
-  // Privacy and availability bridges are classic scripts so they share the historical
-  // app's global lexical environment without persisting confidential status locally.
   if (!html.includes('rotastic-privacy-guard.js')) scripts += '<script src="./rotastic-privacy-guard.js"></script>';
   if (!html.includes('rotastic-unavailability.js')) scripts += '<script src="./rotastic-unavailability.js"></script>';
   if (!html.includes('rotastic-sickness.js')) scripts += '<script type="module" src="./rotastic-sickness.js"></script>';
   if (!html.includes('rotastic-schedule-sync.js')) scripts += '<script type="module" src="./rotastic-schedule-sync.js"></script>';
   if (!html.includes('rotastic-mfa.js')) scripts += '<script type="module" src="./rotastic-mfa.js"></script>';
+  if (!html.includes('rotastic-experience.js')) scripts += '<script type="module" src="./rotastic-experience.js"></script>';
   if (scripts) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${scripts}</body>`) : html + scripts;
   const headers = new Headers(response.headers);
   headers.delete('content-length');
