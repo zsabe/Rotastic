@@ -1,61 +1,34 @@
 package com.zsabe.rotastic;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
-import android.webkit.CookieManager;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+
+import androidx.browser.customtabs.CustomTabsIntent;
 
 public class MainActivity extends Activity {
     private static final String APP_URL = "https://zsabe.github.io/Rotastic/";
-    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        webView = new WebView(this);
-        setContentView(webView);
-
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setAllowFileAccess(true);
-        settings.setAllowContentAccess(true);
-        settings.setSupportZoom(false);
-        settings.setBuiltInZoomControls(false);
-        settings.setDisplayZoomControls(false);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-
-        CookieManager cookies = CookieManager.getInstance();
-        cookies.setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
-
-        webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
-
-        if (savedInstanceState == null) {
-            webView.loadUrl(APP_URL);
-        } else {
-            webView.restoreState(savedInstanceState);
-        }
+        openRotastic();
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        webView.saveState(outState);
-        super.onSaveInstanceState(outState);
+    protected void onResume() {
+        super.onResume();
+        if (!isFinishing() && hasWindowFocus()) {
+            // No embedded WebView state is kept; the browser-backed tab owns the session.
+        }
     }
 
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+    private void openRotastic() {
+        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                .setShowTitle(false)
+                .setUrlBarHidingEnabled(true)
+                .build();
+        customTabsIntent.launchUrl(this, Uri.parse(APP_URL));
+        finish();
     }
 }
