@@ -1,0 +1,62 @@
+name: Prepare ROTASTIC PWA install assets
+
+on:
+  push:
+    paths:
+      - '.github/workflows/prepare-pwa-install.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate install icons and update manifest
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+          mkdir -p icons
+          cat > /tmp/rotastic-icon.svg <<'SVG'
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <rect width="512" height="512" fill="#090d16"/>
+            <rect x="46" y="46" width="420" height="420" rx="92" fill="#111827" stroke="#14b8a6" stroke-width="10"/>
+            <text x="205" y="350" font-family="Arial,DejaVu Sans,sans-serif" font-size="245" font-weight="700" text-anchor="middle" fill="#ffffff">R</text>
+            <rect x="351" y="80" width="34" height="164" rx="17" fill="#22d3ee"/>
+            <rect x="286" y="145" width="164" height="34" rx="17" fill="#22d3ee"/>
+          </svg>
+          SVG
+          convert -background none /tmp/rotastic-icon.svg -resize 192x192 icons/icon-192.png
+          convert -background none /tmp/rotastic-icon.svg -resize 512x512 icons/icon-512.png
+          cp icons/icon-512.png icons/icon-maskable-512.png
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('manifest.webmanifest')
+          data=json.loads(p.read_text())
+          data['id']='./'
+          data['start_url']='./'
+          data['scope']='./'
+          data['display']='standalone'
+          data['icons']=[
+            {'src':'./icons/icon-192.png','sizes':'192x192','type':'image/png','purpose':'any'},
+            {'src':'./icons/icon-512.png','sizes':'512x512','type':'image/png','purpose':'any'},
+            {'src':'./icons/icon-maskable-512.png','sizes':'512x512','type':'image/png','purpose':'maskable'}
+          ]
+          p.write_text(json.dumps(data, indent=2, ensure_ascii=False)+'\n')
+          sw=Path('service-worker.js')
+          text=sw.read_text()
+          text=text.replace("const CACHE = 'rotastic-v202-day-total';", "const CACHE = 'rotastic-v203-android';")
+          text=text.replace("const CORE = ['./', './index.html', './manifest.webmanifest'];", "const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];")
+          sw.write_text(text)
+          PY
+      - name: Commit PWA install assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.webmanifest service-worker.js icons/
+          git commit -m "Make ROTASTIC installable on Android"
+          git push origin HEAD:main
