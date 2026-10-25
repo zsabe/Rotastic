@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v221-unified-admin-runtime-fix';
+const CACHE = 'rotastic-v222-activation-directory-fix';
 const CORE = [
   './',
   './index.html',
