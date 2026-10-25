@@ -1,8 +1,18 @@
-const CACHE = 'rotastic-v220-interaction-restore';
+const CACHE = 'rotastic-v221-working-dark-runtime';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './rotastic-privacy-guard.js',
+  './rotastic-unavailability.js',
+  './rotastic-sickness.js',
+  './rotastic-schedule-sync.js',
+  './rotastic-mfa.js',
+  './rotastic-experience.js',
+  './rotastic-review-live.js',
+  './rotastic-account-security.js',
+  './rotastic-rota-release.js',
+  './rotastic-metrics-report.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -27,6 +37,34 @@ self.addEventListener('activate', event => {
   })());
 });
 
+async function injectRotasticModules(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  let html = await response.text();
+  let scripts = '';
+  if (!html.includes('rotastic-privacy-guard.js')) scripts += '<script src="./rotastic-privacy-guard.js"></script>';
+  if (!html.includes('rotastic-unavailability.js')) scripts += '<script src="./rotastic-unavailability.js"></script>';
+  const modules = [
+    'rotastic-sickness.js',
+    'rotastic-schedule-sync.js',
+    'rotastic-mfa.js',
+    'rotastic-experience.js',
+    'rotastic-review-live.js',
+    'rotastic-account-security.js',
+    'rotastic-rota-release.js',
+    'rotastic-metrics-report.js'
+  ];
+  for (const file of modules) {
+    if (!html.includes(file)) scripts += `<script type="module" src="./${file}"></script>`;
+  }
+  if (scripts) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${scripts}</body>`) : html + scripts;
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.set('Cache-Control', 'no-cache');
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+}
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
@@ -36,15 +74,12 @@ self.addEventListener('fetch', event => {
         const response = await fetch(event.request, { cache: 'no-store' });
         if (response && response.ok) {
           const copy = response.clone();
-          event.waitUntil(
-            caches.open(CACHE)
-              .then(cache => cache.put('./index.html', copy))
-              .catch(() => {})
-          );
+          event.waitUntil(caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {}));
         }
-        return response;
+        return injectRotasticModules(response);
       } catch (_) {
-        return caches.match('./index.html');
+        const offline = await caches.match('./index.html');
+        return injectRotasticModules(offline);
       }
     })());
     return;
@@ -56,11 +91,7 @@ self.addEventListener('fetch', event => {
     const response = await fetch(event.request);
     if (response && (response.status === 200 || response.type === 'opaque')) {
       const copy = response.clone();
-      event.waitUntil(
-        caches.open(CACHE)
-          .then(cache => cache.put(event.request, copy))
-          .catch(() => {})
-      );
+      event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
     }
     return response;
   })());
@@ -68,12 +99,8 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('push', event => {
   let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (_) {
-    data = { body: 'Open ROTASTIC for a private update.' };
-  }
-
+  try { data = event.data ? event.data.json() : {}; }
+  catch (_) { data = { body: 'Open ROTASTIC for a private update.' }; }
   const title = data.title || 'ROTASTIC';
   const url = typeof data.url === 'string' && data.url ? data.url : './';
   const options = {
@@ -83,31 +110,23 @@ self.addEventListener('push', event => {
     tag: data.tag || data.type || 'rotastic-notification',
     renotify: true,
     requireInteraction: Boolean(data.requireInteraction),
-    data: Object.assign({}, data.data || {}, {
-      url,
-      type: data.type || '',
-      rotasticNotification: true
-    })
+    data: Object.assign({}, data.data || {}, { url, type: data.type || '', rotasticNotification: true })
   };
-
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const rawTarget = event.notification?.data?.url || './?rotasticNotification=1';
-
   event.waitUntil((async () => {
     const targetUrl = new URL(rawTarget, self.registration.scope).href;
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-
     for (const client of windows) {
       if (!client.url.startsWith(self.registration.scope)) continue;
       try { if ('navigate' in client) await client.navigate(targetUrl); } catch (_) {}
       try { client.postMessage({ type: 'ROTASTIC_NOTIFICATION_OPEN', url: targetUrl }); } catch (_) {}
       try { return await client.focus(); } catch (_) {}
     }
-
     if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
   })());
 });
