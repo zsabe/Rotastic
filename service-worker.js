@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v211-review-live';
+const CACHE = 'rotastic-v212-original-ui-no-mfa';
 const CORE = [
   './',
   './index.html',
@@ -7,9 +7,6 @@ const CORE = [
   './rotastic-unavailability.js',
   './rotastic-sickness.js',
   './rotastic-schedule-sync.js',
-  './rotastic-mfa.js',
-  './rotastic-experience.js',
-  './rotastic-review-live.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -17,9 +14,116 @@ const CORE = [
   './icons/favicon-32.png',
   './icons/favicon-48.png'
 ];
-self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', event => { event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));await self.clients.claim();})()); });
-async function injectPrivateClient(response){if(!response||!response.ok)return response;const type=response.headers.get('content-type')||'';if(!type.includes('text/html'))return response;let html=await response.text(),scripts='';if(!html.includes('rotastic-privacy-guard.js'))scripts+='<script src="./rotastic-privacy-guard.js"></script>';if(!html.includes('rotastic-unavailability.js'))scripts+='<script src="./rotastic-unavailability.js"></script>';if(!html.includes('rotastic-sickness.js'))scripts+='<script type="module" src="./rotastic-sickness.js"></script>';if(!html.includes('rotastic-schedule-sync.js'))scripts+='<script type="module" src="./rotastic-schedule-sync.js"></script>';if(!html.includes('rotastic-mfa.js'))scripts+='<script type="module" src="./rotastic-mfa.js"></script>';if(!html.includes('rotastic-experience.js'))scripts+='<script type="module" src="./rotastic-experience.js"></script>';if(!html.includes('rotastic-review-live.js'))scripts+='<script type="module" src="./rotastic-review-live.js"></script>';if(scripts)html=/<\/body>/i.test(html)?html.replace(/<\/body>/i,`${scripts}</body>`):html+scripts;const headers=new Headers(response.headers);headers.delete('content-length');headers.set('Cache-Control','no-cache');return new Response(html,{status:response.status,statusText:response.statusText,headers});}
-self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;if(event.request.mode==='navigate'){event.respondWith((async()=>{try{const response=await fetch(event.request,{cache:'no-store'});if(response&&response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put('./index.html',copy)).catch(()=>{}));}return injectPrivateClient(response);}catch(_){return injectPrivateClient(await caches.match('./index.html'));}})());return;}event.respondWith((async()=>{const hit=await caches.match(event.request);if(hit)return hit;const response=await fetch(event.request);if(response&&(response.status===200||response.type==='opaque')){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));}return response;})());});
-self.addEventListener('push',event=>{let data={};try{data=event.data?event.data.json():{};}catch(_){data={body:'Open ROTASTIC for a private update.'};}const title=data.title||'ROTASTIC',url=typeof data.url==='string'&&data.url?data.url:'./',options={body:data.body||'Open ROTASTIC for an update.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:data.tag||data.type||'rotastic-notification',renotify:true,requireInteraction:Boolean(data.requireInteraction),data:Object.assign({},data.data||{},{url,type:data.type||'',rotasticNotification:true})};event.waitUntil(self.registration.showNotification(title,options));});
-self.addEventListener('notificationclick',event=>{event.notification.close();const rawTarget=event.notification?.data?.url||'./?rotasticNotification=1';event.waitUntil((async()=>{const targetUrl=new URL(rawTarget,self.registration.scope).href,windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows){if(!client.url.startsWith(self.registration.scope))continue;try{if('navigate'in client)await client.navigate(targetUrl);}catch(_){}try{client.postMessage({type:'ROTASTIC_NOTIFICATION_OPEN',url:targetUrl});}catch(_){}try{return await client.focus();}catch(_){}}if(self.clients.openWindow)return self.clients.openWindow(targetUrl);})());});
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(CORE))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
+});
+
+async function injectPrivateClient(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  let html = await response.text();
+  let scripts = '';
+  // Preserve the original ROTASTIC visual design and only inject the established
+  // privacy, confidential availability/sickness, and schedule-sync bridges.
+  if (!html.includes('rotastic-privacy-guard.js')) scripts += '<script src="./rotastic-privacy-guard.js"></script>';
+  if (!html.includes('rotastic-unavailability.js')) scripts += '<script src="./rotastic-unavailability.js"></script>';
+  if (!html.includes('rotastic-sickness.js')) scripts += '<script type="module" src="./rotastic-sickness.js"></script>';
+  if (!html.includes('rotastic-schedule-sync.js')) scripts += '<script type="module" src="./rotastic-schedule-sync.js"></script>';
+  if (scripts) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${scripts}</body>`) : html + scripts;
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.set('Cache-Control', 'no-cache');
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+}
+
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request, { cache: 'no-store' });
+        if (response && response.ok) {
+          const copy = response.clone();
+          event.waitUntil(caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {}));
+        }
+        return injectPrivateClient(response);
+      } catch (_) {
+        const offline = await caches.match('./index.html');
+        return injectPrivateClient(offline);
+      }
+    })());
+    return;
+  }
+
+  event.respondWith((async () => {
+    const hit = await caches.match(event.request);
+    if (hit) return hit;
+    const response = await fetch(event.request);
+    if (response && (response.status === 200 || response.type === 'opaque')) {
+      const copy = response.clone();
+      event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
+    }
+    return response;
+  })());
+});
+
+self.addEventListener('push', event => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (_) {
+    data = { body: 'Open ROTASTIC for a private update.' };
+  }
+
+  const title = data.title || 'ROTASTIC';
+  const url = typeof data.url === 'string' && data.url ? data.url : './';
+  const options = {
+    body: data.body || 'Open ROTASTIC for an update.',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    tag: data.tag || data.type || 'rotastic-notification',
+    renotify: true,
+    requireInteraction: Boolean(data.requireInteraction),
+    data: Object.assign({}, data.data || {}, {
+      url,
+      type: data.type || '',
+      rotasticNotification: true
+    })
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const rawTarget = event.notification?.data?.url || './?rotasticNotification=1';
+
+  event.waitUntil((async () => {
+    const targetUrl = new URL(rawTarget, self.registration.scope).href;
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+
+    for (const client of windows) {
+      if (!client.url.startsWith(self.registration.scope)) continue;
+      try { if ('navigate' in client) await client.navigate(targetUrl); } catch (_) {}
+      try { client.postMessage({ type: 'ROTASTIC_NOTIFICATION_OPEN', url: targetUrl }); } catch (_) {}
+      try { return await client.focus(); } catch (_) {}
+    }
+
+    if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+  })());
+});
