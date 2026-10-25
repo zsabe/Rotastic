@@ -1,0 +1,22 @@
+name: Inspect ROTASTIC WebView compatibility
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-webview-compat.yml'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect external resources
+        run: |
+          echo '--- HTTP URLs ---'
+          grep -oE 'http://[^"'"' ]+' index.html | sort -u | head -100 || true
+          echo '--- HTTPS URLs ---'
+          grep -oE 'https://[^"'"' ]+' index.html | sort -u | head -100 || true
+          echo '--- Script tags ---'
+          grep -n '<script' index.html | head -60 || true
+          echo '--- Body tag / visibility ---'
+          grep -n -E '<body|display:[[:space:]]*none|visibility:[[:space:]]*hidden' index.html | head -80 || true
