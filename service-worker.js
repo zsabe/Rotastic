@@ -1,10 +1,11 @@
-const CACHE = 'rotastic-v206-private-sickness';
+const CACHE = 'rotastic-v207-phcc-mfa';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './rotastic-sickness.js',
   './rotastic-schedule-sync.js',
+  './rotastic-mfa.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -37,6 +38,7 @@ async function injectPrivateClient(response) {
   let scripts = '';
   if (!html.includes('rotastic-sickness.js')) scripts += '<script type="module" src="./rotastic-sickness.js"></script>';
   if (!html.includes('rotastic-schedule-sync.js')) scripts += '<script type="module" src="./rotastic-schedule-sync.js"></script>';
+  if (!html.includes('rotastic-mfa.js')) scripts += '<script type="module" src="./rotastic-mfa.js"></script>';
   if (scripts) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${scripts}</body>`) : html + scripts;
   const headers = new Headers(response.headers);
   headers.delete('content-length');
