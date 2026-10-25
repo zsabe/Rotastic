@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v216-original-dark-ui';
+const CACHE = 'rotastic-v217-original-dark-lock';
 const CORE = [
   './',
   './index.html',
@@ -27,6 +27,26 @@ self.addEventListener('activate', event => {
   })());
 });
 
+async function enforceOriginalDarkDesign(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  let html = await response.text();
+  const darkLock = `<style id="rotastic-original-dark-lock">
+:root{--bg-base:#090d16!important;--surface-card:#0f1624!important;--border-subtle:rgba(148,163,184,.12)!important;--teal-primary:#14b8a6!important;color-scheme:dark!important}
+html,body{background:#090d16!important;background-color:#090d16!important;color:#e2e8f0!important;color-scheme:dark!important}
+body.antialiased{background:#090d16!important;color:#e2e8f0!important}
+.clean-card{background:#0f1624!important;color:#e2e8f0!important;border-color:rgba(148,163,184,.12)!important}
+</style>`;
+  if (!html.includes('rotastic-original-dark-lock')) {
+    html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${darkLock}</head>`) : darkLock + html;
+  }
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+}
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
@@ -42,9 +62,9 @@ self.addEventListener('fetch', event => {
               .catch(() => {})
           );
         }
-        return response;
+        return enforceOriginalDarkDesign(response);
       } catch (_) {
-        return caches.match('./index.html');
+        return enforceOriginalDarkDesign(await caches.match('./index.html'));
       }
     })());
     return;
@@ -53,7 +73,7 @@ self.addEventListener('fetch', event => {
   event.respondWith((async () => {
     const hit = await caches.match(event.request);
     if (hit) return hit;
-    const response = await fetch(event.request);
+    const response = await fetch(event.request, { cache: 'no-store' });
     if (response && (response.status === 200 || response.type === 'opaque')) {
       const copy = response.clone();
       event.waitUntil(
