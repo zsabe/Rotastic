@@ -1,17 +1,86 @@
 (()=>{
 'use strict';
-const URL='https://lodhylphktopwqlcvcvf.supabase.co',KEY='sb_publishable_w7PkdZLDpZUo8bAH8hszyA_6BbzuOtf';let c=null,s=null,phys=[];
-const e=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
-const vis=n=>{if(!n?.getBoundingClientRect)return false;const r=n.getBoundingClientRect(),q=getComputedStyle(n);return r.width>3&&r.height>3&&q.display!=='none'&&q.visibility!=='hidden'};const txt=n=>String(n?.textContent||'').replace(/\s+/g,' ').trim();
-async function factory(){if(window.supabase?.createClient)return window.supabase.createClient;return (await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm')).createClient}
-function css(){if(document.getElementById('rau-css'))return;const x=document.createElement('style');x.id='rau-css';x.textContent=`#rotastic-unified-admin{margin:18px 14px;padding:20px;border-radius:24px;border:1px solid rgba(139,92,246,.32);background:linear-gradient(155deg,#11192a,#0a1220);color:#f8fafc;font-family:system-ui}.rau-k{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:#c4b5fd;font-weight:900}.rau-title{font-size:1.2rem;font-weight:900;margin:6px 0}.rau-sub{color:#9aa9bd;line-height:1.45}.rau-tabs{display:flex;gap:8px;margin:15px 0}.rau-tab{border:1px solid #334155;background:#101827;color:#cbd5e1;padding:9px 12px;border-radius:12px;font-weight:800}.rau-tab.on{background:#6d28d9;color:white;border-color:#7c3aed}.rau-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rau-field label{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#8ea0b7;font-weight:800;margin-bottom:6px}.rau-field select{width:100%;padding:13px;border-radius:14px;background:#0d1728;color:#fff;border:1px solid #334155}.rau-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}.rau-btn{border:0;border-radius:13px;padding:11px 14px;font-weight:900;background:#7c3aed;color:white}.rau-btn.sec{background:#233147}.rau-btn.danger{background:#3a1b2b;color:#fda4af}.rau-result{margin-top:14px;padding:15px;border-radius:16px;background:#07111f;border:1px solid #24364b}.rau-code{font-size:1.8rem;letter-spacing:.18em;font-weight:950;margin:8px 0}.rau-list{display:grid;gap:8px;margin-top:14px}.rau-row{padding:11px;border-radius:14px;background:#091321;border:1px solid #1e2d42;display:grid;grid-template-columns:1fr auto;gap:10px}.rau-row small{display:block;color:#8fa0b4;margin-top:3px}.rau-msg{min-height:20px;margin-top:10px;color:#86efac}.rau-msg.err{color:#fca5a5}@media(max-width:620px){.rau-grid{grid-template-columns:1fr}.rau-row{grid-template-columns:1fr}}`;document.head.appendChild(x)}
-function host(){const arr=[...document.querySelectorAll('main,section,div')].filter(vis).filter(n=>/settings/i.test(txt(n)));return arr.sort((a,b)=>b.getBoundingClientRect().height-a.getBoundingClientRect().height).find(n=>n.getBoundingClientRect().width>280)||document.querySelector('main')||document.body}
-function msg(t,b=false){const n=document.getElementById('rau-msg');if(n){n.textContent=t||'';n.classList.toggle('err',b)}}
-function hideLegacy(){for(const n of [...document.querySelectorAll('h2,h3,h4,div,p,span')]){if(!vis(n))continue;const t=txt(n);if(!/^(temporary admin access|delegated admin view|temporary administration access)$/i.test(t))continue;let b=n;for(let i=0;i<6&&b?.parentElement;i++){const r=b.getBoundingClientRect();if(r.width>280&&r.height>120&&r.height<850)break;b=b.parentElement}if(b&&!b.closest('#rotastic-unified-admin')&&!b.closest('#rotastic-registration-admin')){b.dataset.rauLegacy='1';b.style.display='none'}}}
-async function list(){const {data,error}=await c.rpc('rotastic_list_admin_access_codes');if(error)throw error;const box=document.getElementById('rau-list');if(!box)return;box.innerHTML=(data||[]).slice(0,20).map(r=>{const active=!r.revoked_at&&new Date(r.expires_at)>new Date();return `<div class="rau-row"><div><strong>${e(r.target_physician_name||'Any authorised physician')}</strong><small>Expires ${e(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',dateStyle:'medium',timeStyle:'short'}).format(new Date(r.expires_at)))} Qatar time</small><small>${active?'Active':r.revoked_at?'Revoked':'Expired'} · used ${Number(r.use_count||0)} time(s)</small></div>${active?`<button class="rau-btn danger" data-id="${e(r.code_id)}">Revoke</button>`:''}</div>`}).join('')||'<div class="rau-sub">No admin codes issued yet.</div>';box.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>revoke(b.dataset.id))}
-async function issue(){const mode=document.querySelector('.rau-tab.on')?.dataset.mode||'temporary',d=Number(document.getElementById('rau-duration').value),p=document.getElementById('rau-physician'),target=mode==='delegated'?p.value:null;if(mode==='delegated'&&!target)return msg('Select a physician for delegated access.',true);msg('Generating secure Admin View code…');try{const {data,error}=await c.rpc('rotastic_issue_admin_access_code',{p_minutes:d,p_target_physician:target||null});if(error)throw error;const r=Array.isArray(data)?data[0]:data;if(!r?.admin_code)throw new Error('Code was not returned');const box=document.getElementById('rau-result');box.hidden=false;box.innerHTML=`<div class="rau-k">${target?'Delegated':'Temporary'} Admin View code</div><div class="rau-code">${e(r.admin_code)}</div><div class="rau-sub">${target?e(target):'Usable by an authorised physician'} · expires ${e(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',dateStyle:'medium',timeStyle:'short'}).format(new Date(r.expires_at)))} Qatar time</div><div class="rau-actions"><button class="rau-btn sec" id="rau-copy">Copy code</button><button class="rau-btn danger" id="rau-revoke-now">Revoke</button></div>`;box.querySelector('#rau-copy').onclick=async()=>{await navigator.clipboard.writeText(r.admin_code);msg('Admin View code copied.')};box.querySelector('#rau-revoke-now').onclick=()=>revoke(r.code_id);msg('Admin View code created.');await list()}catch(x){msg(x?.message||String(x),true)}}
-async function revoke(id){try{const {data,error}=await c.rpc('rotastic_revoke_admin_access_code',{p_code_id:id});if(error)throw error;msg(data?'Code revoked.':'Code was already inactive.');await list()}catch(x){msg(x?.message||String(x),true)}}
-function render(){if(document.getElementById('rotastic-unified-admin'))return;css();const x=document.createElement('section');x.id='rotastic-unified-admin';x.innerHTML=`<div class="rau-k">Admin access</div><div class="rau-title">Admin View access manager</div><div class="rau-sub">One place to create, copy, review and revoke temporary or physician-specific Admin View access.</div><div class="rau-tabs"><button class="rau-tab on" data-mode="temporary">Temporary</button><button class="rau-tab" data-mode="delegated">Delegated physician</button></div><div class="rau-grid"><div class="rau-field" id="rau-phys-wrap" style="display:none"><label>Physician</label><select id="rau-physician"><option value="">Select physician</option>${phys.map(p=>`<option>${e(p.physician_name)}</option>`).join('')}</select></div><div class="rau-field"><label>Validity</label><select id="rau-duration"><option value="60">1 hour</option><option value="480" selected>8 hours</option><option value="1440">1 day</option><option value="4320">3 days</option><option value="10080">7 days</option></select></div></div><div class="rau-actions"><button class="rau-btn" id="rau-create">Create code</button><button class="rau-btn sec" id="rau-refresh">Refresh</button></div><div class="rau-result" id="rau-result" hidden></div><div class="rau-msg" id="rau-msg"></div><div class="rau-k" style="margin-top:16px">Active / recent codes</div><div class="rau-list" id="rau-list"></div>`;host().appendChild(x);x.querySelectorAll('.rau-tab').forEach(b=>b.onclick=()=>{x.querySelectorAll('.rau-tab').forEach(z=>z.classList.toggle('on',z===b));x.querySelector('#rau-phys-wrap').style.display=b.dataset.mode==='delegated'?'block':'none'});x.querySelector('#rau-create').onclick=issue;x.querySelector('#rau-refresh').onclick=()=>list().catch(z=>msg(z.message,true));list().catch(()=>{});hideLegacy()}
-async function init(){try{const make=await factory();c=make(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const q=await c.auth.getSession();s=q.data.session;if(!s)return;const {data,error}=await c.rpc('rotastic_list_authorized_physicians');if(error||!Array.isArray(data)||!data.length)return;phys=data.filter(p=>p.active&&p.physician_name);render();new MutationObserver(()=>{if(!document.getElementById('rotastic-unified-admin'))render();hideLegacy()}).observe(document.documentElement,{subtree:true,childList:true})}catch(x){console.error('ROTASTIC unified admin',x)}}
+const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const qatar=d=>{try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',dateStyle:'medium',timeStyle:'short'}).format(new Date(d))}catch{return String(d||'')}};
+function permanentAdmin(){
+  try{
+    if(typeof isAdminViewActive==='function'&&!isAdminViewActive())return false;
+    const n=norm(window.activeUserDocName||'');
+    return n.includes('zaid')||n.includes('moursi')||n.includes('mohamed');
+  }catch{return false}
+}
+function hideLegacyDelegatedCard(){
+  const card=document.getElementById('adminAccessGrantCard');
+  if(card){card.classList.add('hidden');card.style.display='none';card.setAttribute('aria-hidden','true')}
+}
+function ensureTargetSelector(){
+  const card=document.getElementById('tempAdminCodeManagerCard');
+  const duration=document.getElementById('tempAdminDurationMinutes');
+  if(!card||!duration)return null;
+  let select=document.getElementById('tempAdminTargetPhysician');
+  if(!select){
+    const wrap=document.createElement('div');
+    wrap.id='tempAdminTargetWrap';
+    wrap.className='mb-2';
+    wrap.innerHTML='<select class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="tempAdminTargetPhysician"><option value="">Any authorised physician</option></select><div class="text-[10px] text-slate-500 mt-1">Leave blank for a general temporary Admin View code, or choose one physician for delegated access.</div>';
+    const grid=duration.closest('.pt-4')||duration.parentElement;
+    grid?.parentElement?.insertBefore(wrap,grid);
+    select=wrap.querySelector('select');
+  }
+  const desired=[['60','1 hour'],['480','8 hours'],['1440','1 day'],['4320','3 days'],['10080','7 days']];
+  if(!duration.dataset.rauDurations){duration.innerHTML=desired.map(([v,l])=>`<option value="${v}"${v==='480'?' selected':''}>${l}</option>`).join('');duration.dataset.rauDurations='1'}
+  return select;
+}
+async function populatePhysicians(){
+  const select=ensureTargetSelector();
+  if(!select||select.dataset.loaded==='1')return;
+  try{
+    if(typeof rotasticBackendEnsureSession==='function')await rotasticBackendEnsureSession();
+    if(!window.rotasticBackendClient)return;
+    const {data,error}=await window.rotasticBackendClient.rpc('rotastic_list_authorized_physicians');
+    if(error)throw error;
+    (Array.isArray(data)?data:[]).filter(r=>r?.active&&r?.physician_name).forEach(r=>{
+      if([...select.options].some(o=>o.value===r.physician_name))return;
+      const o=document.createElement('option');o.value=r.physician_name;o.textContent=r.physician_name;select.appendChild(o);
+    });
+    select.dataset.loaded='1';
+  }catch(e){console.warn('ROTASTIC admin physician list',e)}
+}
+async function createUnifiedCode(){
+  if(!permanentAdmin()){alert('Admin access codes can only be created from a permanent Admin View.');return}
+  const select=ensureTargetSelector();
+  const target=select?.value||null;
+  const minutes=Math.max(5,parseInt(document.getElementById('tempAdminDurationMinutes')?.value||'480',10)||480);
+  try{
+    if(typeof rotasticBackendEnsureSession==='function')await rotasticBackendEnsureSession();
+    if(!window.rotasticBackendClient||!window.rotasticBackendUser)throw new Error('Verified Admin sign-in is required.');
+    const {data,error}=await window.rotasticBackendClient.rpc('rotastic_issue_admin_access_code',{p_minutes:minutes,p_target_physician:target});
+    if(error)throw error;
+    const row=Array.isArray(data)?data[0]:data;
+    const code=String(row?.admin_code||'');
+    if(!/^\d{8}$/.test(code))throw new Error('The Admin access service did not return a valid code.');
+    const box=document.getElementById('newTempAdminCodeBox'),val=document.getElementById('newTempAdminCodeValue'),expiry=document.getElementById('newTempAdminCodeExpiry');
+    box?.classList.remove('hidden');if(val)val.textContent=code;
+    if(expiry)expiry.textContent=`${target?'Delegated to '+target+' · ':''}Expires ${qatar(row.expires_at)} Qatar time`;
+    if(box&&!document.getElementById('tempAdminCopyCodeBtn')){
+      const actions=document.createElement('div');actions.className='flex gap-2 mt-3';
+      actions.innerHTML='<button class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-bold text-white transition" id="tempAdminCopyCodeBtn" type="button">Copy code</button><button class="px-3 py-2 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800/60 text-[11px] font-bold text-rose-300 transition" id="tempAdminRevokeNewBtn" type="button">Revoke</button>';
+      box.appendChild(actions);
+    }
+    const copy=document.getElementById('tempAdminCopyCodeBtn'),revoke=document.getElementById('tempAdminRevokeNewBtn');
+    if(copy)copy.onclick=async()=>{try{await navigator.clipboard.writeText(code);copy.textContent='Copied ✓';setTimeout(()=>copy.textContent='Copy code',1400)}catch{alert('Copy failed. Press and hold the code to copy it.')}};
+    if(revoke)revoke.onclick=async()=>{try{const r=await window.rotasticBackendClient.rpc('rotastic_revoke_admin_access_code',{p_code_id:row.code_id});if(r.error)throw r.error;box?.classList.add('hidden');if(typeof renderTempAdminCodeManager==='function')await renderTempAdminCodeManager()}catch(e){alert(e?.message||String(e))}};
+    try{await navigator.clipboard.writeText(code)}catch{}
+    if(typeof renderTempAdminCodeManager==='function')await renderTempAdminCodeManager();
+  }catch(e){alert(e?.message||String(e))}
+}
+function install(){
+  hideLegacyDelegatedCard();
+  ensureTargetSelector();
+  populatePhysicians();
+  try{window.canManageAdminAccess=permanentAdmin}catch{}
+  try{window.createTemporaryAdminCode=createUnifiedCode}catch{}
+}
+function init(){install();new MutationObserver(()=>install()).observe(document.documentElement,{childList:true,subtree:true});setInterval(install,3000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
