@@ -1,10 +1,11 @@
-const CACHE = 'rotastic-v219-direct-admin-controls';
+const CACHE = 'rotastic-v220-unified-admin-stable';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './rotastic-admin-bridge.js',
   './rotastic-admin-controls-v2.js',
+  './rotastic-admin-stabilizer.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -40,7 +41,7 @@ html,body{background:#090d16!important;background-color:#090d16!important;color:
 body.antialiased{background:#090d16!important;color:#e2e8f0!important}
 .clean-card{background:#0f1624!important;color:#e2e8f0!important;border-color:rgba(148,163,184,.12)!important}
 </style>`;
-  const adminScripts = `<script src="./rotastic-admin-bridge.js" defer></script><script src="./rotastic-admin-controls-v2.js" defer></script>`;
+  const adminScripts = `<script src="./rotastic-admin-bridge.js" defer></script><script src="./rotastic-admin-controls-v2.js" defer></script><script src="./rotastic-admin-stabilizer.js" defer></script>`;
   if (!html.includes('rotastic-original-dark-lock')) {
     html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${darkLock}</head>`) : darkLock + html;
   }
