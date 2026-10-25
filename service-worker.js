@@ -1,9 +1,10 @@
-const CACHE = 'rotastic-v218-dark-launch-fixes';
+const CACHE = 'rotastic-v219-dark-registration-metrics';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './rotastic-admin-access-unified.js',
+  './rotastic-registration-admin.js',
   './rotastic-metrics-export-fix.js',
   './rotastic-metrics-report.js',
   './icons/icon-192.png',
@@ -49,6 +50,7 @@ input,select,textarea{color-scheme:dark!important}
 
   let scripts = '';
   if (!html.includes('rotastic-admin-access-unified.js')) scripts += '<script defer src="./rotastic-admin-access-unified.js"></script>';
+  if (!html.includes('rotastic-registration-admin.js')) scripts += '<script defer src="./rotastic-registration-admin.js"></script>';
   if (!html.includes('rotastic-metrics-export-fix.js')) scripts += '<script defer src="./rotastic-metrics-export-fix.js"></script>';
   if (!html.includes('rotastic-metrics-report.js')) scripts += '<script defer src="./rotastic-metrics-report.js"></script>';
   if (scripts) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${scripts}</body>`) : html + scripts;
