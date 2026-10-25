@@ -17,7 +17,7 @@ function rmHtml(m){
   const rows=(m.rows||[]).slice().sort((a,b)=>String(a.shift_date).localeCompare(String(b.shift_date))),chunks=[];for(let i=0;i<rows.length;i+=25)chunks.push(rows.slice(i,i+25));if(!chunks.length)chunks.push([]);
   const max=Math.max(1,m.AM||0,m.PM||0,m.NIGHT||0),pct=n=>Math.round(100*(Number(n||0)/max)),totalPages=1+chunks.length,name=rmEsc(rmProfile?.physician_name||'My work');
   const first=`<section class="page"><div class="mast"><div class="ey">ROTASTIC • PRIVATE COLLEAGUE METRICS</div><div class="title">${name}</div><div class="sub">Your own rota activity only. No colleague-level metrics are included in this report.</div></div><div class="cards"><div class="card"><span>Total recorded shifts</span><strong>${m.total||0}</strong></div><div class="card"><span>Duty days</span><strong>${m.days||0}</strong></div><div class="card"><span>Clinic rooms</span><strong>${m.rooms||0}</strong></div><div class="card"><span>Generated</span><strong style="font-size:16pt">${rmQatarDate()}</strong></div></div><div class="section">Shift mix</div>${[['AM',m.AM],['PM',m.PM],['Night',m.NIGHT]].map(([k,n])=>`<div class="barrow"><b>${k}</b><div class="bar"><div class="fill" style="width:${pct(n)}%"></div></div><b>${n||0}</b></div>`).join('')}<div class="section">Privacy</div><div class="sub">This export is derived from the signed-in physician’s own recorded rota activity. It intentionally excludes other physicians’ workload totals and administrative metrics.</div><div class="foot"><span>Private self-view • ROTASTIC</span><span>Page 1 of ${totalPages}</span></div></section>`;
-  const detail=chunks.map((part,i)=>`<section class="page"><div class="mast"><div class="ey">Activity detail</div><div class="title" style="font-size:20pt">Recorded shifts</div><div class="sub">${name}</div></div><table style="margin-top:6mm"><thead><tr><th>Date</th><th>Shift</th><th>Room</th><th>Role</th></tr></thead><tbody>${part.map(r=>`<tr><td>${rmEsc(r.shift_date)}</td><td>${rmEsc(r.shift_code)}</td><td>${rmEsc(r.room||'—')}</td><td>${rmEsc(r.role||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No recorded shifts yet.</td></tr>'}</tbody></table><div class="foot"><span>Only your own activity is exported</span><span>Page ${i+2} of ${totalPages}</span></div></section>`).join('');
+  const detail=chunks.map((part,i)=>`<section class="page"><div class="mast"><div class="ey">Activity detail</div><div class="title" style="font-size:20pt">Recorded shifts</div><div class="sub">${name}</div></div><table style="margin-top:6mm"><thead><tr><th>Date</th><th>Shift</th><th>Room</th><th>Role</th></tr></thead><tbody>${part.map(r=>`<tr><td>${rmEsc(r.shift_date)}</td><td>${rmEsc(r.shift_code)}</td><td>${rmEsc(r.room||'—')}</td><td>${rmEsc(r.role||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No recorded shifts yet.</td></tr>`}</tbody></table><div class="foot"><span>Only your own activity is exported</span><span>Page ${i+2} of ${totalPages}</span></div></section>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROTASTIC Colleague Metrics</title><style>${rmCss()}</style></head><body>${first}${detail}<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),300));<\/script></body></html>`;
 }
 function rmExport(){
@@ -26,8 +26,20 @@ function rmExport(){
   if(!w){URL.revokeObjectURL(url);alert('Please allow pop-ups for ROTASTIC, then try Export Metrics again.');return}
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+function rmIsAdmin(){try{return typeof isAdminViewActive==='function'&&isAdminViewActive()}catch{return false}}
 function rmEnhance(){
-  const b=document.getElementById('rx-export-poster');if(b&&!b.dataset.rmEnhanced){b.dataset.rmEnhanced='1';b.onclick=e=>{e.preventDefault();rmExport()};const label=b.querySelector('span')||b;if(/poster/i.test(label.textContent||''))label.textContent='Export metrics PDF'}
+  const poster=document.getElementById('rx-export-poster');if(poster&&!poster.dataset.rmEnhanced){poster.dataset.rmEnhanced='1';poster.onclick=e=>{e.preventDefault();rmExport()};const label=poster.querySelector('span')||poster;if(/poster/i.test(label.textContent||''))label.textContent='Export metrics PDF'}
+  if(rmIsAdmin())return;
+  if(document.getElementById('rotasticColleagueMetricsExportBtn'))return;
+  const settings=document.getElementById('tabUserSettings');
+  const card=settings?.querySelector('.clean-card');
+  if(!card)return;
+  const btn=document.createElement('button');
+  btn.id='rotasticColleagueMetricsExportBtn';btn.type='button';
+  btn.className='w-full px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-teal-300 transition flex items-center justify-center gap-2';
+  btn.innerHTML='<i class="fa-solid fa-chart-line"></i><span>Export my metrics PDF</span>';
+  btn.onclick=e=>{e.preventDefault();rmExport()};
+  card.appendChild(btn);
 }
 async function rmInit(){
   const create=await rmFactory();rmClient=create(RM_URL,RM_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data:{session}}=await rmClient.auth.getSession();if(!session)return;const {data}=await rmClient.from('rotastic_profiles').select('physician_name').eq('user_id',session.user.id).maybeSingle();rmProfile=data||null;window.exportColleagueMetricsInfographic=rmExport;rmEnhance();new MutationObserver(rmEnhance).observe(document.documentElement,{childList:true,subtree:true});setInterval(rmEnhance,2500)
