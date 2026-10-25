@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v214-production-audit';
+const CACHE = 'rotastic-v215-dark-ui-restore';
 const CORE = [
   './',
   './index.html',
@@ -43,10 +43,8 @@ async function injectRotasticModules(response) {
   if (!type.includes('text/html')) return response;
   let html = await response.text();
   let scripts = '';
-  // These two are classic scripts because they intentionally bridge the historical app globals.
   if (!html.includes('rotastic-privacy-guard.js')) scripts += '<script src="./rotastic-privacy-guard.js"></script>';
   if (!html.includes('rotastic-unavailability.js')) scripts += '<script src="./rotastic-unavailability.js"></script>';
-  // Everything else is isolated as a module to avoid global-name collisions and accidental privilege coupling.
   const modules = [
     'rotastic-sickness.js',
     'rotastic-schedule-sync.js',
@@ -90,7 +88,7 @@ self.addEventListener('fetch', event => {
   event.respondWith((async () => {
     const hit = await caches.match(event.request);
     if (hit) return hit;
-    const response = await fetch(event.request);
+    const response = await fetch(event.request, { cache: 'no-store' });
     if (response && (response.status === 200 || response.type === 'opaque')) {
       const copy = response.clone();
       event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
