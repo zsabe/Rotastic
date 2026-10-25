@@ -1,0 +1,103 @@
+(()=>{
+'use strict';
+const SUPABASE_URL='https://lodhylphktopwqlcvcvf.supabase.co';
+const SUPABASE_KEY='sb_publishable_w7PkdZLDpZUo8bAH8hszyA_6BbzuOtf';
+const STORAGE_KEY='rotastic-auth-session-v1';
+const EMAIL_BY_DOCTOR={
+'Dr Mohamed M.':'mmoursi@phcc.gov.qa','Dr Husam S':'halsaudi@phcc.gov.qa','Dr Fazila K.':'fkhattak@phcc.gov.qa','Dr Mohammed S.':'msayed@phcc.gov.qa','Dr Bilal C.':'bchaudhry@phcc.gov.qa','Dr Saima N.':'snaz@phcc.gov.qa','Dr Imran A.':'imahmad@phcc.gov.qa','Dr Maher A.':'mahed@phcc.gov.qa','Dr Laith A.':'lalmarsomi@phcc.gov.qa','Dr Oula T.':'otayar@phcc.gov.qa','Dr Abdulgafoor K.':'akuniyil@phcc.gov.qa','Dr Abdulrashid S.':'asiddique@phcc.gov.qa','Dr Shadi T':'saltarawneh@phcc.gov.qa','Dr Syed I.':'sislam@phcc.gov.qa','Dr Selman E.':'serturhan@phcc.gov.qa','Dr Enan M.':'emasoud@phcc.gov.qa','Dr Gani M.':'gsmohamed@phcc.gov.qa','Dr Faisal C.':'fchaudhry@phcc.gov.qa','Dr Muhammad K.':'mkhattak@phcc.gov.qa','Dr Aminullah Z.':'azamani@phcc.gov.qa','Dr Salah M.':'salmohammed@phcc.gov.qa','Dr Rida C.':'rchandio@phcc.gov.qa','Dr Maya S.':'msukkari@phcc.gov.qa','Dr Laila A.':'layoub@phcc.gov.qa','Dr Saba T.':'satahir@phcc.gov.qa','Dr Tayseer A.':'tayed@phcc.gov.qa','Dr Zaid SE.':'zeleish@phcc.gov.qa','Dr Fahima N':'fnabina@phcc.gov.qa'
+};
+let client=null;
+function getClient(){
+  if(client)return client;
+  if(!window.supabase?.createClient)throw new Error('ROTASTIC sign-in service is not ready.');
+  client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:STORAGE_KEY}});
+  return client;
+}
+async function ensureSession(){
+  try{ if(typeof window.rotasticBackendEnsureSession==='function') await window.rotasticBackendEnsureSession(); }catch(e){}
+  const c=getClient();
+  let s=await c.auth.getSession();
+  if(!s?.data?.session?.user){
+    await new Promise(r=>setTimeout(r,180));
+    s=await c.auth.getSession();
+  }
+  if(!s?.data?.session?.user)throw new Error('Verified ROTASTIC backend session is not restored on this device. Reopen ROTASTIC once, then try again.');
+  return c;
+}
+async function rpc(name,args){
+  const c=await ensureSession();
+  const r=await c.rpc(name,args||{});
+  if(r.error)throw r.error;
+  return Array.isArray(r.data)?(r.data.length===1?r.data[0]:r.data):r.data;
+}
+function status(msg,bad=false){
+  const e=document.getElementById('rotasticUnifiedAdminMsg');
+  if(!e)return;
+  e.textContent=msg||'';
+  e.className='mt-3 text-[10px] '+(bad?'text-rose-300':'text-emerald-300');
+}
+function fmt(v){
+  if(!v)return 'No expiry';
+  try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',dateStyle:'medium',timeStyle:'short'}).format(new Date(v))+' Qatar time';}catch{return String(v);}
+}
+function outlookUrl(row){
+  const body=`Dear ${row.physician_name},\n\nThank you for using Rotastic.\n\nPlease find below the code for first time registration:\n\n${row.registration_code}\n\nPlease note that this code is valid for 24 hours.\n\nKind regards,\nROTASTIC`;
+  return 'https://outlook.office.com/mail/deeplink/compose?'+new URLSearchParams({to:row.email,subject:'Rotastic activation code',body}).toString();
+}
+async function activation(){
+  const name=document.getElementById('rotasticActivationDoctor')?.value||'';
+  if(!name)return status('Choose a doctor first.',true);
+  const email=EMAIL_BY_DOCTOR[name];
+  if(!email)return status('No PHCC email mapping is configured for '+name+'.',true);
+  try{
+    status('Generating activation code…');
+    const row=await rpc('rotastic_issue_registration_code_v2',{p_email:email,p_physician_name:name,p_valid_minutes:1440});
+    if(!row?.registration_code)throw new Error('Activation code was not returned.');
+    status('Activation code generated. Outlook is opening with the email pre-filled.');
+    const url=outlookUrl(row);
+    const w=window.open(url,'_blank','noopener');
+    if(!w)window.location.href=url;
+  }catch(e){status(e?.message||'Could not generate activation code.',true);}
+}
+async function renderGrants(){
+  const el=document.getElementById('rotasticAdminGrantListV2');
+  if(!el)return;
+  try{
+    const rows=await rpc('rotastic_list_admin_grants_v2');
+    const a=Array.isArray(rows)?rows:[];
+    el.innerHTML=a.length?a.map(r=>`<div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800"><div class="text-xs font-bold ${r.status==='active'?'text-white':'text-slate-500'}">${r.physician_name}</div><div class="text-[9px] text-slate-500">${r.status} · ${fmt(r.expires_at)}</div></div>`).join(''):'<div class="text-[10px] text-slate-500">No temporary Admin View access.</div>';
+  }catch(e){el.innerHTML='<div class="text-[10px] text-rose-300">'+String(e?.message||'Could not load Admin View access.')+'</div>';}
+}
+async function grantAdmin(){
+  const name=document.getElementById('rotasticAdminDoctor')?.value||'';
+  const minutes=Number(document.getElementById('rotasticAdminDuration')?.value||1440);
+  if(!name)return status('Choose a doctor first.',true);
+  try{
+    const row=await rpc('rotastic_grant_admin_access',{p_physician_name:name,p_minutes:minutes});
+    status(name+' can now use Admin View until '+fmt(row?.expires_at)+'.');
+    await renderGrants();
+  }catch(e){status(e?.message||'Could not grant Admin View access.',true);}
+}
+async function revokeAdmin(){
+  const name=document.getElementById('rotasticAdminDoctor')?.value||'';
+  if(!name)return status('Choose a doctor first.',true);
+  try{
+    await rpc('rotastic_revoke_admin_access',{p_physician_name:name});
+    status('Admin View access revoked for '+name+'.');
+    await renderGrants();
+  }catch(e){status(e?.message||'Could not revoke Admin View access.',true);}
+}
+function bind(){
+  const a=document.getElementById('rotasticGrantActivation');
+  const g=document.getElementById('rotasticGrantAdmin');
+  const r=document.getElementById('rotasticRevokeAdmin');
+  if(a&&a.dataset.hotfix!=='1'){a.dataset.hotfix='1';a.onclick=activation;}
+  if(g&&g.dataset.hotfix!=='1'){g.dataset.hotfix='1';g.onclick=grantAdmin;}
+  if(r&&r.dataset.hotfix!=='1'){r.dataset.hotfix='1';r.onclick=revokeAdmin;}
+  if(a||g||r)renderGrants();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(bind,100);setTimeout(bind,700);},{once:true});
+else{setTimeout(bind,100);setTimeout(bind,700);}
+const observer=new MutationObserver(()=>bind());
+setTimeout(()=>{if(document.body)observer.observe(document.body,{childList:true,subtree:true});},200);
+})();
