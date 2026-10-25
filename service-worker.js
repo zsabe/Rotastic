@@ -1,9 +1,10 @@
-const CACHE = 'rotastic-v208-phcc-privacy';
+const CACHE = 'rotastic-v209-phcc-unavailability';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
   './rotastic-privacy-guard.js',
+  './rotastic-unavailability.js',
   './rotastic-sickness.js',
   './rotastic-schedule-sync.js',
   './rotastic-mfa.js',
@@ -37,9 +38,10 @@ async function injectPrivateClient(response) {
   if (!type.includes('text/html')) return response;
   let html = await response.text();
   let scripts = '';
-  // Classic privacy guard loads first so legacy sickness functions/local caches are disabled
-  // before the confidential module takes ownership of the workflow.
+  // Privacy and availability bridges are classic scripts so they share the historical
+  // app's global lexical environment without persisting confidential status locally.
   if (!html.includes('rotastic-privacy-guard.js')) scripts += '<script src="./rotastic-privacy-guard.js"></script>';
+  if (!html.includes('rotastic-unavailability.js')) scripts += '<script src="./rotastic-unavailability.js"></script>';
   if (!html.includes('rotastic-sickness.js')) scripts += '<script type="module" src="./rotastic-sickness.js"></script>';
   if (!html.includes('rotastic-schedule-sync.js')) scripts += '<script type="module" src="./rotastic-schedule-sync.js"></script>';
   if (!html.includes('rotastic-mfa.js')) scripts += '<script type="module" src="./rotastic-mfa.js"></script>';
