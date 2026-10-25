@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v225-splash-failsafe';
+const CACHE = 'rotastic-v226-splash-one-way';
 const CORE = [
   './',
   './index.html',
@@ -41,7 +41,7 @@ body.antialiased{background:#090d16!important;color:#e2e8f0!important}
 .clean-card{background:#0f1624!important;color:#e2e8f0!important;border-color:rgba(148,163,184,.12)!important}
 </style>`;
   const adminScripts = `<script src="./rotastic-admin-controls-v2.js?v=224" defer></script><script src="./rotastic-admin-hotfix.js?v=224" defer></script>`;
-  const splashFailsafe = `<script id="rotastic-splash-failsafe">(function(){function hide(){var s=document.getElementById('rotasticOpeningSplash');if(!s)return;s.classList.add('rotastic-splash-hide');s.style.opacity='0';s.style.visibility='hidden';s.style.pointerEvents='none';setTimeout(function(){if(s)s.style.display='none';},650);}function arm(){setTimeout(hide,5200);setTimeout(hide,7600);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',arm,{once:true});}else{arm();}})();</script>`;
+  const splashFailsafe = `<script id="rotastic-splash-failsafe">(function(){let dismissed=false,observer=null;function removeSplash(){dismissed=true;var s=document.getElementById('rotasticOpeningSplash');if(s){s.style.setProperty('display','none','important');s.style.setProperty('visibility','hidden','important');s.style.setProperty('opacity','0','important');s.style.setProperty('pointer-events','none','important');s.setAttribute('aria-hidden','true');try{s.remove();}catch(_){}}}function arm(){observer=new MutationObserver(function(){if(!dismissed)return;var s=document.getElementById('rotasticOpeningSplash');if(s)try{s.remove();}catch(_){}});if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(removeSplash,5200);setTimeout(removeSplash,7600);setTimeout(function(){if(observer)observer.disconnect();},16000);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',arm,{once:true});}else{arm();}})();</script>`;
   if (!html.includes('rotastic-original-dark-lock')) {
     html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${darkLock}</head>`) : darkLock + html;
   }
