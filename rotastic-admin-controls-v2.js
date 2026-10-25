@@ -1,0 +1,91 @@
+(()=>{
+'use strict';
+const READY=()=>typeof window.rotasticBackendEnsureSession==='function'&&typeof window.Storage!=='undefined';
+let entitlement={active:false,permanent:false,expires_at:null,physician_name:''};
+let directory=[];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>{if(!v)return 'No expiry';try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',dateStyle:'medium',timeStyle:'short'}).format(new Date(v))+' Qatar time'}catch{return String(v)}};
+const role=()=>String(window.rotasticResolvedVerifiedRole?.()||window.rotasticVerifiedRole||Storage.get('rotastic_verified_role','')||'').trim().toLowerCase();
+const permanent=()=>['zaid','moursi','nabina'].includes(role());
+const directActive=()=>permanent()||!!(entitlement.active&&(!entitlement.expires_at||new Date(entitlement.expires_at)>new Date()));
+async function session(){await window.rotasticBackendEnsureSession();if(!window.rotasticBackendClient||!window.rotasticBackendUser)throw new Error('Verified ROTASTIC sign-in is required.');return window.rotasticBackendClient;}
+async function rpc(name,args){const c=await session();const r=await c.rpc(name,args||{});if(r.error)throw r.error;return Array.isArray(r.data)?(r.data.length===1?r.data[0]:r.data):r.data;}
+function installGate(){
+  window.rotasticIsPermanentAdminIdentity=permanent;
+  window.isTemporaryAdminSession=()=>!permanent()&&directActive();
+  window.isCurrentUserAdmin=()=>directActive();
+  window.canManageAdminAccess=()=>{try{return !!window.isAdminViewActive?.()&&permanent()}catch{return false}};
+  window.handleViewBadgeClick=function(){
+    if(window.isAdminViewActive?.()){
+      window.currentViewMode='colleague';Storage.set('rotastic_view_mode','colleague');
+      try{localStorage.removeItem('rotastic_admin_token');localStorage.removeItem('rotastic_admin_code_id')}catch{}
+      window.applyViewMode?.();window.renderScheduleView?.();window.switchTab?.('schedule');return;
+    }
+    if(!directActive())return;
+    Storage.set('rotastic_admin_token',permanent()?'permanent':String(entitlement.expires_at?new Date(entitlement.expires_at).getTime():Date.now()+3600000));
+    window.currentViewMode='admin';Storage.set('rotastic_view_mode','admin');
+    window.applyViewMode?.();window.renderScheduleView?.();window.switchTab?.('schedule');
+  };
+  window.openAdminModal=function(){ if(directActive()) window.handleViewBadgeClick(); };
+}
+function updateBadge(){
+  const b=document.getElementById('adminBadgeBtn'),t=document.getElementById('adminBadgeText'),i=document.getElementById('adminLockIcon');
+  if(!b||window.isAdminViewActive?.())return;
+  const ok=directActive();b.disabled=!ok;b.setAttribute('aria-disabled',ok?'false':'true');
+  b.classList.toggle('opacity-40',!ok);b.classList.toggle('cursor-not-allowed',!ok);b.classList.toggle('hover:bg-slate-700',ok);
+  if(t)t.textContent=ok?'Admin View':'Admin View';
+  if(i)i.className=ok?'fa-solid fa-user-shield text-emerald-400 text-[10px]':'fa-solid fa-lock text-slate-500 text-[10px]';
+  b.title=ok?(permanent()?'Permanent Admin View access':('Admin View access until '+fmt(entitlement.expires_at))):'Admin View is not enabled for this account';
+}
+async function refreshEntitlement(){
+  try{const row=await rpc('rotastic_admin_entitlement');entitlement=row||entitlement;}catch(e){entitlement={active:permanent(),permanent:permanent(),expires_at:null,physician_name:window.activeUserDocName||''};}
+  installGate();updateBadge();
+  if(window.currentViewMode==='admin'&&!directActive()){window.currentViewMode='colleague';Storage.set('rotastic_view_mode','colleague');window.applyViewMode?.();}
+}
+async function loadDirectory(){
+  try{const rows=await rpc('rotastic_list_authorized_physicians');directory=Array.isArray(rows)?rows:[];}catch{directory=[];}
+}
+function emailFor(name){
+  const backend=directory.find(x=>x&&x.active&&x.physician_name&&String(x.physician_name).toLowerCase()===String(name).toLowerCase());
+  if(backend?.email)return String(backend.email).toLowerCase();
+  try{const local=window.getKnownPhysicianEmail?.(name);if(local)return String(local).toLowerCase();}catch{}
+  return '';
+}
+function doctorOptions(){
+  const docs=Array.isArray(window.DOCTORS)?window.DOCTORS:[];
+  return docs.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(d=>`<option value="${esc(d.name)}">${esc(d.name)}</option>`).join('');
+}
+function setMsg(msg,bad=false){const e=document.getElementById('rotasticUnifiedAdminMsg');if(!e)return;e.textContent=msg||'';e.className='mt-3 text-[10px] '+(bad?'text-rose-300':'text-emerald-300');}
+function outlookUrl(o){const body=`Dear ${o.physician_name},\n\nThank you for using Rotastic.\n\nPlease find below the code for first time registration:\n\n${o.registration_code}\n\nPlease note that this code is valid for 24 hours.\n\nKind regards,\nROTASTIC`;return 'https://outlook.office.com/mail/deeplink/compose?'+new URLSearchParams({to:o.email,subject:'Rotastic activation code',body}).toString();}
+async function grantActivation(){
+  const sel=document.getElementById('rotasticActivationDoctor');const name=sel?.value||'';if(!name)return setMsg('Choose a doctor first.',true);
+  const email=emailFor(name);if(!email)return setMsg('No registered PHCC email is linked to '+name+' yet.',true);
+  try{setMsg('Generating activation code…');const o=await rpc('rotastic_issue_registration_code_v2',{p_email:email,p_physician_name:name,p_valid_minutes:1440});if(!o?.registration_code)throw new Error('Activation code was not returned.');try{window.saveKnownPhysicianEmail?.(name,email)}catch{};setMsg('Activation code generated. Outlook is opening with the email pre-filled.');const u=outlookUrl(o);const w=window.open(u,'_blank','noopener');if(!w)window.location.href=u;}catch(e){setMsg(e?.message||'Could not generate activation code.',true)}
+}
+async function grantAdmin(){
+  const name=document.getElementById('rotasticAdminDoctor')?.value||'';const minutes=Number(document.getElementById('rotasticAdminDuration')?.value||1440);if(!name)return setMsg('Choose a doctor first.',true);
+  try{const o=await rpc('rotastic_grant_admin_access',{p_physician_name:name,p_minutes:minutes});setMsg(name+' can now use Admin View until '+fmt(o?.expires_at)+'.');await renderGrants();}catch(e){setMsg(e?.message||'Could not grant Admin View access.',true)}
+}
+async function revokeAdmin(){
+  const name=document.getElementById('rotasticAdminDoctor')?.value||'';if(!name)return setMsg('Choose a doctor first.',true);
+  try{await rpc('rotastic_revoke_admin_access',{p_physician_name:name});setMsg('Admin View access revoked for '+name+'.');await renderGrants();}catch(e){setMsg(e?.message||'Could not revoke Admin View access.',true)}
+}
+async function renderGrants(){
+  const el=document.getElementById('rotasticAdminGrantListV2');if(!el)return;
+  try{const rows=await rpc('rotastic_list_admin_grants_v2');const a=Array.isArray(rows)?rows:[];el.innerHTML=a.length?a.map(r=>`<div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-2"><div><div class="text-xs font-bold ${r.status==='active'?'text-white':'text-slate-500'}">${esc(r.physician_name)}</div><div class="text-[9px] text-slate-500">${esc(r.status)} · ${esc(fmt(r.expires_at))}</div></div>${r.status==='active'?`<button type="button" data-revoke="${esc(r.physician_name)}" class="text-[9px] px-2 py-1 rounded-lg border border-rose-500/20 text-rose-300">Revoke</button>`:''}</div>`).join(''):'<div class="text-[10px] text-slate-500">No temporary Admin View access.</div>';el.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{document.getElementById('rotasticAdminDoctor').value=b.dataset.revoke;await revokeAdmin()});}catch(e){el.innerHTML='<div class="text-[10px] text-rose-300">Could not load Admin View access.</div>'}
+}
+function renderUnifiedCard(){
+  const card=document.getElementById('tempAdminCodeManagerCard'),old=document.getElementById('adminAccessGrantCard');if(!card)return;
+  if(old)old.classList.add('hidden');
+  const show=permanent()&&window.isAdminViewActive?.();card.classList.toggle('hidden',!show);if(!show)return;
+  if(card.dataset.directAdminV2==='1')return;card.dataset.directAdminV2='1';
+  card.className='clean-card rounded-2xl p-5 max-w-xl mx-auto border-violet-500/25';
+  card.innerHTML=`<div class="pb-3 border-b border-slate-800"><h3 class="text-xs font-bold text-violet-300 uppercase tracking-wider flex items-center"><i class="fa-solid fa-user-shield mr-2"></i>Admin Controls</h3><p class="text-[11px] text-slate-400 mt-1">First-time activation and temporary Admin View access.</p></div>
+  <div class="pt-4"><div class="text-[10px] uppercase tracking-wider font-bold text-cyan-300 mb-2">First-time activation</div><div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2"><select id="rotasticActivationDoctor" class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none"><option value="">Select doctor</option>${doctorOptions()}</select><button id="rotasticGrantActivation" type="button" class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition"><i class="fa-solid fa-key mr-1.5"></i>Grant activation code</button></div><p class="text-[9px] text-slate-500 mt-2">Single-use code · valid for 24 hours · Outlook draft opens automatically.</p></div>
+  <div class="mt-5 pt-4 border-t border-slate-800"><div class="text-[10px] uppercase tracking-wider font-bold text-emerald-300 mb-2">Admin View access</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><select id="rotasticAdminDoctor" class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none"><option value="">Select doctor</option>${doctorOptions()}</select><select id="rotasticAdminDuration" class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none"><option value="1440">24 hours</option><option value="10080">1 week</option><option value="43200">1 month</option></select></div><div class="flex gap-2 mt-3"><button id="rotasticGrantAdmin" type="button" class="flex-1 px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-xs font-black">Grant admin rights</button><button id="rotasticRevokeAdmin" type="button" class="flex-1 px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs font-black">Revoke admin rights</button></div><div class="mt-4 space-y-2" id="rotasticAdminGrantListV2"></div></div><div id="rotasticUnifiedAdminMsg" class="mt-3 text-[10px] text-emerald-300"></div>`;
+  document.getElementById('rotasticGrantActivation').onclick=grantActivation;document.getElementById('rotasticGrantAdmin').onclick=grantAdmin;document.getElementById('rotasticRevokeAdmin').onclick=revokeAdmin;renderGrants();
+}
+function wrapApply(){const old=window.applyViewMode;if(typeof old==='function'&&!old.__directV2){const f=function(){const r=old.apply(this,arguments);setTimeout(()=>{updateBadge();renderUnifiedCard()},0);return r};f.__directV2=true;window.applyViewMode=f}}
+async function init(){if(!READY()){setTimeout(init,120);return}installGate();wrapApply();await Promise.all([refreshEntitlement(),loadDirectory()]);renderUnifiedCard();updateBadge();setInterval(refreshEntitlement,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshEntitlement()});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0),{once:true});else setTimeout(init,0);
+})();
