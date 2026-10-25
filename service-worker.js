@@ -1,10 +1,8 @@
-const CACHE = 'rotastic-v226-splash-one-way';
+const CACHE = 'rotastic-v227-known-working-dark';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './rotastic-admin-controls-v2.js?v=224',
-  './rotastic-admin-hotfix.js?v=224',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -40,16 +38,8 @@ html,body{background:#090d16!important;background-color:#090d16!important;color:
 body.antialiased{background:#090d16!important;color:#e2e8f0!important}
 .clean-card{background:#0f1624!important;color:#e2e8f0!important;border-color:rgba(148,163,184,.12)!important}
 </style>`;
-  const adminScripts = `<script src="./rotastic-admin-controls-v2.js?v=224" defer></script><script src="./rotastic-admin-hotfix.js?v=224" defer></script>`;
-  const splashFailsafe = `<script id="rotastic-splash-failsafe">(function(){let dismissed=false,observer=null;function removeSplash(){dismissed=true;var s=document.getElementById('rotasticOpeningSplash');if(s){s.style.setProperty('display','none','important');s.style.setProperty('visibility','hidden','important');s.style.setProperty('opacity','0','important');s.style.setProperty('pointer-events','none','important');s.setAttribute('aria-hidden','true');try{s.remove();}catch(_){}}}function arm(){observer=new MutationObserver(function(){if(!dismissed)return;var s=document.getElementById('rotasticOpeningSplash');if(s)try{s.remove();}catch(_){}});if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true});setTimeout(removeSplash,5200);setTimeout(removeSplash,7600);setTimeout(function(){if(observer)observer.disconnect();},16000);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',arm,{once:true});}else{arm();}})();</script>`;
   if (!html.includes('rotastic-original-dark-lock')) {
     html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${darkLock}</head>`) : darkLock + html;
-  }
-  if (!html.includes('rotastic-admin-controls-v2.js?v=224')) {
-    html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${adminScripts}</head>`) : adminScripts + html;
-  }
-  if (!html.includes('rotastic-splash-failsafe')) {
-    html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${splashFailsafe}</head>`) : splashFailsafe + html;
   }
   const headers = new Headers(response.headers);
   headers.delete('content-length');
@@ -59,29 +49,18 @@ body.antialiased{background:#090d16!important;color:#e2e8f0!important}
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.pathname.endsWith('/rotastic-admin-controls-v2.js') || url.pathname.endsWith('/rotastic-admin-hotfix.js')) {
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(event.request, { cache: 'no-store' });
-        if (response && response.ok) {
-          const copy = response.clone();
-          event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
-        }
-        return response;
-      } catch (_) {
-        return caches.match(event.request);
-      }
-    })());
-    return;
-  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
         const response = await fetch(event.request, { cache: 'no-store' });
         if (response && response.ok) {
           const copy = response.clone();
-          event.waitUntil(caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {}));
+          event.waitUntil(
+            caches.open(CACHE)
+              .then(cache => cache.put('./index.html', copy))
+              .catch(() => {})
+          );
         }
         return enforceOriginalDarkDesign(response);
       } catch (_) {
@@ -90,13 +69,18 @@ self.addEventListener('fetch', event => {
     })());
     return;
   }
+
   event.respondWith((async () => {
     const hit = await caches.match(event.request);
     if (hit) return hit;
     const response = await fetch(event.request, { cache: 'no-store' });
     if (response && (response.status === 200 || response.type === 'opaque')) {
       const copy = response.clone();
-      event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
+      event.waitUntil(
+        caches.open(CACHE)
+          .then(cache => cache.put(event.request, copy))
+          .catch(() => {})
+      );
     }
     return response;
   })());
@@ -104,8 +88,12 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('push', event => {
   let data = {};
-  try { data = event.data ? event.data.json() : {}; }
-  catch (_) { data = { body: 'Open ROTASTIC for a private update.' }; }
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (_) {
+    data = { body: 'Open ROTASTIC for a private update.' };
+  }
+
   const title = data.title || 'ROTASTIC';
   const url = typeof data.url === 'string' && data.url ? data.url : './';
   const options = {
@@ -115,23 +103,31 @@ self.addEventListener('push', event => {
     tag: data.tag || data.type || 'rotastic-notification',
     renotify: true,
     requireInteraction: Boolean(data.requireInteraction),
-    data: Object.assign({}, data.data || {}, { url, type: data.type || '', rotasticNotification: true })
+    data: Object.assign({}, data.data || {}, {
+      url,
+      type: data.type || '',
+      rotasticNotification: true
+    })
   };
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const rawTarget = event.notification?.data?.url || './?rotasticNotification=1';
+
   event.waitUntil((async () => {
     const targetUrl = new URL(rawTarget, self.registration.scope).href;
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+
     for (const client of windows) {
       if (!client.url.startsWith(self.registration.scope)) continue;
       try { if ('navigate' in client) await client.navigate(targetUrl); } catch (_) {}
       try { client.postMessage({ type: 'ROTASTIC_NOTIFICATION_OPEN', url: targetUrl }); } catch (_) {}
       try { return await client.focus(); } catch (_) {}
     }
+
     if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
   })());
 });
