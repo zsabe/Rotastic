@@ -1,12 +1,8 @@
-const CACHE = 'rotastic-v212-original-ui-no-mfa';
+const CACHE = 'rotastic-v213-original-dark-ui';
 const CORE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './rotastic-privacy-guard.js',
-  './rotastic-unavailability.js',
-  './rotastic-sickness.js',
-  './rotastic-schedule-sync.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -31,25 +27,6 @@ self.addEventListener('activate', event => {
   })());
 });
 
-async function injectPrivateClient(response) {
-  if (!response || !response.ok) return response;
-  const type = response.headers.get('content-type') || '';
-  if (!type.includes('text/html')) return response;
-  let html = await response.text();
-  let scripts = '';
-  // Preserve the original ROTASTIC visual design and only inject the established
-  // privacy, confidential availability/sickness, and schedule-sync bridges.
-  if (!html.includes('rotastic-privacy-guard.js')) scripts += '<script src="./rotastic-privacy-guard.js"></script>';
-  if (!html.includes('rotastic-unavailability.js')) scripts += '<script src="./rotastic-unavailability.js"></script>';
-  if (!html.includes('rotastic-sickness.js')) scripts += '<script type="module" src="./rotastic-sickness.js"></script>';
-  if (!html.includes('rotastic-schedule-sync.js')) scripts += '<script type="module" src="./rotastic-schedule-sync.js"></script>';
-  if (scripts) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${scripts}</body>`) : html + scripts;
-  const headers = new Headers(response.headers);
-  headers.delete('content-length');
-  headers.set('Cache-Control', 'no-cache');
-  return new Response(html, { status: response.status, statusText: response.statusText, headers });
-}
-
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
@@ -59,12 +36,15 @@ self.addEventListener('fetch', event => {
         const response = await fetch(event.request, { cache: 'no-store' });
         if (response && response.ok) {
           const copy = response.clone();
-          event.waitUntil(caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {}));
+          event.waitUntil(
+            caches.open(CACHE)
+              .then(cache => cache.put('./index.html', copy))
+              .catch(() => {})
+          );
         }
-        return injectPrivateClient(response);
+        return response;
       } catch (_) {
-        const offline = await caches.match('./index.html');
-        return injectPrivateClient(offline);
+        return caches.match('./index.html');
       }
     })());
     return;
@@ -76,7 +56,11 @@ self.addEventListener('fetch', event => {
     const response = await fetch(event.request);
     if (response && (response.status === 200 || response.type === 'opaque')) {
       const copy = response.clone();
-      event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
+      event.waitUntil(
+        caches.open(CACHE)
+          .then(cache => cache.put(event.request, copy))
+          .catch(() => {})
+      );
     }
     return response;
   })());
