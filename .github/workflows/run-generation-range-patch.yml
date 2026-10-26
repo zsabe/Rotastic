@@ -25,3 +25,5 @@ jobs:
           git rm .github/workflows/run-generation-range-patch.yml scripts/wire-generation-range.py
           git commit -m 'Make generation range selector functional without redesign'
           git push
+
+# retry after narrowing syntax validation
