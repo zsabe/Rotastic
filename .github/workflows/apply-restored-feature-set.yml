@@ -14,7 +14,7 @@ jobs:
           ref: main
           fetch-depth: 1
       - name: Apply direct feature patch
-        run: python .github/scripts/apply_restored_feature_set.py
+        run: python .github/scripts/run_restored_feature_patch.py
       - name: Verify design and JavaScript
         shell: bash
         run: |
