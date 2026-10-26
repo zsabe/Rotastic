@@ -110,7 +110,7 @@
   function mergeAdminTabs() {
     const annTab = findClickable(/\b(announcement|broadcast)s?\b/i);
     const feedbackTab = findClickable(/\bfeedback\b/i);
-    if (!annTab || !feedbackTab) return null;
+    if (!annTab || !feedbackTab) return combinedPane;
 
     replaceVisibleLabelPreserveIcon(annTab, /Announcements?|Broadcasts?/i, 'Updates');
     feedbackTab.style.display = 'none';
@@ -118,7 +118,7 @@
 
     const annPane = findPane('announcement', annTab) || findPane('broadcast', annTab);
     const feedbackPane = findPane('feedback', feedbackTab);
-    if (!annPane) return null;
+    if (!annPane) return combinedPane;
 
     if (feedbackPane && feedbackPane !== annPane && !annPane.querySelector('[data-rac-feedback="1"]')) {
       const wrap = document.createElement('div');
@@ -154,11 +154,12 @@
       box = document.createElement('section');
       box.id = 'rac-account-box';
       box.className = 'rac-account-box';
+      box.innerHTML = '<div class="rac-account-title">Account & view</div><div class="rac-muted rac-current-view"></div><div id="rac-view-holder" class="rac-view-holder"></div><div class="rac-account-actions"><button type="button" class="rac-signout">Sign out</button></div>';
+      box.querySelector('.rac-signout').onclick = signOut;
       pane.insertBefore(box, pane.firstChild);
     }
-    const name = currentPhysician() || 'Not signed in';
-    box.innerHTML = `<div class="rac-account-title">Account & view</div><div class="rac-muted">You are viewing as doctor <strong>${escapeHtml(name)}</strong>.</div><div id="rac-view-holder" class="rac-view-holder"></div><div class="rac-account-actions"><button type="button" class="rac-signout">Sign out</button></div>`;
-    box.querySelector('.rac-signout').onclick = signOut;
+    const current = box.querySelector('.rac-current-view');
+    if (current) current.innerHTML = `You are viewing as doctor <strong>${escapeHtml(currentPhysician() || 'Not signed in')}</strong>.`;
     return box;
   }
 
@@ -168,11 +169,14 @@
     if (!box) return;
     const holder = box.querySelector('#rac-view-holder');
 
-    if (control && !holder.contains(control)) {
-      const marker = document.createElement('span');
-      marker.id = 'rac-header-slot';
-      marker.style.display = 'none';
-      control.parentNode?.insertBefore(marker, control);
+    if (control && holder && !holder.contains(control)) {
+      let marker = document.getElementById('rac-header-slot');
+      if (!marker) {
+        marker = document.createElement('span');
+        marker.id = 'rac-header-slot';
+        marker.style.display = 'none';
+        control.parentNode?.insertBefore(marker, control);
+      }
       holder.appendChild(control);
     }
 
