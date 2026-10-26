@@ -136,26 +136,6 @@
 9227:     }).join('');
 9228:   } catch (e) {
 9229:     listEl.innerHTML = '<div class="text-[11px] text-rose-400">Could not load Admin View codes.</div>';
-9230:     console.warn('ROTASTIC Admin code list:', e?.message || e);
-9231:   }
-9232: }
-9233: 
-9234: 
-9235: const ROTASTIC_ADMIN_GRANTS_KEY = 'rotastic_admin_access_grants';
-9236: 
-9237: function getAdminAccessGrants() {
-9238:   const grants = Storage.getJSON('rotastic_admin_access_grants', {});
-9239:   return grants && typeof grants === 'object' && !Array.isArray(grants) ? grants : {};
-9240: }
-9241: 
-9242: function saveAdminAccessGrants(grants) {
-9243:   Storage.setJSON('rotastic_admin_access_grants', grants || {});
-9244: }
-9245: 
-9246: function renderAdminGrantList() {
-9247:   const card = document.getElementById('adminAccessGrantCard');
-9248:   const select = document.getElementById('adminGrantDoctorSelect');
-9249:   const list = document.getElementById('adminGrantList');
 
 
 9028: }
@@ -296,26 +276,6 @@
 9163:   } catch (e) {
 9164:     alert(e?.message || 'Could not revoke this Admin View code.');
 9165:   }
-9166: }
-9167: 
-9168: function validateTemporaryAdminCode(value) {
-9169:   // Legacy browser-side validation is intentionally disabled. Admin access
-9170:   // codes are issued and redeemed only through the Supabase backend.
-9171:   return null;
-9172: }
-9173: 
-9174: function isTemporaryAdminSession() {
-9175:   const token = Storage.get('rotastic_admin_token', null);
-9176:   if (!token || token === 'permanent') return false;
-9177:   const expiry = parseInt(token, 10);
-9178:   return !isNaN(expiry) && Date.now() < expiry && !!Storage.get('rotastic_admin_code_id', '');
-9179: }
-9180: 
-9181: function canUseZaidAdminTools() {
-9182:   // Coordinator/admin actions must never leak into Colleague View.
-9183:   if (!isAdminViewActive()) return false;
-9184:   return activeUserDocName === 'Dr Zaid SE.' || isTemporaryAdminSession();
-9185: }
 
 
 8877:   try { return isAdminViewActive(); } catch (e) { return false; }
@@ -456,26 +416,6 @@
 9012:         <div class="text-right">
 9013:           ${isCustom && canEdit
 9014:             ? `<button onclick="removeCustomPhysician(decodeURIComponent('${encodedName}'))" class="px-2 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[9px] font-bold">Remove</button>`
-9015:             : '<span class="text-[9px] text-slate-600">Core</span>'}
-9016:         </div>
-9017:       </div>`;
-9018:   }).join('');
-9019: }
-9020: 
-9021: // Admin View access codes are generated and validated exclusively by the backend.
-9022: 
-9023: // Stable local storage helpers for temporary Admin access codes.
-9024: // These are deliberately small and dependency-free so Settings cannot fail if backend sync is unavailable.
-9025: function getTemporaryAdminCodes() {
-9026:   const rows = Storage.getJSON('rotastic_temporary_admin_codes', []);
-9027:   return Array.isArray(rows) ? rows.filter(Boolean) : [];
-9028: }
-9029: 
-9030: function saveTemporaryAdminCodes(rows) {
-9031:   Storage.setJSON('rotastic_temporary_admin_codes', Array.isArray(rows) ? rows : []);
-9032: }
-9033: 
-9034: let rotasticLastIssuedAccessCode = null;
 
 
 9052:     duration.disabled = type === 'first_time';
@@ -616,26 +556,6 @@
 9187: async function renderTempAdminCodeManager() {
 9188:   const card = document.getElementById('tempAdminCodeManagerCard');
 9189:   if (!card) return;
-9190: 
-9191:   const canManageCodes = canManageAdminAccess();
-9192:   card.classList.toggle('hidden', !canManageCodes);
-9193:   if (!canManageCodes) return;
-9194: 
-9195:   populateAccessCodeDoctorSelect();
-9196:   onAccessCodeTypeChange();
-9197: 
-9198:   const listEl = document.getElementById('tempAdminCodeList');
-9199:   if (!listEl) return;
-9200: 
-9201:   try {
-9202:     await rotasticBackendEnsureSession();
-9203:     const result = await rotasticBackendClient.rpc('rotastic_list_admin_access_codes');
-9204:     if (result.error) throw result.error;
-9205:     const items = Array.isArray(result.data) ? result.data : [];
-9206:     if (!items.length) {
-9207:       listEl.innerHTML = '<div class="text-[11px] text-slate-500">No Admin View codes have been created yet.</div>';
-9208:       return;
-9209:     }
 
 
 9074:   if (box) box.classList.remove('hidden');
@@ -776,23 +696,3 @@
 9209:     }
 9210:     const now = Date.now();
 9211:     listEl.innerHTML = items.map(function(code) {
-9212:       const expired = !code.expires_at || new Date(code.expires_at).getTime() <= now;
-9213:       const revoked = !!code.revoked_at;
-9214:       const inactive = revoked || expired;
-9215:       const status = revoked ? 'Revoked' : (expired ? 'Expired' : 'Active');
-9216:       const target = code.target_physician_name ? (' · for ' + code.target_physician_name) : ' · general';
-9217:       return `
-9218:         <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-9219:           <div>
-9220:             <div class="text-xs font-black ${inactive ? 'text-slate-500' : 'text-white'}">${status}${target}</div>
-9221:             <div class="text-[10px] text-slate-500 mt-0.5">
-9222:               expires ${formatWorkflowTime(code.expires_at)}${code.use_count ? ' · used ' + code.use_count + ' time' + (code.use_count === 1 ? '' : 's') : ''}
-9223:             </div>
-9224:           </div>
-9225:           ${!inactive ? `<button onclick="revokeTemporaryAdminCode('${code.code_id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 text-rose-300 text-[10px] font-bold">Revoke</button>` : ''}
-9226:         </div>`;
-9227:     }).join('');
-9228:   } catch (e) {
-9229:     listEl.innerHTML = '<div class="text-[11px] text-rose-400">Could not load Admin View codes.</div>';
-9230:     console.warn('ROTASTIC Admin code list:', e?.message || e);
-9231:   }

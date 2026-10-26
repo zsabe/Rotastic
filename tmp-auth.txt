@@ -136,26 +136,6 @@
 7824:   } else {
 7825:     currentViewMode = 'colleague';
 7826:     try {
-7827:       localStorage.removeItem('rotastic_admin_token');
-7828:       localStorage.removeItem('rotastic_admin_code_id');
-7829:     } catch(e) {}
-7830:   }
-7831:   Storage.set('rotastic_view_mode', currentViewMode);
-7832:   try { updateOpeningSplashName(); } catch(e) {}
-7833:   try { applyViewMode(); } catch(e) {}
-7834:   try { renderScheduleView(); } catch(e) {}
-7835:   try { initGreetingAndHolidays(); } catch(e) {}
-7836:   rotasticRegistrationShow(false);
-7837: 
-7838:   // Some startup timers paint the colleague shell before backend identity is
-7839:   // restored. Reassert the verified permanent-admin landing once after that
-7840:   // startup work settles.
-7841:   if (privilegedAdmin) {
-7842:     setTimeout(function() {
-7843:       currentViewMode = 'admin';
-7844:       Storage.set('rotastic_view_mode', 'admin');
-7845:       Storage.set('rotastic_admin_token', 'permanent');
-7846:       try { applyViewMode(); } catch(e) {}
 
 
 7804: 
@@ -296,6 +276,47 @@
 7939: 
 7940:     if (!rotasticBackendUser) {
 7941:       // A device that has previously completed activation gets one final silent
+
+
+7903:     const clean = String(event.target.value || '').replace(/\D/g,'').slice(0,6);
+7904:     if (event.target.value !== clean) event.target.value = clean;
+7905:     if (clean.length === 6) {
+7906:       setTimeout(function(){ rotasticVerifyRegistrationOtp(); }, 120);
+7907:     }
+7908:   }
+7909: });
+7910: 
+7911: async function rotasticInitializeVerifiedRegistration() {
+7912:   try {
+7913:     // A previously activated Dr Zaid owner account remains activated across
+7914:     // reloads/new copies of this app on the same browser storage.
+7915:     if (rotasticHasStoredZaidPermanentIdentity()) {
+7916:       rotasticRegistrationIdentity = {
+7917:         email: ROTASTIC_ZAID_PERMANENT_EMAIL,
+7918:         role: 'zaid',
+7919:         physician_name: 'Dr Zaid SE.',
+7920:         profile_physician_name: 'Dr Zaid SE.',
+7921:         registration_complete: true,
+7922:         permanent: true
+7923:       };
+7924:       rotasticApplyVerifiedIdentity('Dr Zaid SE.', 'zaid', ROTASTIC_ZAID_PERMANENT_EMAIL);
+7925:       try { await rotasticBackendEnsureSession(); } catch (e) {}
+7926:       return true;
+7927:     }
+7928: 
+7929:     await rotasticBackendEnsureSession();
+7930:     if (!rotasticBackendClient) throw new Error('Authentication service unavailable');
+7931: 
+7932:     if (!rotasticAuthListenerBound) {
+7933:       rotasticAuthListenerBound = true;
+7934:       rotasticBackendClient.auth.onAuthStateChange(function(event, session){
+7935:         rotasticBackendUser = session?.user || null;
+7936:         if (session?.user) setTimeout(function(){ rotasticFinishAuthenticatedRegistration().catch(function(e){ console.warn('ROTASTIC registration:',e?.message||e); }); }, 0);
+7937:       });
+7938:     }
+7939: 
+7940:     if (!rotasticBackendUser) {
+7941:       // A device that has previously completed activation gets one final silent
 7942:       // restoration attempt before the gate is shown. This avoids asking for a
 7943:       // one-time code again merely because startup/network timing was slow.
 7944:       if (rotasticHasStoredActivatedIdentity()) {
@@ -316,9 +337,85 @@
 7959:     rotasticRegistrationSetStatus(e?.message || 'Sign-in is required.', false);
 7960:     return false;
 7961:   }
-
-
--- rotasticInitializeRegistration: not found --
+7962: }
+7963: 
+7964: function rotasticBackendIsoFromMillis(value) {
+7965:   if (value === null || value === undefined || value === '') return null;
+7966:   const n = Number(value);
+7967:   return Number.isFinite(n) ? new Date(n).toISOString() : null;
+7968: }
+7969: 
+7970: function rotasticBackendMillisFromIso(value) {
+7971:   if (!value) return null;
+7972:   const n = new Date(value).getTime();
+7973:   return Number.isFinite(n) ? n : null;
+7974: }
+7975: 
+7976: async function rotasticBackendEnsureSession() {
+7977:   // The Supabase bundle is loaded from the network. On a fast app launch it can
+7978:   // arrive a fraction later than ROTASTIC's own bootstrap. Wait briefly before
+7979:   // deciding that an already-activated device needs registration again.
+7980:   if (!window.supabase || !window.supabase.createClient) {
+7981:     for (let i = 0; i < 10; i++) {
+7982:       await new Promise(function(resolve){ setTimeout(resolve, 150); });
+7983:       if (window.supabase && window.supabase.createClient) break;
+7984:     }
+7985:   }
+7986:   if (!window.supabase || !window.supabase.createClient) return null;
+7987: 
+7988:   if (!rotasticBackendClient) {
+7989:     rotasticBackendClient = window.supabase.createClient(
+7990:       ROTASTIC_SUPABASE_URL,
+7991:       ROTASTIC_SUPABASE_PUBLISHABLE_KEY,
+7992:       { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storageKey:'rotastic-auth-session-v1' } }
+7993:     );
+7994:   }
+7995: 
+7996:   // getSession reads the persisted refresh/access session from this device.
+7997:   // Do not show the activation gate until this restoration attempt has finished.
+7998:   const existing = await rotasticBackendClient.auth.getSession();
+7999:   const session = existing?.data?.session || null;
+8000:   rotasticBackendUser = session?.user || null;
+8001:   return rotasticBackendUser;
+8002: }
+8003: 
+8004: async function rotasticBackendSyncProfile() {
+8005:   if (!rotasticBackendClient || !rotasticBackendUser) return;
+8006:   // Physician identity is now created/bound only through the verified-email
+8007:   // registration RPC. Do not overwrite it from editable localStorage.
+8008:   const identityResult = await rotasticBackendClient.rpc('rotastic_registration_identity');
+8009:   if (identityResult.error) return;
+8010:   const identity = Array.isArray(identityResult.data) ? identityResult.data[0] : identityResult.data;
+8011:   if (!identity || !identity.profile_physician_name) return;
+8012:   const physician = identity.profile_physician_name;
+8013:   activeUserDocName = physician;
+8014:   rotasticVerifiedRole = identity.role || 'doctor';
+8015:   rotasticBackendLocalSet('rotastic_user_doc_name', physician, false);
+8016:   const result = await rotasticBackendClient.from('rotastic_profiles').update({
+8017:     device_label:(navigator.userAgent || 'ROTASTIC device').slice(0,180),
+8018:     last_seen_at:new Date().toISOString()
+8019:   }).eq('user_id',rotasticBackendUser.id);
+8020:   if (result.error) console.warn('ROTASTIC backend profile heartbeat:', result.error.message);
+8021: }
+8022: 
+8023: function rotasticBackendMapLeaveRow(row, existing) {
+8024:   return Object.assign({}, existing || {}, {
+8025:     id:row.id,
+8026:     type:row.leave_type,
+8027:     typeLabel:row.type_label || row.leave_type || 'Leave',
+8028:     emoji:row.emoji || '📝',
+8029:     doc:row.physician_name,
+8030:     startDate:row.start_date,
+8031:     endDate:row.end_date || row.start_date,
+8032:     notes:row.notes || '',
+8033:     shift:row.shift || '',
+8034:     status:row.status || 'Submitted for approval',
+8035:     createdAt:row.created_at,
+8036:     approvedAt:row.approved_at || undefined,
+8037:     approvedBy:row.approved_by_name || undefined
+8038:   });
+8039: }
+8040: 
 
 
 7968: }
@@ -459,23 +556,3 @@
 8103:   if (result.error) throw result.error;
 8104: 
 8105:   const now = Date.now();
-8106:   const grants = {};
-8107:   (result.data || []).forEach(row => {
-8108:     if (row.revoked_at) return;
-8109:     const expiry = rotasticBackendMillisFromIso(row.expires_at);
-8110:     if (expiry && expiry <= now) return;
-8111:     grants[row.physician_name] = {
-8112:       grantedBy:row.granted_by_name,
-8113:       grantedAt:rotasticBackendMillisFromIso(row.granted_at) || now,
-8114:       expiresAt:expiry
-8115:     };
-8116:   });
-8117:   rotasticBackendLocalSet('rotastic_admin_access_grants', grants, true);
-8118: }
-8119: 
-8120: async function rotasticBackendMirrorAdminGrants(grants) {
-8121:   if (!rotasticBackendReady || !rotasticBackendClient || !grants || typeof grants !== 'object') return;
-8122:   if (!canManageAdminAccess()) return;
-8123: 
-8124:   for (const name of Object.keys(grants)) {
-8125:     const grant = grants[name] || {};
