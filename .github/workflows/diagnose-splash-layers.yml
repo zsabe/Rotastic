@@ -18,28 +18,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           s = Path('index.html').read_text(encoding='utf-8')
-          print('rotasticOpeningSplash count:', s.count('rotasticOpeningSplash'))
-          print('id="rotasticOpeningSplash" count:', s.count('id="rotasticOpeningSplash"'))
-          print('class="rotastic-splash count:', s.count('class="rotastic-splash'))
-          print('startOpeningSplash() calls:', s.count('startOpeningSplash();'))
-          print('startOpeningSplash definitions:', s.count('function startOpeningSplash()'))
-          print('\nALL IDS CONTAINING splash:')
-          for m in re.finditer(r'id=["\']([^"\']*splash[^"\']*)["\']', s, re.I):
-              line = s.count('\n', 0, m.start()) + 1
-              print(line, m.group(1))
-          print('\nREGISTRATION GATE OCCURRENCES:')
-          for i,line in enumerate(s.splitlines(),1):
-              if 'rotasticRegistrationGate' in line:
-                  print(i, line[:700])
-          print('\nLINES CONTAINING splash + fixed/inset/z-index/display:')
-          for i,line in enumerate(s.splitlines(),1):
-              lo=line.lower()
-              if 'splash' in lo and any(k in lo for k in ['fixed','inset','z-index','display','visibility','opacity','pointer-events','welcome','loading']):
-                  print(i, line[:500])
-          print('\nFULLSCREEN-LOOKING DIVS NEAR SPLASH MARKUP:')
-          for i,line in enumerate(s.splitlines(),1):
-              if ('fixed inset-0' in line or 'position: fixed' in line) and 6000 <= i <= 6600:
-                  print(i, line[:500])
+          lines=s.splitlines()
+          print('=== 6175-6210 ===')
+          for i in range(6175,6211): print(i, lines[i-1])
+          print('=== 7600-7665 ===')
+          for i in range(7600,7666): print(i, lines[i-1])
+          print('=== all registration gate class mutations ===')
+          for i,line in enumerate(lines,1):
+              if 'rotasticRegistrationGate' in line or ('gate.' in line and 7580 <= i <= 7700): print(i,line[:700])
           PY
