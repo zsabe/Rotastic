@@ -16,7 +16,24 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
-      - name: Apply exact access-code patch
+      - name: Apply access-code patch
+        run: python .github/scripts/patch_unified_access_codes.py
+      - name: Guard patch scope
         shell: bash
         run: |
-          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQoKcCA9IFBhdGgoImluZGV4Lmh0bWwiKQpzID0gcC5yZWFkX3RleHQoKQoKY2FyZF9wYXR0ZXJuID0gcmUuY29tcGlsZSgKICAgIHInPGRpdiBjbGFzcz0iaGlkZGVuIGNsZWFuLWNhcmQgcm91bmRlZC0yeGwgcC01IG1heC13LXhsIG14LWF1dG8gYm9yZGVyLXZpb2xldC01MDAvMjUiIGlkPSJ0ZW1wQWRtaW5Db2RlTWFuYWdlckNhcmQiPi4qPzwvZGl2PlxzKjxkaXYgY2xhc3M9ImhpZGRlbiBjbGVhbi1jYXJkIHJvdW5kZWQtMnhsIHAtNSBtYXgtdy14bCBteC1hdXRvIGJvcmRlci1lbWVyYWxkLTUwMC8yNSIgaWQ9ImFkbWluQWNjZXNzR3JhbnRDYXJkIj4nLAogICAgcmUuUwpT9WVDAK==
+          git diff --check
+          test "$(git diff --name-only | tr '\n' ' ')" = "index.html "
+          grep -q 'id="accessCodeType"' index.html
+          grep -q 'id="accessCodeDoctorSelect"' index.html
+          grep -q 'sendLastAccessCodeViaOutlook' index.html
+          grep -q "functions.invoke('rotastic-registration-admin'" index.html
+          grep -q 'p_target_physician: physicianName' index.html
+          ! git diff -- index.html | grep -E '^[+-].*<(style|link|body|main|nav|script src)' || (echo 'Unexpected global design/runtime markup change' && exit 1)
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Add unified physician access code card'
+          git push origin HEAD:main
