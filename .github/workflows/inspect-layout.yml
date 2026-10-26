@@ -1,0 +1,40 @@
+name: Inspect restored layout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-layout.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract relevant markup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text()
+          needles=['topActionGrid','live-rota-meta-row','rotaSecondaryTools','rotaDaySelector','mainRoomHeroNumber','tickerContent','Refresh</span>']
+          out=[]
+          lines=text.splitlines()
+          for needle in needles:
+              out.append('\n===== '+needle+' =====')
+              hits=[i for i,l in enumerate(lines) if needle in l]
+              for i in hits[:6]:
+                  a=max(0,i-18); b=min(len(lines),i+30)
+                  out.append(f'--- lines {a+1}-{b} ---')
+                  out.extend(f'{j+1}: {lines[j]}' for j in range(a,b))
+          Path('layout-inspection.txt').write_text('\n'.join(out))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add layout-inspection.txt
+          git commit -m 'Add temporary layout inspection' || exit 0
+          git push
