@@ -10329,39 +10329,48 @@ function saveUserPreferences() {
 
 function getQatarLongDateText(isoDate) {
   try {
-    const iso = isoDate || getQatarTodayISO();
-    const parts = String(iso).split('-').map(Number);
-    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 9, 0, 0));
-
+    const iso = String(isoDate || getQatarTodayISO());
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!match) throw new Error('Invalid Qatar date');
+    const d = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0));
     return new Intl.DateTimeFormat('en-GB', {
-      timeZone:'Asia/Qatar',
-      weekday:'long',
-      day:'numeric',
-      month:'long',
-      year:'numeric'
+      timeZone: 'Asia/Qatar',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     }).format(d);
   } catch (e) {
-    return isoDate || getQatarTodayISO();
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(new Date());
   }
 }
 
 function getQatarTodayISO() {
   try {
-    const parts = new Intl.DateTimeFormat('en-CA', {
+    const parts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Asia/Qatar',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     }).formatToParts(new Date());
-
-    const map = {};
-    parts.forEach(function(p) {
-      if (p.type !== 'literal') map[p.type] = p.value;
+    const value = {};
+    parts.forEach(function(part) {
+      if (part.type !== 'literal') value[part.type] = part.value;
     });
-
-    return map.year + '-' + map.month + '-' + map.day;
+    if (!value.year || !value.month || !value.day) throw new Error('Qatar date unavailable');
+    return [value.year, value.month, value.day].join('-');
   } catch (e) {
-    return new Date().toISOString().slice(0, 10);
+    const qatarNow = new Date(Date.now() + (3 * 60 * 60 * 1000));
+    const y = qatarNow.getUTCFullYear();
+    const m = String(qatarNow.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(qatarNow.getUTCDate()).padStart(2, '0');
+    return [y, m, d].join('-');
   }
 }
 

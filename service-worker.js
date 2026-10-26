@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v250-emergency-restore';
+const CACHE = 'rotastic-v251-splash-date';
 const CORE = [
   './',
   './index.html',
