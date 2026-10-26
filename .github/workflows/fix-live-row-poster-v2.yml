@@ -1,0 +1,50 @@
+name: Fix live row and poster v2
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'Restore LIVE ETA temperature row') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch only live row visibility and poster height
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Remove the previous brittle runtime relocation patch, wherever it was inserted.
+          s=re.sub(r'\n?<!-- rotastic-live-inline-tools-patch: only ETA/Weather/Refresh placement -->.*?<script id="rotastic-live-inline-tools-patch">.*?</script>\n?', '\n', s, flags=re.S)
+
+          marker='rotastic-live-row-poster-v2'
+          if marker not in s:
+              css='''\n<style id="rotastic-live-row-poster-v2">\n/* Preserve original design: restore the existing LIVE / ETA / temperature row. */\n.live-rota-meta-row {\n  display: grid !important;\n  grid-template-columns: minmax(74px,auto) minmax(92px,1fr) minmax(74px,auto) !important;\n  align-items: center !important;\n  gap: 6px !important;\n  visibility: visible !important;\n  opacity: 1 !important;\n}\n.live-rota-meta-row > * {\n  visibility: visible !important;\n  opacity: 1 !important;\n}\n.live-drive-slot {\n  display: flex !important;\n  justify-content: center !important;\n  align-items: center !important;\n  min-width: 0 !important;\n}\n#driveTimeBtn, #weatherBadge {\n  display: inline-flex !important;\n  visibility: visible !important;\n  opacity: 1 !important;\n  pointer-events: auto !important;\n}\n#driveTimeBtn {\n  width: auto !important;\n  min-width: 88px !important;\n  max-width: 112px !important;\n}\n#weatherBadge {\n  width: auto !important;\n  min-width: 68px !important;\n  justify-content: center !important;\n}\n/* Slightly extend the existing personal poster downward; no redesign. */\n.personal-poster-card, .personal-poster-content {\n  min-height: 430px !important;\n}\n@media (max-width: 520px) {\n  .live-rota-meta-row {\n    grid-template-columns: minmax(72px,auto) minmax(88px,1fr) minmax(68px,auto) !important;\n    gap: 5px !important;\n  }\n  .personal-poster-card, .personal-poster-content {\n    min-height: 438px !important;\n  }\n}\n</style>\n'''
+              head_end=s.find('</head>')
+              if head_end<0:
+                  raise SystemExit('No real </head> found; refusing to modify')
+              s=s[:head_end]+css+s[head_end:]
+
+          # Safety checks: original design anchors must remain.
+          required=['live-rota-meta-row','driveTimeBtn','weatherBadge','personal-poster-card','topActionGrid','scheduleMatrixContainer']
+          missing=[x for x in required if x not in s]
+          if missing:
+              raise SystemExit('Missing required original UI anchors: '+', '.join(missing))
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit exact UI correction
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No index change needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore LIVE ETA temperature row and extend poster"
+          git push
