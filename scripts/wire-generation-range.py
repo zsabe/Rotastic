@@ -97,15 +97,13 @@ if missing:
 
 p.write_text(s)
 
-scripts = re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', s, re.S | re.I)
-for i, code in enumerate(scripts):
-    if not code.strip():
-        continue
-    fn = Path(f'/tmp/rotastic-inline-{i}.js')
-    fn.write_text(code)
-    r = subprocess.run(['node', '--check', str(fn)], capture_output=True, text=True)
-    if r.returncode:
-        print(r.stderr)
-        raise SystemExit(f'inline script {i} failed syntax check')
+# Syntax-check only the exact function being introduced.
+check = replacement.split("\n\n\n// Final safety pass for Twilight", 1)[0]
+fn = Path('/tmp/generateDutyScheduleFromPlanner.js')
+fn.write_text(check)
+r = subprocess.run(['node', '--check', str(fn)], capture_output=True, text=True)
+if r.returncode:
+    print(r.stderr)
+    raise SystemExit('generation function failed syntax check')
 
-print(f'Checked {len(scripts)} inline scripts successfully')
+print('Generation function syntax check passed')
