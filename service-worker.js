@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v228-direct-splash-fix';
+const CACHE = 'rotastic-v229-single-splash';
 const CORE = [
   './',
   './index.html',
