@@ -1,0 +1,41 @@
+name: Diagnose splash layers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-splash-layers.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect splash markup and startup paths
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('index.html').read_text(encoding='utf-8')
+          print('rotasticOpeningSplash count:', s.count('rotasticOpeningSplash'))
+          print('id="rotasticOpeningSplash" count:', s.count('id="rotasticOpeningSplash"'))
+          print('class="rotastic-splash count:', s.count('class="rotastic-splash'))
+          print('startOpeningSplash() calls:', s.count('startOpeningSplash();'))
+          print('startOpeningSplash definitions:', s.count('function startOpeningSplash()'))
+          print('\nALL IDS CONTAINING splash:')
+          for m in re.finditer(r'id=["\']([^"\']*splash[^"\']*)["\']', s, re.I):
+              line = s.count('\n', 0, m.start()) + 1
+              print(line, m.group(1))
+          print('\nLINES CONTAINING splash + fixed/inset/z-index/display:')
+          for i,line in enumerate(s.splitlines(),1):
+              lo=line.lower()
+              if 'splash' in lo and any(k in lo for k in ['fixed','inset','z-index','display','visibility','opacity','pointer-events','welcome','loading']):
+                  print(i, line[:500])
+          print('\nFULLSCREEN-LOOKING DIVS NEAR SPLASH MARKUP:')
+          for i,line in enumerate(s.splitlines(),1):
+              if ('fixed inset-0' in line or 'position: fixed' in line) and 6000 <= i <= 6600:
+                  print(i, line[:500])
+          PY
