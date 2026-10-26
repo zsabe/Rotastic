@@ -19619,6 +19619,15 @@ function renderAutoGenerationStatus() {
 }
 
 async function generateAutomaticWeeklyDraftIfDue() {
+  try {
+    const qatarToday = typeof getQatarTodayISO === 'function' ? getQatarTodayISO() : '';
+    if (qatarToday === '2026-10-28') {
+      const status = document.getElementById('autoGenerationStatus');
+      if (status) status.textContent = 'Manual exception: no automatic rota generation on Wednesday 28 Oct 2026. Normal weekly generation resumes next Wednesday.';
+      return false;
+    }
+  } catch (e) {}
+
   await rotasticRefreshGenerationLock();
   if (!rotasticGuardNewGeneration(false)) { renderAutoGenerationStatus(); return false; }
   const due = getMostRecentWednesday2200Qatar();
