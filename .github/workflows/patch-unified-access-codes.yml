@@ -17,11 +17,16 @@ jobs:
           ref: main
           fetch-depth: 1
       - name: Apply access-code patch
-        run: python .github/scripts/patch_unified_access_codes.py
+        shell: bash
+        run: |
+          sed -i "s/s = fn_pattern.sub(new_fn, s, count=1)/s = fn_pattern.sub(lambda _m: new_fn, s, count=1)/" .github/scripts/patch_unified_access_codes.py
+          python .github/scripts/patch_unified_access_codes.py
       - name: Guard patch scope
         shell: bash
         run: |
           git diff --check
+          test "$(git diff --name-only | tr '\n' ' ')" = ".github/scripts/patch_unified_access_codes.py index.html " || test "$(git diff --name-only | tr '\n' ' ')" = "index.html .github/scripts/patch_unified_access_codes.py "
+          git checkout -- .github/scripts/patch_unified_access_codes.py
           test "$(git diff --name-only | tr '\n' ' ')" = "index.html "
           grep -q 'id="accessCodeType"' index.html
           grep -q 'id="accessCodeDoctorSelect"' index.html
