@@ -13,32 +13,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show relevant generate and rota code
+      - name: Show target functions
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          s=Path('index.html').read_text(encoding='utf-8').splitlines()
-          terms=[
-            'Delegated Admin','Smart Rules Assistant','Schedule Amendment Assistant',
-            'Clinical Lead','Generate schedule','Rota approval','Physician directory',
-            'Day total','day total','Developed by Dr. Zaid','shift notification',
-            'notification','generateSchedule','autoGenerate','Wednesday'
-          ]
-          hits=[]
-          for i,line in enumerate(s):
-            if any(t.lower() in line.lower() for t in terms):
-              hits.append(i)
-          merged=[]
-          for i in hits:
-            a=max(0,i-12); b=min(len(s),i+28)
-            if merged and a<=merged[-1][1]+5: merged[-1]=(merged[-1][0],max(merged[-1][1],b))
-            else: merged.append((a,b))
-          for a,b in merged[:30]:
-            print(f'--- lines {a+1}-{b} ---')
-            for n in range(a,b):
-              line=s[n]
-              line=re.sub(r'(?i)(sb_secret_[A-Za-z0-9_\-]+)', '[secret-redacted]', line)
-              print(f'{n+1}: {line}')
+          lines=Path('index.html').read_text(encoding='utf-8').splitlines()
+          names=['analyseScheduleAmendment','addSmartRotaRule','applyMoursiShiftOverride','renderPhysicianManagement','generateDutyScheduleFromPlanner','rotasticRefreshGenerationLock','getCurrentUserShiftWindow']
+          for name in names:
+            hits=[i for i,l in enumerate(lines) if name.lower() in l.lower()]
+            for i in hits[:5]:
+              a=max(0,i-8); b=min(len(lines),i+90)
+              print(f'--- {name} lines {a+1}-{b} ---')
+              for n in range(a,b):
+                line=re.sub(r'(?i)(sb_secret_[A-Za-z0-9_\-]+)', '[secret-redacted]', lines[n])
+                print(f'{n+1}: {line}')
+          for term in ['day total','available doctors','availableDoctors','shift reminder','one hour','60 * 60','60*60','auto_generation_last_wednesday','22:00']:
+            for i,l in enumerate(lines):
+              if term.lower() in l.lower():
+                a=max(0,i-8); b=min(len(lines),i+35)
+                print(f'--- term {term} lines {a+1}-{b} ---')
+                for n in range(a,b): print(f'{n+1}: {lines[n]}')
           PY
