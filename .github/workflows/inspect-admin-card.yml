@@ -1,0 +1,51 @@
+name: Inspect admin card anchors
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-admin-card.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print exact admin fragments
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          needles = [
+              'tempAdminCodeManagerCard',
+              'createTemporaryAdminCode',
+              'tempAdminDurationMinutes',
+              'adminGrantDoctorSelect',
+              'rotastic_issue_registration_code_v2',
+              'rotastic-registration-admin',
+              'mmoursi@phcc.gov.qa',
+          ]
+          for needle in needles:
+              print('\n' + '='*30 + f' {needle} ' + '='*30)
+              start = 0
+              hits = 0
+              while True:
+                  i = s.find(needle, start)
+                  if i < 0:
+                      break
+                  hits += 1
+                  a = max(0, i - 2200)
+                  b = min(len(s), i + 4200)
+                  print(s[a:b])
+                  print('\n--- HIT END ---')
+                  start = i + len(needle)
+                  if hits >= 4:
+                      print('Additional hits omitted')
+                      break
+              if hits == 0:
+                  print('NOT FOUND')
+          PY
