@@ -1,0 +1,50 @@
+name: Inspect stability pass targets
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-stability-pass.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Extract relevant app sections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          terms=[
+            'Feedback','tabFeedback','announcement','Notifications','notification','switch','Admin View','Colleague View',
+            'createSelectedAccessCode','populateAccessCodeDoctorSelect','getKnownPhysicianEmail','rotasticAccessCodeEmailForDoctor',
+            'Logged in as','Not signed in','rotasticRegistrationIdentity','rotasticApplyVerifiedIdentity','switchView',
+            'metrics','chart','PDF','jsPDF','export'
+          ]
+          out=[]; seen=set()
+          lines=s.splitlines()
+          for term in terms:
+            for i,l in enumerate(lines):
+              if term.lower() in l.lower():
+                a=max(0,i-16); b=min(len(lines),i+45); key=(a,b)
+                if key in seen: continue
+                seen.add(key)
+                out.append(f'\n--- {term} @ {i+1} ---')
+                for n in range(a,b):
+                  line=re.sub(r"ROTASTIC_ZAID_PERMANENT_CODE\s*=\s*['\"][^'\"]+['\"]", "ROTASTIC_ZAID_PERMANENT_CODE='[redacted]'", lines[n])
+                  out.append(f'{n+1}: {line}')
+          Path('tmp-stability-context.txt').write_text('\n'.join(out),encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tmp-stability-context.txt
+          git commit -m 'Temporary stability inspection context'
+          git push origin HEAD:main
