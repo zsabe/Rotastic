@@ -6735,14 +6735,22 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
 <div>
 <h3 class="text-xs font-bold text-violet-300 uppercase tracking-wider flex items-center">
-<i class="fa-solid fa-key mr-2"></i>Temporary Admin Access
+<i class="fa-solid fa-key mr-2"></i>Access Codes
           </h3>
-<p class="text-[11px] text-slate-400 mt-1">
-            Create or revoke time-limited codes used to unlock Admin View.
-          </p>
+<p class="text-[11px] text-slate-400 mt-1">Issue a first-time setup code or temporary Admin View code for an authorised physician.</p>
 </div>
 </div>
-<div class="pt-4 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+<div class="pt-4 space-y-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="accessCodeType" onchange="onAccessCodeTypeChange()">
+<option value="first_time">First-time setup code</option>
+<option value="admin">Temporary Admin code</option>
+</select>
+<select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="accessCodeDoctorSelect">
+<option value="">Select physician</option>
+</select>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
 <select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="tempAdminDurationMinutes">
 <option value="30">30 minutes</option>
 <option value="60">1 hour</option>
@@ -6758,17 +6766,22 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <option value="30240">3 weeks</option>
 <option value="43200">1 month</option>
 </select>
-<button class="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-xl transition" onclick="createTemporaryAdminCode()" type="button">
-<i class="fa-solid fa-plus mr-1.5"></i>Create Code
-        </button>
+<button class="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-xl transition" onclick="createSelectedAccessCode()" type="button" id="createAccessCodeButton">
+<i class="fa-solid fa-plus mr-1.5"></i>Generate Code
+</button>
+</div>
+<div class="text-[10px] text-slate-500" id="accessCodeModeHint">First-time setup codes are valid for 24 hours.</div>
 </div>
 <div class="hidden mt-3 p-3 rounded-xl bg-violet-950/30 border border-violet-500/30" id="newTempAdminCodeBox">
-<div class="text-[10px] uppercase tracking-wider font-bold text-violet-300">New Admin View code</div>
+<div class="text-[10px] uppercase tracking-wider font-bold text-violet-300" id="newTempAdminCodeLabel">New access code</div>
 <div class="text-xl font-black tracking-[0.18em] text-white mt-1 select-all" id="newTempAdminCodeValue"></div>
 <div class="text-[10px] text-slate-400 mt-1" id="newTempAdminCodeExpiry"></div>
+<button class="hidden mt-3 w-full px-3 py-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-300 text-xs font-black" id="sendAccessCodeOutlookBtn" onclick="sendLastAccessCodeViaOutlook()" type="button">
+<i class="fa-regular fa-envelope mr-1.5"></i>Send via Outlook
+</button>
 </div>
 <div class="mt-4">
-<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">Active / recent codes</div>
+<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">Active / recent Admin View codes</div>
 <div class="space-y-2" id="tempAdminCodeList"></div>
 </div>
 </div>
@@ -9010,36 +9023,119 @@ function saveTemporaryAdminCodes(rows) {
   Storage.setJSON('rotastic_temporary_admin_codes', Array.isArray(rows) ? rows : []);
 }
 
-async function createTemporaryAdminCode() {
-  if (!canManageAdminAccess()) {
-    alert('Temporary Admin codes can only be created from an unlocked permanent Admin View.');
+let rotasticLastIssuedAccessCode = null;
+
+function populateAccessCodeDoctorSelect() {
+  const select = document.getElementById('accessCodeDoctorSelect');
+  if (!select || typeof getDoctorsAlphabetically !== 'function') return;
+  const current = select.value;
+  select.innerHTML = '<option value="">Select physician</option>' + getDoctorsAlphabetically()
+    .filter(function(d){ return d && d.name; })
+    .map(function(d){ return '<option value="' + String(d.name).replace(/"/g,'&quot;') + '">' + d.name + '</option>'; })
+    .join('');
+  if (current) select.value = current;
+}
+
+function onAccessCodeTypeChange() {
+  const type = document.getElementById('accessCodeType')?.value || 'first_time';
+  const duration = document.getElementById('tempAdminDurationMinutes');
+  const hint = document.getElementById('accessCodeModeHint');
+  if (duration) {
+    duration.disabled = type === 'first_time';
+    if (type === 'first_time') duration.value = '1440';
+  }
+  if (hint) hint.textContent = type === 'first_time'
+    ? 'First-time setup codes are valid for 24 hours.'
+    : 'Choose how long this physician can unlock Admin View.';
+}
+
+function rotasticAccessCodeEmailForDoctor(docName) {
+  try {
+    if (typeof getKnownPhysicianEmail === 'function') return String(getKnownPhysicianEmail(docName) || '').trim().toLowerCase();
+  } catch(e) {}
+  return '';
+}
+
+function showIssuedAccessCode(kind, physicianName, email, code, expiresAt) {
+  rotasticLastIssuedAccessCode = { kind, physicianName, email, code, expiresAt };
+  const box = document.getElementById('newTempAdminCodeBox');
+  const label = document.getElementById('newTempAdminCodeLabel');
+  const val = document.getElementById('newTempAdminCodeValue');
+  const expiry = document.getElementById('newTempAdminCodeExpiry');
+  const outlook = document.getElementById('sendAccessCodeOutlookBtn');
+  if (box) box.classList.remove('hidden');
+  if (label) label.textContent = kind === 'first_time' ? 'New first-time setup code' : 'New Admin View code';
+  if (val) val.innerText = code;
+  if (expiry) expiry.innerText = 'For ' + physicianName + ' · Expires ' + formatWorkflowTime(expiresAt);
+  if (outlook) outlook.classList.toggle('hidden', !email);
+  try { navigator.clipboard.writeText(code); } catch(e) {}
+}
+
+function sendLastAccessCodeViaOutlook() {
+  const info = rotasticLastIssuedAccessCode;
+  if (!info || !info.code || !info.email) {
+    alert('Generate a code for a physician with a saved PHCC email first.');
     return;
   }
+  const firstTime = info.kind === 'first_time';
+  const subject = firstTime ? 'Rotastic activation code' : 'ROTASTIC Admin View access code';
+  const body = firstTime
+    ? ('Dear ' + info.physicianName + ',\n\nYour ROTASTIC first-time setup code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter your PHCC email and this code to complete setup.\n\nRegards,\nDr Zaid')
+    : ('Dear ' + info.physicianName + ',\n\nYour temporary ROTASTIC Admin View code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter this code under Temporary Administration Access.\n\nRegards,\nDr Zaid');
+  window.location.href = 'mailto:' + encodeURIComponent(info.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
 
-  const minutes = parseInt(document.getElementById('tempAdminDurationMinutes')?.value || '480', 10);
+async function createSelectedAccessCode() {
+  if (!canManageAdminAccess()) {
+    alert('Access codes can only be created from an unlocked permanent Admin View.');
+    return;
+  }
+  const kind = document.getElementById('accessCodeType')?.value || 'first_time';
+  const physicianName = String(document.getElementById('accessCodeDoctorSelect')?.value || '').trim();
+  if (!physicianName) {
+    alert('Select a physician first.');
+    return;
+  }
+  const email = rotasticAccessCodeEmailForDoctor(physicianName);
+  if (!email || !/@phcc\.gov\.qa$/i.test(email)) {
+    alert('No PHCC email is saved for ' + physicianName + '.');
+    return;
+  }
   try {
     await rotasticBackendEnsureSession();
     if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified Admin sign-in is required.');
-    const result = await rotasticBackendClient.rpc('rotastic_issue_admin_access_code', {
-      p_minutes: Math.max(5, minutes || 480),
-      p_target_physician: null
-    });
-    if (result.error) throw result.error;
-    const row = Array.isArray(result.data) ? result.data[0] : result.data;
-    const code = String(row?.admin_code || '');
-    if (!/^\d{8}$/.test(code)) throw new Error('The Admin access service did not return a valid code.');
-
-    const box = document.getElementById('newTempAdminCodeBox');
-    const val = document.getElementById('newTempAdminCodeValue');
-    const expiry = document.getElementById('newTempAdminCodeExpiry');
-    if (box) box.classList.remove('hidden');
-    if (val) val.innerText = code;
-    if (expiry) expiry.innerText = 'Expires ' + formatWorkflowTime(row.expires_at);
-    try { await navigator.clipboard.writeText(code); } catch(e) {}
-    await renderTempAdminCodeManager();
+    if (kind === 'first_time') {
+      const result = await rotasticBackendClient.functions.invoke('rotastic-registration-admin', {
+        body: { action:'generate', email:email, physician_name:physicianName, valid_minutes:1440 }
+      });
+      if (result.error) throw result.error;
+      const row = result.data || {};
+      const code = String(row.registration_code || '');
+      if (!/^\d{6}$/.test(code)) throw new Error(row.error || 'The registration service did not return a valid setup code.');
+      showIssuedAccessCode('first_time', physicianName, email, code, row.expires_at);
+    } else {
+      const minutes = parseInt(document.getElementById('tempAdminDurationMinutes')?.value || '480', 10);
+      const result = await rotasticBackendClient.rpc('rotastic_issue_admin_access_code', {
+        p_minutes: Math.max(5, minutes || 480),
+        p_target_physician: physicianName
+      });
+      if (result.error) throw result.error;
+      const row = Array.isArray(result.data) ? result.data[0] : result.data;
+      const code = String(row?.admin_code || '');
+      if (!/^\d{8}$/.test(code)) throw new Error('The Admin access service did not return a valid code.');
+      showIssuedAccessCode('admin', physicianName, email, code, row.expires_at);
+      await renderTempAdminCodeManager();
+    }
   } catch (e) {
-    alert(e?.message || 'Could not create the Admin View code.');
+    alert(e?.message || 'Could not create this access code.');
   }
+}
+
+async function createTemporaryAdminCode() {
+  const mode = document.getElementById('accessCodeType');
+  if (mode) mode.value = 'admin';
+  onAccessCodeTypeChange();
+  return createSelectedAccessCode();
 }
 
 async function revokeTemporaryAdminCode(id) {
@@ -9083,6 +9179,9 @@ async function renderTempAdminCodeManager() {
   const canManageCodes = canManageAdminAccess();
   card.classList.toggle('hidden', !canManageCodes);
   if (!canManageCodes) return;
+
+  populateAccessCodeDoctorSelect();
+  onAccessCodeTypeChange();
 
   const listEl = document.getElementById('tempAdminCodeList');
   if (!listEl) return;
