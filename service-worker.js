@@ -1,10 +1,9 @@
-const CACHE = 'rotastic-v237-compact-rota-layout';
+const CACHE = 'rotastic-v238-layout-rollback';
 const CORE = [
   './',
   './index.html',
   './admin-comms-ui.js',
   './stability-ui.js',
-  './rotastic-compact-layout-v2.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -47,10 +46,6 @@ body.antialiased{background:#090d16!important;color:#e2e8f0!important}
   const adminCenterScript = '<script id="rotastic-admin-center-loader" src="./admin-comms-ui.js?v=20261026-3" defer></script>';
   if (!html.includes('rotastic-admin-center-loader')) {
     html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${adminCenterScript}</body>`) : html + adminCenterScript;
-  }
-  const compactLayoutScript = '<script id="rotastic-compact-layout-loader" src="./rotastic-compact-layout-v2.js?v=20261026-1" defer></script>';
-  if (!html.includes('rotastic-compact-layout-loader')) {
-    html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${compactLayoutScript}</body>`) : html + compactLayoutScript;
   }
   const headers = new Headers(response.headers);
   headers.delete('content-length');
