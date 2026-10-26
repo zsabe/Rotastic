@@ -1,0 +1,27 @@
+name: Inspect exact rota block
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, 'Inspect exact rota block') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('index.html').read_text(encoding='utf-8').splitlines()
+          a,b=6388,6485
+          Path('rota-exact.txt').write_text('\n'.join(f'{i+1}: {lines[i]}' for i in range(a-1,b)),encoding='utf-8')
+          PY
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add rota-exact.txt
+          git commit -m 'Inspect exact rota block'
+          git push
