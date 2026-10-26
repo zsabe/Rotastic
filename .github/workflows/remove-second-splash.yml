@@ -1,0 +1,51 @@
+name: Remove second splash start
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/remove-second-splash.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove duplicate splash start
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = "  initializeRotasticTextSize();\n  initializeRotaZoom();\n  startOpeningSplash();\n\n  requestBrowserNotificationPermission();"
+          new = "  initializeRotasticTextSize();\n  initializeRotaZoom();\n\n  requestBrowserNotificationPermission();"
+          if old not in s:
+              raise SystemExit('duplicate splash-start anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          sw = Path('service-worker.js')
+          w = sw.read_text(encoding='utf-8')
+          if "const CACHE = 'rotastic-v228-direct-splash-fix';" in w:
+              w = w.replace("const CACHE = 'rotastic-v228-direct-splash-fix';", "const CACHE = 'rotastic-v229-single-splash';", 1)
+          else:
+              import re
+              w = re.sub(r"const CACHE = 'rotastic-v[^']+';", "const CACHE = 'rotastic-v229-single-splash';", w, count=1)
+          sw.write_text(w, encoding='utf-8')
+          PY
+      - name: Commit single splash fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html service-worker.js
+          git diff --cached --check
+          git commit -m "Remove duplicate opening splash start"
+          git push origin HEAD:main
