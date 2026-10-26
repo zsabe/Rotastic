@@ -1,4 +1,4 @@
-name: Patch splash directly
+name: Remove second web splash
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Make opening splash one-way
+      - name: Remove HTML splash while preserving startup handoff
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -25,52 +25,43 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          start_old = "function startOpeningSplash() {\n  try { updateOpeningSplashName(); }"
-          start_new = "function startOpeningSplash() {\n  if (window.__rotasticSplashDismissed || window.__rotasticSplashStarted) return;\n  window.__rotasticSplashStarted = true;\n\n  try { updateOpeningSplashName(); }"
-          if start_old not in s:
-              raise SystemExit('startOpeningSplash anchor not found')
-          s = s.replace(start_old, start_new, 1)
+          # The Android/PWA launcher is the first splash. Suppress only the
+          # in-page HTML overlay so there is no second splash after handoff.
+          style = """\n<style id=\"rotastic-second-splash-removal\">\n#rotasticOpeningSplash { display: none !important; visibility: hidden !important; pointer-events: none !important; }\n</style>\n"""
+          if 'id="rotastic-second-splash-removal"' not in s:
+              if '</head>' not in s:
+                  raise SystemExit('head closing tag not found')
+              s = s.replace('</head>', style + '</head>', 1)
 
-          escape_old = "    var splash = document.getElementById('rotasticOpeningSplash');\n    if (!splash) return;\n\n    splash.classList.add('rotastic-splash-hide');"
-          escape_new = "    var splash = document.getElementById('rotasticOpeningSplash');\n    if (!splash) return;\n\n    window.__rotasticSplashDismissed = true;\n    window.__rotasticSplashStarted = false;\n    splash.classList.add('rotastic-splash-hide');"
-          if escape_old not in s:
-              raise SystemExit('forceEscapeSplash anchor not found')
-          s = s.replace(escape_old, escape_new, 1)
+          # Keep all existing post-splash startup work, but execute its handoff
+          # immediately because the HTML splash is intentionally not rendered.
+          if 'setTimeout(finishSplash, 4200);' in s:
+              s = s.replace('setTimeout(finishSplash, 4200);', 'setTimeout(finishSplash, 0);', 1)
+          elif 'setTimeout(finishSplash, 0);' not in s:
+              raise SystemExit('normal splash timer anchor not found')
 
-          finish_old = "    if (finished) return;\n    finished = true;\n\n    if (window.__rotasticSplashEscapeTimer) {"
-          finish_new = "    if (finished) return;\n    finished = true;\n    window.__rotasticSplashDismissed = true;\n    window.__rotasticSplashStarted = false;\n\n    if (window.__rotasticSplashEscapeTimer) {"
-          if finish_old not in s:
-              raise SystemExit('finishSplash anchor not found')
-          s = s.replace(finish_old, finish_new, 1)
-
-          # Once hidden, remove the overlay from the DOM so no later startup path can resurrect it.
-          emergency_old = "    setTimeout(function () {\n      splash.style.display = 'none';\n    }, 260);"
-          emergency_new = "    setTimeout(function () {\n      splash.style.display = 'none';\n      if (splash.parentNode) splash.parentNode.removeChild(splash);\n    }, 260);"
-          if emergency_old not in s:
-              raise SystemExit('emergency hide anchor not found')
-          s = s.replace(emergency_old, emergency_new, 1)
-
-          finish_hide_old = "    setTimeout(function() {\n      splash.style.display = 'none';\n      splash.style.pointerEvents = 'none';\n    }, 420);"
-          finish_hide_new = "    setTimeout(function() {\n      splash.style.display = 'none';\n      splash.style.pointerEvents = 'none';\n      if (splash.parentNode) splash.parentNode.removeChild(splash);\n    }, 420);"
-          if finish_hide_old not in s:
-              raise SystemExit('normal hide anchor not found')
-          s = s.replace(finish_hide_old, finish_hide_new, 1)
+          if 'setTimeout(finishSplash, 5000);' in s:
+              s = s.replace('setTimeout(finishSplash, 5000);', 'setTimeout(finishSplash, 100);', 1)
+          elif 'setTimeout(finishSplash, 100);' not in s:
+              raise SystemExit('safety splash timer anchor not found')
 
           p.write_text(s, encoding='utf-8')
 
           sw = Path('service-worker.js')
           w = sw.read_text(encoding='utf-8')
-          old_cache = "const CACHE = 'rotastic-v227-known-working-dark';"
-          new_cache = "const CACHE = 'rotastic-v228-direct-splash-fix';"
-          if old_cache not in w:
+          old_cache = "const CACHE = 'rotastic-v228-direct-splash-fix';"
+          new_cache = "const CACHE = 'rotastic-v229-no-second-splash';"
+          if old_cache in w:
+              w = w.replace(old_cache, new_cache, 1)
+          elif new_cache not in w:
               raise SystemExit('service worker cache anchor not found')
-          sw.write_text(w.replace(old_cache, new_cache, 1), encoding='utf-8')
+          sw.write_text(w, encoding='utf-8')
           PY
-      - name: Commit direct splash fix
+      - name: Commit second splash removal
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html service-worker.js
           git diff --cached --check
-          git commit -m "Fix opening splash one-way dismissal"
+          git commit -m "Remove second web splash layer"
           git push origin HEAD:main
