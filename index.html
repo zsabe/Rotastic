@@ -17274,7 +17274,7 @@ function renderShiftCard(s, period, roomPill) {
         <div class="rotastic-shift-notice">
           <span class="uppercase tracking-wider font-black text-slate-600">Total on duty</span><strong class="text-slate-200">${dutyCount}</strong>
           <span class="uppercase tracking-wider font-black text-slate-600">On Leave</span><strong class="text-rose-300">${shiftLeaveCount}</strong>
-          <small class="rotastic-shift-day-total">Day total ${dayLeaveCount}</small>
+          <small class="rotastic-shift-day-total">Day total ${rotasticAvailableDoctorCountForDay(s)}</small>
         </div>
       </div>
 
@@ -17338,7 +17338,7 @@ const ROTASTIC_FULL_DOCTOR_NAMES = {
   'Dr Maya S.':'Dr Maya Sukkari',
   'Dr Laila A.':'Dr Laila Ahmed Said Ayoub',
   'Dr Saba T.':'Dr Saba Tahir',
-  'Dr Tayseer A.':'Dr Tayseer Fathjelalim Abdelhalim Ayed',
+  'Dr Tayseer A.':'Dr Tayseer Fathielalim Abdelhalim Ayed',
   'Dr Zaid SE.':'Dr Zaid Husameddin Yousef Sabe Eleish'
 };
 
@@ -26021,5 +26021,6 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
 </script>
 
 <script id="rotastic-admin-center-loader" src="./admin-comms-ui.js?v=20261026-5" defer></script>
+<script id="rotastic-generate-cleanup" src="./generate-cleanup.js?v=20261026-1" defer></script>
 </body>
 </html>

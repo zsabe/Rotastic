@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v238-admin-center-safe';
+const CACHE = 'rotastic-v237-generate-cleanup';
 const CORE = [
   './',
   './index.html',
