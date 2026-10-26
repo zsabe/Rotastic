@@ -6181,60 +6181,6 @@ button,input,select,textarea{font-size:max(16px,1em);}
 }
 </style>
 
-
-<style id="rotastic-requested-direct-layout">
-/* Requested compact control geometry; original ROTASTIC colours/cards remain unchanged. */
-.live-rota-meta-row{display:grid!important;grid-template-columns:auto minmax(92px,1fr) auto!important;gap:6px!important;align-items:center!important;margin-top:2px!important}
-.live-rota-meta-row>div:first-child,.live-drive-slot,#weatherBadge,.live-drive-slot #driveTimeBtn{min-height:30px!important;height:30px!important;border-radius:8px!important;padding-top:0!important;padding-bottom:0!important;box-shadow:none!important}
-.live-rota-meta-row>div:first-child{padding:0 7px!important;background:transparent!important;border-color:transparent!important}
-.live-drive-slot{background:transparent!important;border:0!important}.live-drive-slot #driveTimeBtn{padding:0 7px!important;background:rgba(14,165,233,.045)!important}
-#weatherBadge{padding:0 7px!important;background:rgba(15,23,42,.28)!important}
-#driveTimeBtnText,#weatherTemp{font-size:9px!important}.rota-action-btn{min-height:54px!important;height:auto!important;border-radius:16px!important}
-#rotaDaySelector{display:none!important}
-#rotasticRotaDayHeader{display:grid;grid-template-columns:38px minmax(0,1fr) 38px;gap:8px;align-items:center;margin:0 0 9px;padding:8px;border:1px solid rgba(56,189,248,.18);border-radius:14px;background:rgba(15,23,42,.56)}
-#rotasticRotaDayHeader button{width:36px;height:36px;border-radius:10px;border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.8);color:#e2e8f0}
-#rotasticRotaDayHeader .rdh-center{text-align:center;min-width:0}#rotasticRotaDayHeader .rdh-day{font-size:15px;font-weight:900;color:#fff}#rotasticRotaDayHeader .rdh-meta{font-size:10px;color:#94a3b8;margin-top:2px}#rotasticRotaDayHeader .rdh-room{color:#7dd3fc;font-weight:900}
-#notificationUnreadBadge{pointer-events:none}.rotastic-my-metrics-admin-hide{display:none!important}
-#tabAnnouncements,#tabAnnouncements *{max-width:100%;box-sizing:border-box}#tabAnnouncements p,#tabAnnouncements div{overflow-wrap:anywhere}
-@media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto!important}.live-rota-meta-row>div:first-child,.live-drive-slot,#weatherBadge,.live-drive-slot #driveTimeBtn{min-height:28px!important;height:28px!important}#settingsViewSwitchBtn,#rotasticLogoutBtn{font-size:10px!important;padding-left:8px!important;padding-right:8px!important}}
-</style>
-
-<style id="rotastic-requested-compact-rota">
-/* Requested minor reordering only: preserve the restored visual design. */
-.live-rota-meta-row{grid-template-columns:auto minmax(92px,1fr) auto!important;gap:6px!important;align-items:center!important}
-.rotastic-live-inline{display:flex!important;align-items:center!important;gap:5px!important;margin:0!important;min-width:0!important;white-space:nowrap!important}
-.rotastic-live-inline #liveRotaUpdatedAt{max-width:72px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-#topActionGrid{margin-top:2px!important}
-#rotaSecondaryTools{min-height:0!important;height:0!important;margin:0!important;padding:0!important;overflow:visible!important}
-#rotaSecondaryTools>div{height:0!important;min-height:0!important;overflow:visible!important}
-#rotaDaySelector{margin:3px 0 7px!important;padding:4px 2px!important;overflow:visible!important}
-.rotastic-day-nav-arrow{width:36px!important;height:36px!important;flex:0 0 36px!important;border-radius:10px!important;border:1px solid rgba(51,65,85,.95)!important;background:rgba(15,23,42,.78)!important;color:#cbd5e1!important;display:grid!important;place-items:center!important}
-.rotastic-day-nav-copy{min-width:0!important;flex:1!important;text-align:center!important;line-height:1.1!important}
-.rotastic-day-nav-name{font-size:15px!important;font-weight:900!important;color:#f8fafc!important}
-.rotastic-day-nav-meta{margin-top:3px!important;font-size:10px!important;font-weight:750!important;color:#7dd3fc!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-@media(max-width:520px){.live-rota-meta-row{grid-template-columns:minmax(72px,auto) minmax(92px,1fr) minmax(62px,auto)!important;gap:5px!important}.rotastic-live-inline #liveRotaUpdatedAt{display:none!important}.live-drive-slot #driveTimeBtn{height:24px!important;padding:0 6px!important}.live-drive-slot #driveTimeBtnText{font-size:9px!important}.live-drive-slot #driveTimeBtnSub{display:none!important}#weatherBadge{height:24px!important;font-size:9px!important}}
-</style>
-
-<style id="rotastic-live-meta-plain-fix">
-/* Requested visual correction only: ETA and Weather remain clickable, without card-like rectangles. */
-.live-rota-meta-row #driveTimeBtn{
-  background:transparent!important;
-  border-color:transparent!important;
-  box-shadow:none!important;
-  border-radius:0!important;
-  padding-left:4px!important;
-  padding-right:4px!important;
-}
-.live-rota-meta-row #weatherBadge{
-  background:transparent!important;
-  border-color:transparent!important;
-  box-shadow:none!important;
-  border-radius:0!important;
-  padding-left:4px!important;
-  padding-right:4px!important;
-}
-.live-rota-meta-row{background:transparent!important;border:0!important;box-shadow:none!important;}
-</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
@@ -6318,10 +6264,13 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnLeavePlanner" onclick="switchTab('leaveplanner')" type="button">
 <i class="fa-solid fa-calendar-week mr-1.5 text-emerald-400"></i>Planner
       </button>
+<button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" data-rotastic-tab="feedback" id="deskTabBtnFeedback" onclick="switchTab('feedback')" type="button">
+<i class="fa-regular fa-comment-dots mr-1.5 text-cyan-400"></i>Shift Feedback
+      </button>
 <button class="admin-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition" id="deskTabBtnAnnouncements" onclick="switchTab('announcements')" style="display:none;" type="button">
 <i class="fa-solid fa-bullhorn mr-1.5 text-amber-400"></i>Announcements
       </button>
-<button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnMetrics" onclick="switchTab('metrics')" type="button">
+<button class="admin-tab px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnMetrics" onclick="switchTab('metrics')" style="display:none;" type="button">
 <i class="fa-solid fa-chart-pie mr-1.5 text-slate-400"></i>Metrics
       </button>
 <button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnUserSettings" onclick="switchTab('usersettings')" type="button">
@@ -6329,9 +6278,9 @@ button,input,select,textarea{font-size:max(16px,1em);}
       </button>
 </nav>
 <div class="flex items-center space-x-2" id="adminBadgeWrapper">
-<button aria-label="Notifications" class="relative w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center justify-center transition" id="notificationBellBtn" onclick="openRotasticNotificationCenter()" type="button">
-<i class="fa-regular fa-bell text-lg"></i>
-<span class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black leading-[18px] text-center" id="notificationUnreadBadge">0</span>
+<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700 flex items-center space-x-1.5 transition" id="adminBadgeBtn" onclick="handleViewBadgeClick()" type="button">
+<i class="fa-solid fa-lock text-amber-400 text-[10px]" id="adminLockIcon"></i>
+<span id="adminBadgeText">Admin Login</span>
 </button>
 </div>
 </div>
@@ -6445,14 +6394,11 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
 <div class="w-full space-y-1.5">
 <div class="live-rota-meta-row w-full">
-<div class="rotastic-live-mini rotastic-live-inline" id="rotasticLiveMini">
-<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
-  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
-  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-</span>
-<span class="rotastic-live-mini-label">LIVE</span>
-<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
-</div>
+<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
+<i class="fa-solid fa-arrow-up-from-bracket"></i>
+<span>Export</span>
+<i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
+</button>
 <div class="live-drive-slot">
 <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
 <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
@@ -6476,8 +6422,8 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
 <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
 </button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportBtn" onclick="toggleRotaExportMenu()" type="button">
-<i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
+<i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
 </button>
 </div>
 </div>
@@ -6495,6 +6441,11 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 <div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
 <div class="relative flex items-center justify-end gap-2">
+<button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
+<i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
+<span>Export</span>
+<i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+</button>
 <div class="flex items-center space-x-2" id="rotaExportActions">
 <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToImageReport()" type="button">
 <i class="fa-regular fa-image text-[10px]"></i>
@@ -6511,14 +6462,21 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 </div>
 </div>
-
-<div class="flex items-center justify-between gap-2 py-1" id="rotaDaySelector">
-<button aria-label="Previous rota day" class="rotastic-day-nav-arrow" onclick="rotasticMoveRotaDay(-1)" type="button"><i class="fa-solid fa-chevron-left"></i></button>
-<div class="rotastic-day-nav-copy">
-<div class="rotastic-day-nav-name" id="rotasticDayNavName">Sunday</div>
-<div class="rotastic-day-nav-meta" id="rotasticDayNavMeta">Date · Room —</div>
+<div class="rotastic-live-mini" id="rotasticLiveMini">
+<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+</span>
+<span class="rotastic-live-mini-label">LIVE</span>
+<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
 </div>
-<button aria-label="Next rota day" class="rotastic-day-nav-arrow" onclick="rotasticMoveRotaDay(1)" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+<div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(1)" type="button">Mon</button>
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(2)" type="button">Tue</button>
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(3)" type="button">Wed</button>
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(4)" type="button">Thu</button>
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(-1)" type="button">All Week</button>
 </div>
 <div class="space-y-4" id="scheduleMatrixContainer"></div>
 </div>
@@ -6660,6 +6618,35 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 </div>
 </div>
+<!-- SHIFT FEEDBACK -->
+<div class="hidden space-y-4" id="tabFeedback">
+<div class="clean-card rounded-2xl p-5 max-w-3xl mx-auto border-cyan-500/20">
+<div class="pb-4 border-b border-slate-800">
+<h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+<i class="fa-regular fa-comment-dots text-cyan-400 mr-2"></i>Shift Feedback
+        </h2>
+<p class="text-xs text-slate-400 mt-1">Confidential feedback to the Clinical Lead.</p>
+</div>
+<div class="pt-4" id="shiftFeedbackComposeBox">
+<div class="p-4 rounded-xl bg-cyan-950/25 border border-cyan-500/25">
+<div class="text-base font-extrabold text-white">How did your shift go? 🙂</div>
+<p class="text-xs text-slate-300 mt-1">Comments or suggestions.</p>
+<textarea class="mt-3 w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-cyan-400 resize-y" id="shiftFeedbackText" maxlength="700" oninput="updateShiftFeedbackCount()" placeholder="Anything that worked well, caused difficulty, or could be improved..." rows="4"></textarea>
+<div class="flex items-center justify-between mt-1">
+<span class="text-[10px] text-slate-500">To Clinical Lead</span>
+<span class="text-[10px] text-slate-500" id="shiftFeedbackCharCount">0/700</span>
+</div>
+<button class="mt-3 w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition" onclick="submitShiftFeedback()" type="button">
+<i class="fa-solid fa-paper-plane mr-1.5"></i>Submit Feedback
+          </button>
+</div>
+</div>
+<div class="pt-5">
+<div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-3" id="shiftFeedbackHeading">Your feedback</div>
+<div class="space-y-3" id="shiftFeedbackThreadList"></div>
+</div>
+</div>
+</div>
 <!-- SETTINGS -->
 <div class="hidden space-y-4" id="tabUserSettings">
 <div class="clean-card rounded-2xl p-5 max-w-xl mx-auto space-y-6">
@@ -6667,14 +6654,6 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-1 flex items-center">
 <i class="fa-solid fa-gear text-teal-400 mr-2"></i>Settings
         </h2>
-<div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/50 p-3" id="rotasticSettingsAccountBox">
-<div class="text-[11px] text-slate-300">You are viewing as doctor <strong class="text-white" id="rotasticViewingDoctor">—</strong></div>
-<div class="mt-3 flex items-center gap-2">
-<button class="flex-1 min-w-0 whitespace-nowrap rounded-xl border border-teal-500/25 bg-teal-500/10 px-3 py-2.5 text-[11px] font-extrabold text-teal-200" id="settingsViewSwitchBtn" onclick="handleViewBadgeClick()" type="button"><i class="fa-solid fa-repeat mr-1.5"></i><span id="settingsViewSwitchText">Switch view</span></button>
-<button class="flex-1 min-w-0 whitespace-nowrap rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-[11px] font-extrabold text-rose-200" id="rotasticLogoutBtn" onclick="rotasticLogoutAndSwitchAccount()" type="button"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>Log out / Switch account</button>
-</div>
-<div class="mt-2 text-[9px] text-slate-500">Returning from Colleague View to Admin View requires a valid temporary Admin access code.</div>
-</div>
 <p class="text-xs text-slate-400">App preferences.</p>
 <p class="hidden" id="profileChangeAccessNote"></p>
 </div>
@@ -6806,7 +6785,27 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="space-y-2" id="tempAdminCodeList"></div>
 </div>
 </div>
-
+<div class="hidden clean-card rounded-2xl p-5 max-w-xl mx-auto border-emerald-500/25" id="adminAccessGrantCard">
+<div class="flex items-start justify-between gap-3">
+<div>
+<h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center">
+<i class="fa-solid fa-user-shield mr-2"></i>Delegated Admin View
+          </h3>
+<p class="text-[11px] text-slate-400 mt-1">Generate physician-specific Admin View access. The physician must enter the issued code to unlock Admin View.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+<select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="adminGrantDoctorSelect"><option value="">Select physician</option></select>
+<select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="adminGrantDurationSelect">
+<option value="1d">1 day</option><option value="1w">1 week</option><option value="1m">1 month</option><option value="indefinite">Indefinite</option>
+</select>
+</div>
+<div class="flex gap-2 mt-3">
+<button class="flex-1 px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-xs font-black" onclick="grantSelectedAdminAccess()" type="button">Grant</button>
+<button class="flex-1 px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs font-black" onclick="revokeSelectedAdminAccess()" type="button">Revoke</button>
+</div>
+<div class="mt-4 space-y-2" id="adminGrantList"></div>
+</div>
 </div>
 <!-- GENERATOR -->
 <div class="hidden space-y-5" id="tabGenerator">
@@ -6840,12 +6839,6 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <label class="block text-[10px] font-semibold text-indigo-400 uppercase mb-1">Assign PM Shift Lead</label>
 <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="assignShiftLeadPM" onchange="onAdminAssignShiftLead('PM')"></select>
 </div>
-<div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-<label class="block text-[10px] font-semibold text-teal-400 uppercase mb-1">Generate period</label>
-<select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="rotasticGenerationRange">
-<option value="1">1 week</option><option value="4">1 month (4 weeks)</option><option value="13">3 months (13 weeks)</option>
-</select>
-</div>
 <div class="flex items-end">
 <button class="w-full px-3.5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition" onclick="generateDutyScheduleFromPlanner()" type="button">
 <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generate Schedule
@@ -6871,7 +6864,7 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Schedule Amendment Assistant
           </h3>
 <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
-            Write one or many instructions in normal language. ROTASTIC will understand multiple names, days, shifts, rooms and leave instructions, then show one clear confirmation before applying.
+            Describe the change; confirm before applying.
           </p>
 </div>
 <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-bold text-cyan-300 whitespace-nowrap">Admin only</span>
@@ -6917,7 +6910,81 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 </div>
 <!-- 2. AUTOMATIC ROTA RULES -->
-
+<div class="clean-card rounded-2xl p-5 border-violet-500/25">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-800">
+<div>
+<h3 class="text-xs font-bold text-violet-300 uppercase tracking-wider flex items-center">
+<i class="fa-solid fa-gears mr-2"></i>Automatic Rota Rules
+          </h3>
+<p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+            Core rota rules and exemptions.
+          </p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-[10px] font-bold text-violet-300 whitespace-nowrap">Rules engine</span>
+</div>
+<div class="pt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1">Group 1</label>
+<textarea class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-violet-400 resize-y" id="rotaGroup1Members" placeholder="One clinician per line" rows="4"></textarea>
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1">Group 2</label>
+<textarea class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-violet-400 resize-y" id="rotaGroup2Members" placeholder="One clinician per line" rows="4"></textarea>
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Preferred room pattern A</label>
+<input class="w-full bg-slate-900 text-white text-xs p-2.5 rounded-xl border border-slate-700 outline-none" id="rotaRoomSetA" placeholder="10,12,13,14,22,25,26,27"/>
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Preferred room pattern B</label>
+<input class="w-full bg-slate-900 text-white text-xs p-2.5 rounded-xl border border-slate-700 outline-none" id="rotaRoomSetB" placeholder="10,12,13,14,22,24,25,26,27"/>
+</div>
+</div>
+<div class="mt-4 p-4 rounded-xl bg-violet-950/20 border border-violet-500/25">
+<div class="flex items-start justify-between gap-3 mb-2">
+<div>
+<div class="text-[10px] font-extrabold uppercase tracking-wider text-violet-300">
+<i class="fa-solid fa-brain mr-1.5"></i>Smart Rules Assistant
+            </div>
+<p class="text-[10px] text-slate-500 mt-1">
+              Add a rule in plain language.
+            </p>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 items-end">
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1">Rule scope</label>
+<select class="w-full bg-slate-900 text-white text-xs p-2.5 rounded-xl border border-slate-700 outline-none focus:border-violet-400" id="smartRotaRuleScope">
+<option value="rota">This rota only</option>
+<option value="week">This week only</option>
+<option value="permanent">Long-term / permanent</option>
+</select>
+</div>
+<div>
+<textarea class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-violet-400 resize-y" id="smartRotaRuleInput" placeholder="Add a rule in plain language — one or several doctors" rows="3"></textarea>
+</div>
+</div>
+<div class="mt-2 flex flex-wrap gap-2">
+<button class="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-xl transition" onclick="addSmartRotaRule()" type="button">
+<i class="fa-solid fa-sparkles mr-1.5"></i>Add Smart Rule
+          </button>
+<button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition" onclick="clearSmartRotaRules()" type="button">
+            Clear Custom Rules
+          </button>
+</div>
+<div class="hidden mt-3 p-3 rounded-xl text-[11px]" id="smartRotaRuleStatus"></div>
+<div class="mt-3 space-y-2" id="smartRotaRuleList"></div>
+</div>
+<div class="mt-3 flex flex-wrap gap-2">
+<button class="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-xl transition" onclick="saveAutoRotaRuleSettings()" type="button">
+<i class="fa-solid fa-floppy-disk mr-1.5"></i>Save Core Rules
+        </button>
+<button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition" onclick="resetAutoRotaRuleSettings()" type="button">
+          Reset Defaults
+        </button>
+</div>
+<div class="hidden mt-3 p-3 rounded-xl text-[11px]" id="autoRotaRulesStatus"></div>
+</div>
 <!-- 3. ROTA REVIEW & APPROVAL -->
 <div class="clean-card rounded-2xl p-5 border-amber-500/30" id="rotaApprovalWorkflowCard">
 <div class="flex flex-col md:flex-row md:items-start justify-between pb-3 border-b border-slate-800 gap-3">
@@ -6974,7 +7041,34 @@ button,input,select,textarea{font-size:max(16px,1em);}
         </button>
 </div>
 </div>
-
+<div class="clean-card rounded-2xl p-5 border-cyan-500/25">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-800">
+<div>
+<h3 class="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center">
+<i class="fa-solid fa-user-clock mr-2"></i>Clinical Lead — Add / Change Shift
+          </h3>
+<p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+            Choose the day and AM / PM, or OFF.
+          </p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-bold text-cyan-300 whitespace-nowrap" id="moursiShiftOverrideBadge">Live rota override</span>
+</div>
+<div class="pt-4 grid grid-cols-1 sm:grid-cols-[1fr_140px_auto_auto] gap-2">
+<input aria-label="Dr Mohamed M. rota override date" class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-400 rotastic-date-input" id="moursiShiftDay" inputmode="none" type="date"/>
+<select class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-400" id="moursiShiftPeriod">
+<option value="AM">AM (07:00–14:00)</option>
+<option value="PM">PM / Evening</option>
+<option value="OFF">OFF — Remove Clinical Lead from this day</option>
+</select>
+<button class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition" onclick="applyMoursiShiftOverride()" type="button">
+<i class="fa-solid fa-plus mr-1.5"></i>Apply Shift
+        </button>
+<button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition" onclick="clearMoursiShiftOverride()" type="button">
+          Clear Override
+        </button>
+</div>
+<div class="hidden mt-3 p-3 rounded-xl text-[11px]" id="moursiShiftOverrideStatus"></div>
+</div>
 <div class="clean-card rounded-2xl p-5 border-teal-500/20">
 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-800">
 <div>
@@ -7013,10 +7107,6 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 <!-- ANNOUNCEMENTS -->
 <div class="hidden space-y-4" id="tabAnnouncements">
-<div class="hidden clean-card rounded-2xl p-5 border-emerald-500/25" id="moursiApprovalInboxCard">
-<div class="pb-3 border-b border-slate-800"><h2 class="text-sm font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-inbox text-emerald-400 mr-2"></i>Approval Inbox</h2><p class="text-[11px] text-slate-400 mt-1">Rota, leave and swap requests. Sick leave is acknowledged as Informed.</p></div>
-<div class="pt-4 space-y-3" id="moursiApprovalInboxList"><div class="text-xs text-slate-500">Loading…</div></div>
-</div>
 <div class="clean-card rounded-2xl p-5 border-amber-500/20">
 <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-800">
 <div>
@@ -7387,11 +7477,15 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <i class="fa-solid fa-calendar-week text-base mb-0.5 text-emerald-400"></i>
 <span class="text-[10px] font-medium">Planner</span>
 </button>
+<button class="flex flex-col items-center text-slate-400 transition" data-rotastic-tab="feedback" onclick="switchTab('feedback')" type="button">
+<i class="fa-regular fa-comment-dots text-base mb-0.5 text-cyan-400"></i>
+<span class="text-[10px] font-medium">Feedback</span>
+</button>
 <button class="admin-tab flex flex-col items-center text-amber-300 transition" onclick="switchTab('announcements')" style="display:none;" type="button">
 <i class="fa-solid fa-bullhorn text-base mb-0.5 text-amber-400"></i>
 <span class="text-[10px] font-bold">New</span>
 </button>
-<button class="flex flex-col items-center text-slate-400 transition" onclick="switchTab('metrics')" type="button">
+<button class="admin-tab flex flex-col items-center text-slate-400 transition" onclick="switchTab('metrics')" style="display:none;" type="button">
 <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
 <span class="text-[10px] font-medium">Metrics</span>
 </button>
@@ -8369,7 +8463,7 @@ function rotasticBackendMirrorStorageChange(key, value, isJSON) {
 function rotasticRunLaunchSelfTest() {
   const issues = [];
   const requiredIds = [
-    'tabSchedule','tabLeavePlanner','tabUserSettings',
+    'tabSchedule','tabLeavePlanner','tabFeedback','tabUserSettings',
     'rotaZoomBtn','plannerWeekSelect','driveTimeBtn','weatherBadge',
     'scheduleMatrixContainer','inlineSetupBanner'
   ];
@@ -8383,6 +8477,7 @@ function rotasticRunLaunchSelfTest() {
   if (typeof switchTab !== 'function') issues.push('Navigation unavailable');
   if (typeof renderScheduleView !== 'function') issues.push('Schedule renderer unavailable');
   if (typeof renderWeeklyLeavePlanner !== 'function') issues.push('Planner renderer unavailable');
+  if (typeof submitShiftFeedback !== 'function') issues.push('Feedback submit unavailable');
   if (typeof submitSwapForLeadApproval !== 'function') issues.push('Swap submit unavailable');
 
   window.__rotasticLaunchSelfTest = {
@@ -9421,8 +9516,8 @@ function switchTab(tab) {
   let adminMode = false; try { adminMode = isAdminViewActive(); } catch (e) {}
   if (tab === 'settings') tab = 'usersettings';
   if (tab === 'leaves') tab = 'leaveplanner';
-  if (!adminMode && ['generator','announcements'].includes(tab)) tab = 'schedule';
-  const tabs = {schedule:document.getElementById('tabSchedule'),leaveplanner:document.getElementById('tabLeavePlanner'),usersettings:document.getElementById('tabUserSettings'),generator:document.getElementById('tabGenerator'),announcements:document.getElementById('tabAnnouncements'),metrics:document.getElementById('tabMetrics')};
+  if (!adminMode && ['generator','metrics','announcements'].includes(tab)) tab = 'schedule';
+  const tabs = {schedule:document.getElementById('tabSchedule'),leaveplanner:document.getElementById('tabLeavePlanner'),feedback:document.getElementById('tabFeedback'),usersettings:document.getElementById('tabUserSettings'),generator:document.getElementById('tabGenerator'),announcements:document.getElementById('tabAnnouncements'),metrics:document.getElementById('tabMetrics')};
   Object.keys(tabs).forEach(function(key) { const el = tabs[key]; if (!el) return; const show = key === tab; el.classList.toggle('hidden', !show); el.style.display = show ? '' : 'none'; });
   rotasticActiveTab = tab;
   try { rotasticSafeApplyViewMode(); } catch (e) { console.warn('ROTASTIC view mode during tab change:', e); }
@@ -9523,23 +9618,54 @@ document.addEventListener('DOMContentLoaded', function() { bindRotasticPrimaryNa
 
 function handleViewBadgeClick() {
   if (isAdminViewActive()) {
+    const wasPermanent = rotasticIsPermanentAdminIdentity();
     currentViewMode = 'colleague';
     Storage.set('rotastic_view_mode', 'colleague');
-    try { Storage.remove('rotastic_admin_token'); Storage.remove('rotastic_admin_code_id'); } catch (e) {}
-    try { if (rotasticBackendClient && rotasticBackendUser) rotasticBackendClient.rpc('rotastic_end_admin_session'); } catch (e) {}
-    applyViewMode(); renderScheduleView(); switchTab('schedule'); return;
+    if (!wasPermanent) {
+      try {
+        if (rotasticBackendClient && rotasticBackendUser) rotasticBackendClient.rpc('rotastic_end_admin_session');
+      } catch(e) {}
+      try { localStorage.removeItem('rotastic_admin_token'); localStorage.removeItem('rotastic_admin_code_id'); } catch(e) {}
+    }
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
   }
+
+  if (rotasticIsPermanentAdminIdentity()) {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  // Every non-permanent account must present an admin-issued code when
+  // moving from Colleague View into Admin View. A delegated grant alone
+  // never bypasses this challenge.
   openAdminModal();
 }
 
 function openAdminModal() {
-  const modal = document.getElementById('adminModal');
-  if (!modal) return;
-  modal.classList.remove('hidden');
-  const input = document.getElementById('adminPasskeyInput');
-  const status = document.getElementById('adminModalStatus');
-  if (input) { input.value = ''; setTimeout(function(){ try { input.focus(); } catch(e){} },50); }
-  if (status) status.innerText = '';
+  // Verified permanent admins never need to re-enter an Admin View code.
+  // Their identity has already been established by the backend registration.
+  const role = rotasticResolvedVerifiedRole();
+  if (role === 'zaid' || role === 'moursi') {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  document.getElementById('adminModal').classList.remove('hidden');
+  document.getElementById('adminPasskeyInput').value = '';
+  document.getElementById('adminModalStatus').innerText = '';
 }
 
 function closeAdminModal() {
@@ -9554,7 +9680,10 @@ async function verifyAdminPasskey() {
   // unlock Admin View with its existing personal PIN. Normally they enter
   // Admin View directly and never see this modal.
   const role = rotasticResolvedVerifiedRole();
-  const permanentPinOk = false;
+  const permanentPinOk =
+    (role === 'zaid' && input === PIN_DR_ZAID) ||
+    (role === 'moursi' && input === PIN_DR_MOURSI);
+
   if (permanentPinOk) {
     Storage.set('rotastic_admin_token', 'permanent');
     currentViewMode = 'admin';
@@ -10329,48 +10458,39 @@ function saveUserPreferences() {
 
 function getQatarLongDateText(isoDate) {
   try {
-    const iso = String(isoDate || getQatarTodayISO());
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-    if (!match) throw new Error('Invalid Qatar date');
-    const d = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0));
+    const iso = isoDate || getQatarTodayISO();
+    const parts = String(iso).split('-').map(Number);
+    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 9, 0, 0));
+
     return new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Qatar',
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
+      timeZone:'Asia/Qatar',
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
     }).format(d);
   } catch (e) {
-    return new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Qatar',
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).format(new Date());
+    return isoDate || getQatarTodayISO();
   }
 }
 
 function getQatarTodayISO() {
   try {
-    const parts = new Intl.DateTimeFormat('en-GB', {
+    const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Qatar',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     }).formatToParts(new Date());
-    const value = {};
-    parts.forEach(function(part) {
-      if (part.type !== 'literal') value[part.type] = part.value;
+
+    const map = {};
+    parts.forEach(function(p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
     });
-    if (!value.year || !value.month || !value.day) throw new Error('Qatar date unavailable');
-    return [value.year, value.month, value.day].join('-');
+
+    return map.year + '-' + map.month + '-' + map.day;
   } catch (e) {
-    const qatarNow = new Date(Date.now() + (3 * 60 * 60 * 1000));
-    const y = qatarNow.getUTCFullYear();
-    const m = String(qatarNow.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(qatarNow.getUTCDate()).padStart(2, '0');
-    return [y, m, d].join('-');
+    return new Date().toISOString().slice(0, 10);
   }
 }
 
@@ -12191,138 +12311,6 @@ function exportAdminMetricsInfographic() {
 
 
 
-
-<div class="hidden fixed inset-0 z-[10080] bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto" id="rotasticNotificationCenterOverlay" onclick="if(event.target===this) closeRotasticNotificationCenter()">
-<div class="max-w-xl mx-auto mt-16 clean-card rounded-2xl p-4 sm:p-5">
-<div class="flex items-center justify-between gap-3 mb-4"><div><div class="text-[10px] uppercase tracking-[0.18em] text-cyan-300 font-black">Today</div><h3 class="text-lg font-black text-white">Notifications</h3></div><button class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 text-slate-300" onclick="closeRotasticNotificationCenter()" type="button"><i class="fa-solid fa-xmark"></i></button></div>
-<div class="space-y-2" id="rotasticNotificationTodayList"></div>
-</div></div>
-\n<script id="rotastic-requested-direct-functions">
-(function(){
-'use strict';
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const canon=n=>{try{return typeof canonicalRotaName==='function'?canonicalRotaName(n):String(n||'').trim()}catch(e){return String(n||'').trim()}};
-const qatarDayKey=v=>{try{const d=v instanceof Date?v:new Date(v||Date.now()),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Qatar',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),m={};parts.forEach(x=>{if(x.type!=='literal')m[x.type]=x.value});return m.year+'-'+m.month+'-'+m.day}catch(e){return ''}};
-
-window.rotasticAvailableDoctorCountForDay=function(day){
- const docs=(typeof DOCTORS!=='undefined'&&Array.isArray(DOCTORS))?DOCTORS:(Array.isArray(window.DOCTORS)?window.DOCTORS:[]); const iso=String(day?.isoDate||''); const leaves=Storage.getJSON('rotastic_leave_submissions',[])||[];
- return docs.filter(d=>{const name=String(d?.name||'').trim();if(!name)return false;try{if(typeof rotasticDoctorIsOnDisplayedLeave==='function'&&rotasticDoctorIsOnDisplayedLeave(name,day))return false}catch(e){}return !leaves.some(x=>x&&/approved/i.test(String(x.status||''))&&canon(x.doc)===canon(name)&&iso&&x.startDate&&iso>=x.startDate&&iso<=(x.endDate||x.startDate));}).length;
-};
-
-async function refreshSecureDirectory(){
- const map=Storage.getJSON('rotastic_physician_email_directory',{})||{}; if(typeof rotasticBackendClient==='undefined'||!rotasticBackendClient)return map;
- try{if(typeof rotasticBackendEnsureSession==='function')await rotasticBackendEnsureSession();const r=await rotasticBackendClient.rpc('rotastic_list_authorized_physicians');if(r.error)throw r.error;const full=(typeof ROTASTIC_FULL_DOCTOR_NAMES!=='undefined'&&ROTASTIC_FULL_DOCTOR_NAMES)?ROTASTIC_FULL_DOCTOR_NAMES:(window.ROTASTIC_FULL_DOCTOR_NAMES||{});(r.data||[]).forEach(row=>{const name=String(row?.physician_name||'').trim(),email=String(row?.email||'').trim().toLowerCase();if(!name||!/@phcc\.gov\.qa$/i.test(email))return;map[name]=email;Object.keys(full).forEach(short=>{if(String(full[short]||'').trim().toLowerCase()===name.toLowerCase())map[short]=email;});});Storage.setJSON('rotastic_physician_email_directory',map);}catch(e){console.warn('ROTASTIC secure physician directory:',e?.message||e)}return map;
-}
-window.rotasticRefreshPhysicianEmailDirectory=refreshSecureDirectory;
-function emailFor(name){const map=Storage.getJSON('rotastic_physician_email_directory',{})||{};return String(map[name]||'').trim().toLowerCase()}
-
-window.createSelectedAccessCode=async function(){
- if(!(typeof canManageAdminAccess==='function'&&canManageAdminAccess())){alert('Access codes can only be created from an unlocked permanent Admin View.');return false;}
- const kind=document.getElementById('accessCodeType')?.value||'first_time',physician=String(document.getElementById('accessCodeDoctorSelect')?.value||'').trim();if(!physician){alert('Select a physician first.');return false;}
- try{if(typeof rotasticBackendEnsureSession==='function')await rotasticBackendEnsureSession();if(typeof rotasticBackendClient==='undefined'||!rotasticBackendClient||typeof rotasticBackendUser==='undefined'||!rotasticBackendUser)throw new Error('Verified Admin sign-in is required.');await refreshSecureDirectory();const email=emailFor(physician);if(!/@phcc\.gov\.qa$/i.test(email))throw new Error('No PHCC email is stored for '+physician+'.');
-   if(kind==='first_time'){const r=await rotasticBackendClient.rpc('rotastic_issue_registration_code_v2',{p_email:email,p_physician_name:physician,p_valid_minutes:1440});if(r.error)throw r.error;const row=Array.isArray(r.data)?r.data[0]:r.data,code=String(row?.registration_code||'');if(!/^\d{6}$/.test(code))throw new Error('Setup-code service did not return a valid code.');showIssuedAccessCode('first_time',physician,email,code,row?.expires_at);return true;}
-   const minutes=Math.max(5,parseInt(document.getElementById('tempAdminDurationMinutes')?.value||'480',10)||480),r=await rotasticBackendClient.rpc('rotastic_issue_admin_access_code',{p_minutes:minutes,p_target_physician:physician});if(r.error)throw r.error;const row=Array.isArray(r.data)?r.data[0]:r.data,code=String(row?.admin_code||'');if(!code)throw new Error('Admin access service did not return a code.');showIssuedAccessCode('admin',physician,email,code,row?.expires_at);if(typeof renderTempAdminCodeManager==='function')await renderTempAdminCodeManager();return true;
- }catch(e){alert(String(e?.message||'Could not create this access code.'));return false;}
-};
-
-window.rotasticLogoutAndSwitchAccount=async function(){
- const btn=document.getElementById('rotasticLogoutBtn');if(btn)btn.disabled=true;try{if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient?.auth)await rotasticBackendClient.auth.signOut({scope:'local'});}catch(e){console.warn('ROTASTIC sign-out:',e?.message||e)}
- ['rotastic_user_doc_name','rotastic_setup_completed','rotastic_verified_email','rotastic_verified_role','rotastic_admin_token','rotastic_admin_code_id','rotastic_view_mode'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}try{Storage.remove(k)}catch(e){}});try{sessionStorage.clear()}catch(e){}location.reload();
-};
-
-function refreshSettingsIdentity(){const name=String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||Storage.get('rotastic_user_doc_name','')||'').trim();const n=document.getElementById('rotasticViewingDoctor');if(n)n.textContent=name||'Not signed in';const t=document.getElementById('settingsViewSwitchText');if(t)t.textContent=(typeof isAdminViewActive==='function'&&isAdminViewActive())?'Switch to Colleague View':'Switch to Admin View';}
-
-function mine(n){const me=String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||Storage.get('rotastic_user_doc_name','')||'').trim(),r=String(n?.recipient||n?.recipient_name||'').trim();return !!me&&(r===me||r==='*'||/^all(?:\s|$)/i.test(r)||r.split(' + ').map(x=>x.trim()).includes(me));}
-function todayNotifications(){const day=qatarDayKey(new Date());return (Storage.getJSON('rotastic_notification_queue',[])||[]).filter(n=>mine(n)&&qatarDayKey(n.createdAt||n.created_at||Date.now())===day).sort((a,b)=>new Date(b.createdAt||b.created_at||0)-new Date(a.createdAt||a.created_at||0));}
-function updateBell(){const count=todayNotifications().filter(n=>!n.read&&!n.readAt&&!n.read_at).length,b=document.getElementById('notificationUnreadBadge');if(!b)return;b.textContent=count>99?'99+':String(count);b.classList.toggle('hidden',count===0);}
-window.closeRotasticNotificationCenter=()=>document.getElementById('rotasticNotificationCenterOverlay')?.classList.add('hidden');
-window.openRotasticNotificationCenter=async function(){try{if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient&&typeof rotasticBackendUser!=='undefined'&&rotasticBackendUser)await rotasticBackendClient.rpc('rotastic_cleanup_my_notifications')}catch(e){}const items=todayNotifications(),list=document.getElementById('rotasticNotificationTodayList');if(list)list.innerHTML=items.length?items.map(n=>'<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div class="flex justify-between gap-3"><div class="text-xs font-black text-white">'+esc(n.title||'ROTASTIC')+'</div><div class="text-[9px] text-slate-500 whitespace-nowrap">'+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',hour:'2-digit',minute:'2-digit'}).format(new Date(n.createdAt||n.created_at||Date.now()))+'</div></div><div class="text-[11px] text-slate-300 mt-1">'+esc(n.message||'')+'</div></div>').join(''):'<div class="text-sm text-slate-500 text-center py-8">No notifications today.</div>';document.getElementById('rotasticNotificationCenterOverlay')?.classList.remove('hidden');const q=Storage.getJSON('rotastic_notification_queue',[])||[];items.forEach(n=>{n.read=true;if(n.backendId&&typeof rotasticBackendMarkNotificationRead==='function')rotasticBackendMarkNotificationRead(n.backendId)});Storage.setJSON('rotastic_notification_queue',q);updateBell();};
-
-async function renderMoursiInbox(){const card=document.getElementById('moursiApprovalInboxCard');if(!card)return;const role=typeof rotasticResolvedVerifiedRole==='function'?rotasticResolvedVerifiedRole():'';const isM=/moursi|morsi/i.test(String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||''))||role==='moursi';card.classList.toggle('hidden',!isM);if(!isM)return;const list=document.getElementById('moursiApprovalInboxList');try{const r=await rotasticBackendClient.rpc('rotastic_moursi_approval_inbox');if(r.error)throw r.error;const rows=Array.isArray(r.data)?r.data:[];list.innerHTML=rows.length?rows.map(x=>{const informed=x.action_mode==='inform';return '<div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-xs font-black text-white">'+esc(x.title||x.request_kind)+'</div><div class="text-[10px] text-cyan-300 font-bold mt-0.5">'+esc(x.physician_name||'')+'</div><div class="text-[11px] text-slate-300 mt-1 leading-relaxed">'+esc(x.detail||'')+'</div></div></div><div class="grid '+(informed?'grid-cols-1':'grid-cols-2')+' gap-2 mt-3">'+(informed?'<button class="py-2 rounded-lg bg-cyan-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'informed\')">Informed</button>':'<button class="py-2 rounded-lg bg-emerald-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'approve\')">Approve</button><button class="py-2 rounded-lg bg-rose-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'decline\')">Decline</button>')+'</div></div>'}).join(''):'<div class="text-xs text-slate-500 text-center py-5">No pending approvals.</div>';}catch(e){list.textContent=String(e?.message||'Could not load approvals.')}}
-window.actMoursiApproval=async function(kind,id,action){let note='';if(action==='decline')note=prompt('Reason / amendment requested (optional):','')||'';try{const r=await rotasticBackendClient.rpc('rotastic_moursi_request_action',{p_kind:kind,p_id:id,p_action:action==='informed'?'informed':action,p_note:note});if(r.error)throw r.error;await renderMoursiInbox();if(typeof rotasticBackendHydrateNotifications==='function')await rotasticBackendHydrateNotifications();}catch(e){alert(String(e?.message||'Could not update this request.'))}};
-
-function renderRotaDayHeader(){const host=document.getElementById('scheduleMatrixContainer');if(!host||typeof currentSchedule==='undefined'||!Array.isArray(currentSchedule)||!currentSchedule.length)return;const full=typeof getCurrentRotaDisplayMode==='function'?getCurrentRotaDisplayMode()==='rota':true;let h=document.getElementById('rotasticRotaDayHeader');if(!full){h?.remove();return;}const idx=typeof activeDayIndex==='number'&&activeDayIndex>=0?activeDayIndex:0,day=currentSchedule[idx]||currentSchedule[0];if(!h){h=document.createElement('div');h.id='rotasticRotaDayHeader';host.parentElement.insertBefore(h,host)}let room='';try{const info=typeof getTodayRoomInfoForActiveDoctor==='function'?getTodayRoomInfoForActiveDoctor():null;room=info?.room||info?.roomNumber||''}catch(e){}h.innerHTML='<button type="button" onclick="filterDay('+(idx-1+currentSchedule.length)%currentSchedule.length+')"><i class="fa-solid fa-chevron-left"></i></button><div class="rdh-center"><div class="rdh-day">'+esc(day.day||'Day')+'</div><div class="rdh-meta">'+esc(day.dateLabel||day.isoDate||'')+(room?' · <span class="rdh-room">Room '+esc(room)+'</span>':'')+'</div></div><button type="button" onclick="filterDay('+(idx+1)%currentSchedule.length+')"><i class="fa-solid fa-chevron-right"></i></button>'; }
-
-const GOOD_VIBES=['Beautiful work today — thank you for giving your best. 🌟','Shift complete. Your hard work mattered today — thank you. 🙌','Well done today. Time to recharge — you earned it. 🌙','Thank you for the care, patience and energy you brought today. 💙','Another shift done with purpose. Great work. ✨','You made a difference today. Thank you for your hard work. 🌿','Strong work today — now give yourself some well-earned rest. 💫','Thank you for showing up and giving your best today. 👏','Shift finished — excellent effort and teamwork today. 🤝','Great job today. Your patients and team appreciate you. 😊','You got through another busy shift — well done and thank you. 🌈','Thank you for bringing calm, skill and care to the shift today. 🩺','That is today’s shift done — brilliant work. ⭐','Well played today. Rest, reset and come back refreshed. 🌼','Thank you for the energy you gave the team today. 💪','A good shift completed by a good doctor — thank you. 🌟','Your contribution counted today. Thank you and enjoy your downtime. ☕','Shift complete. Be proud of the work you did today. 💙','Thank you for another day of dependable, compassionate work. 🙏','Done for today — great effort, great care, now enjoy the rest of your day. 🎉'];
-function vibe(name,date,period){let h=0;String(name+'|'+date+'|'+period).split('').forEach(c=>h=(h*31+c.charCodeAt(0))>>>0);return GOOD_VIBES[h%GOOD_VIBES.length]}
-async function scheduleShiftNotifications(schedule){if(typeof rotasticBackendClient==='undefined'||!rotasticBackendClient||typeof rotasticBackendUser==='undefined'||!rotasticBackendUser||!Array.isArray(schedule))return;const items=[],dates=[];schedule.filter(d=>d?.isoDate).forEach(day=>{dates.push(day.isoDate);['am','pm'].forEach(period=>{const sh=day[period]||{};let doctors=[];try{doctors=rotasticCollectShiftDoctors(day,period)||[]}catch(e){}const seen=new Set();doctors.forEach(name=>{name=String(name||'').trim();const ck=canon(name).toLowerCase();if(!name||seen.has(ck))return;seen.add(ck);try{if(typeof rotasticDoctorIsOnDisplayedLeave==='function'&&rotasticDoctorIsOnDisplayedLeave(name,day))return}catch(e){}const timed=typeof doctorMatches==='function'&&(doctorMatches(sh.timed1Doc,name)||doctorMatches(sh.timed2Doc,name)),start=timed?(period==='am'?540:840):(period==='am'?420:960),end=timed?(period==='am'?960:1200):(period==='am'?840:1320);[[start-60,'shift-reminder','Shift starts in 1 hour','Your ROTASTIC '+(period==='am'?'AM':'PM')+' shift starts in about 1 hour.'],[end,'shift-finish','Shift complete — thank you 💙',vibe(name,day.isoDate,period)]].forEach(([mins,type,title,msg])=>{const hh=String(Math.floor(mins/60)).padStart(2,'0'),mm=String(mins%60).padStart(2,'0'),when=day.isoDate+'T'+hh+':'+mm+':00+03:00';if(new Date(when).getTime()<=Date.now())return;items.push({recipient_name:name,title,message:msg,notification_type:type,scheduled_for:when,dedupe_key:type+'|'+day.isoDate+'|'+period+'|'+ck+'|'+mins,metadata:{schedule_date:day.isoDate,period,shift_minutes:mins}});});});});});for(let i=0;i<items.length||i===0;i+=400){const r=await rotasticBackendClient.rpc('rotastic_schedule_shift_reminders',{p_items:items.slice(i,i+400),p_dates:i===0?[...new Set(dates)]:[]});if(r.error)throw r.error;if(!items.length)break;}}
-
-function myMetricRow(){try{return (typeof buildDutyStats==='function'?buildDutyStats():[]).find(r=>canon(r.doctor)===canon(activeUserDocName))||null}catch(e){return null}}
-function renderPersonalMetrics(){const tab=document.getElementById('tabMetrics');if(!tab)return;const admin=typeof isAdminViewActive==='function'&&isAdminViewActive();let p=document.getElementById('rotasticMyMetricsPanel');if(admin){if(p)p.remove();[...tab.children].forEach(x=>x.classList.remove('rotastic-my-metrics-admin-hide'));return;}[...tab.children].forEach(x=>{if(x.id!=='rotasticMyMetricsPanel')x.classList.add('rotastic-my-metrics-admin-hide')});if(!p){p=document.createElement('div');p.id='rotasticMyMetricsPanel';p.className='space-y-4';tab.insertBefore(p,tab.firstChild)}const r=myMetricRow(),vals=r?[['Total shifts',r.shifts||0],['AM shifts',r.amShifts||0],['PM shifts',r.pmShifts||0],['Emergency',(r.maleER||0)+(r.femaleER||0)+(r.paedsER||0)],['Clinic duties',(r.wbc||0)+(r.ancNcd||0)+(r.roomClinics||0)],['Code Blue',(r.codeBlueLead||0)+(r.codeBlueResponder||0)],['Twilight',(r.twilightAM||0)+(r.twilightPM||0)]]:[],max=Math.max(1,...vals.map(v=>Number(v[1])||0));p.innerHTML='<div class="clean-card rounded-2xl p-5" id="rotasticMyMetricsReport"><div class="flex items-start justify-between gap-3"><div><div class="text-[10px] uppercase tracking-wider text-teal-300 font-black">My metrics</div><h2 class="text-lg font-black text-white mt-1">'+esc(activeUserDocName||'')+'</h2></div><button class="px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-[10px] font-black text-slate-200" onclick="exportMyMetricsPdf()" type="button"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button></div>'+(r?'<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">'+vals.slice(0,4).map(v=>'<div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3"><div class="text-[9px] uppercase text-slate-500 font-bold">'+v[0]+'</div><div class="text-2xl font-black text-white mt-1">'+v[1]+'</div></div>').join('')+'</div><div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/40 p-3">'+vals.map(v=>'<div class="mb-2"><div class="flex justify-between text-[10px] text-slate-300 mb-1"><span>'+v[0]+'</span><strong>'+v[1]+'</strong></div><div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full bg-teal-500" style="width:'+Math.max(2,(Number(v[1])||0)/max*100)+'%"></div></div></div>').join('')+'</div>':'<div class="text-sm text-slate-500 py-8">No rota metrics are available for you in the current schedule.</div>')+'</div>';}
-window.exportMyMetricsPdf=function(){const el=document.getElementById('rotasticMyMetricsReport');if(window.html2pdf&&el)html2pdf().set({margin:8,filename:'ROTASTIC-'+String(activeUserDocName||'doctor').replace(/\s+/g,'-')+'-metrics.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save();else window.print();};
-
-function parseAdminShiftAdd(raw){if(!/\b(add|put|assign|place)\b/i.test(raw))return null;let doctor='';if(/\b(moursi|morsi|mohamed\s+m)\b/i.test(raw))doctor='Dr Mohamed M.';else if(/\bzaid\b/i.test(raw))doctor='Dr Zaid SE.';if(!doctor)return null;let period=/\b(am|morning)\b/i.test(raw)?'am':/\b(pm|evening|afternoon)\b/i.test(raw)?'pm':'';if(!period)return null;let idx=-1;(currentSchedule||[]).some((d,i)=>{if([d.day,d.isoDate,d.dateLabel].filter(Boolean).some(v=>raw.toLowerCase().includes(String(v).toLowerCase()))){idx=i;return true}return false});if(idx<0)return null;const actor=String(activeUserDocName||'');if(/moursi|morsi|mohamed m/i.test(actor)&&doctor!=='Dr Mohamed M.')return{denied:true,message:'Dr Moursi can add himself. Dr Zaid can add himself or Dr Moursi.'};return{type:'rotasticAdminShiftAdd',doctor,dayIndex:idx,period,summary:'Add '+doctor+' to '+String(currentSchedule[idx].day||currentSchedule[idx].isoDate)+' '+period.toUpperCase()+' shift'};}
-
-const baseApply=window.applyScheduleAmendmentAction;if(typeof baseApply==='function')window.applyScheduleAmendmentAction=function(a){if(a?.type==='rotasticBatch'){for(const x of a.actions||[])if(!window.applyScheduleAmendmentAction(x))return false;return true;}if(a?.type==='rotasticAdminShiftAdd'){const day=currentSchedule?.[a.dayIndex];if(!day)return false;try{if(rotasticDoctorIsOnDisplayedLeave(a.doctor,day)){alert(a.doctor+' is on approved leave for that day.');return false}}catch(e){}const sh=day[a.period]||(day[a.period]={});if(!Array.isArray(sh.noRoomDocs))sh.noRoomDocs=[];if(!rotasticCollectShiftDoctors(day,a.period).some(n=>doctorMatches(n,a.doctor)))sh.noRoomDocs.push(a.doctor);return true;}return baseApply.apply(this,arguments);};
-const baseAnalyse=window.analyseScheduleAmendment;if(typeof baseAnalyse==='function')window.analyseScheduleAmendment=async function(){const input=document.getElementById('scheduleAmendmentInput'),raw=String(input?.value||'').trim(),parts=raw.split(/\n+|\s*;\s*/).map(x=>x.trim()).filter(Boolean);if(parts.length<=1){const a=parseAdminShiftAdd(raw);if(!a)return baseAnalyse.apply(this,arguments);if(a.denied){alert(a.message);return;}const scope=typeof getScheduleAmendmentScope==='function'?getScheduleAmendmentScope():'rota';a.scope=scope;rotasticPendingScheduleAmendment=a;document.getElementById('scheduleAmendmentSummary').textContent=a.summary;document.getElementById('scheduleAmendmentDetails').textContent='Scope: '+scope+' · nothing has been changed yet.';document.getElementById('scheduleAmendmentPreview').classList.remove('hidden');return;}const scope=typeof getScheduleAmendmentScope==='function'?getScheduleAmendmentScope():'rota',actions=[];for(const part of parts){let a=parseAdminShiftAdd(part);if(a?.denied){alert(a.message);return;}if(!a){const r=await interpretScheduleAmendment(part);if(!r?.ok||!r.action){alert(r?.message||('Could not safely interpret: '+part));return;}a=r.action;}a.scope=scope;actions.push(a);}rotasticPendingScheduleAmendment={type:'rotasticBatch',scope,actions,summary:actions.map((a,i)=>(i+1)+'. '+(a.summary||describeScheduleAmendment(a))).join('  ')};document.getElementById('scheduleAmendmentSummary').textContent=rotasticPendingScheduleAmendment.summary;document.getElementById('scheduleAmendmentDetails').textContent='Multiple instructions understood · confirm once to apply all.';document.getElementById('scheduleAmendmentPreview').classList.remove('hidden');};
-
-const basePlanner=window.generateDutyScheduleFromPlanner;if(typeof basePlanner==='function')window.generateDutyScheduleFromPlanner=async function(){const weeks=Math.max(1,parseInt(document.getElementById('rotasticGenerationRange')?.value||'1',10)||1);if(weeks===1){const r=await basePlanner.apply(this,arguments);await scheduleShiftNotifications((typeof currentSchedule!=='undefined'?currentSchedule:[]));return r;}const weekEl=document.getElementById('cycleStartDate'),groupEl=document.getElementById('wednesdayAMOBGroup'),first=String(weekEl?.value||''),firstGroup=typeof getWednesdayAMOBGroupValue==='function'?getWednesdayAMOBGroupValue():String(groupEl?.value||'');if(!first||!firstGroup){alert('Choose the week commencing Sunday and Wednesday AM group first.');return false;}const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)},series=[];for(let i=0;i<weeks;i++){const wk=addDays(first,i*7);weekEl.value=wk;Storage.set('rotastic_selected_week_commencing',wk);let group=firstGroup;try{if(typeof getRecommendedWednesdayAMGroupForWeek==='function')group=getRecommendedWednesdayAMGroupForWeek(wk)||group}catch(e){}if(groupEl)groupEl.value=group;generateDutySchedule();series.push({weekStart:wk,wednesdayAMGroup:group,schedule:JSON.parse(JSON.stringify(currentSchedule||[]))});}Storage.setJSON('rotastic_generated_schedule_series',series);if(series[0]){currentSchedule=JSON.parse(JSON.stringify(series[0].schedule));weekEl.value=series[0].weekStart;}await scheduleShiftNotifications(series.flatMap(x=>x.schedule||[]));switchTab('schedule');renderScheduleView();return true;};
-
-const baseConfirm=window.confirmScheduleAmendment;if(typeof baseConfirm==='function')window.confirmScheduleAmendment=function(){const r=baseConfirm.apply(this,arguments);Promise.resolve(r).then(()=>scheduleShiftNotifications((typeof currentSchedule!=='undefined'?currentSchedule:[])));return r;};
-const baseRender=window.renderScheduleView;if(typeof baseRender==='function')window.renderScheduleView=function(){const r=baseRender.apply(this,arguments);setTimeout(renderRotaDayHeader,0);return r;};
-const baseSwitch=window.switchTab;if(typeof baseSwitch==='function')window.switchTab=function(tab){const r=baseSwitch.apply(this,arguments);setTimeout(()=>{refreshSettingsIdentity();updateBell();if(tab==='metrics')renderPersonalMetrics();if(tab==='announcements')renderMoursiInbox();},0);return r;};
-const baseApplyView=window.applyViewMode;if(typeof baseApplyView==='function')window.applyViewMode=function(){const r=baseApplyView.apply(this,arguments);setTimeout(()=>{refreshSettingsIdentity();updateBell();renderPersonalMetrics();},0);return r;};
-
-function shrinkCredits(){document.querySelectorAll('body *').forEach(el=>{if(el.children.length<=2&&/Developed by\s+Dr\.\s*Zaid Sabe Eleish/i.test(String(el.textContent||'')))el.style.fontSize='8px';});}
-function boot(){try{const q=Storage.getJSON('rotastic_notification_queue',[])||[],cut=Date.now()-3*24*60*60*1000;Storage.setJSON('rotastic_notification_queue',q.filter(n=>{const t=new Date(n?.createdAt||n?.created_at||0).getTime();return !t||t>=cut;}));if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient&&typeof rotasticBackendUser!=='undefined'&&rotasticBackendUser)rotasticBackendClient.rpc('rotastic_cleanup_my_notifications').catch(()=>{});}catch(e){}refreshSettingsIdentity();updateBell();refreshSecureDirectory();renderRotaDayHeader();renderMoursiInbox();shrinkCredits();setInterval(()=>{updateBell();refreshSettingsIdentity()},60000);}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,50));else setTimeout(boot,50);
-})();
-</script>\n
-<script id="rotastic-requested-day-navigation">
-(function(){
-  function qatarDateLabel(iso){
-    if(!iso)return '';
-    try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',day:'numeric',month:'short',year:'numeric'}).format(new Date(iso+'T12:00:00+03:00'));}catch(_){return iso;}
-  }
-  function selectedIndex(){
-    if(typeof activeDayIndex==='number' && activeDayIndex>=0)return activeDayIndex;
-    return 0;
-  }
-  function roomFromRenderedRota(){
-    var name=(typeof activeUserDocName!=='undefined'&&activeUserDocName)?String(activeUserDocName).trim():'';
-    var root=document.getElementById('scheduleMatrixContainer');
-    if(name&&root){
-      var nodes=[].slice.call(root.querySelectorAll('.rotastic-room-grid > *, .room-card, [class*="room"]'));
-      for(var i=0;i<nodes.length;i++){
-        var t=String(nodes[i].textContent||'').replace(/\s+/g,' ').trim();
-        if(t.indexOf(name)===-1)continue;
-        var m=t.match(/\bRoom\s*(\d+[A-Za-z]?)\b/i);
-        if(m)return m[1];
-      }
-    }
-    var hero=document.getElementById('mainRoomHeroNumber');
-    var h=hero?String(hero.textContent||'').trim():'';
-    return h&&h!=='—'?h:'';
-  }
-  window.rotasticUpdateDayNavigator=function(){
-    var days=(typeof currentSchedule!=='undefined'&&Array.isArray(currentSchedule))?currentSchedule:[];
-    if(!days.length)return;
-    var i=Math.max(0,Math.min(selectedIndex(),days.length-1));
-    var d=days[i]||{};
-    var n=document.getElementById('rotasticDayNavName');
-    var m=document.getElementById('rotasticDayNavMeta');
-    if(n)n.textContent=String(d.day||d.dayName||['Sunday','Monday','Tuesday','Wednesday','Thursday'][i]||'Day');
-    var room=roomFromRenderedRota();
-    var date=qatarDateLabel(d.isoDate||'');
-    if(m)m.textContent=(date||String(d.dateLabel||''))+(room?' · Room '+room:' · Room —');
-  };
-  window.rotasticMoveRotaDay=function(delta){
-    var days=(typeof currentSchedule!=='undefined'&&Array.isArray(currentSchedule))?currentSchedule:[];
-    if(!days.length||typeof filterDay!=='function')return;
-    var count=Math.min(days.length,5);
-    var i=selectedIndex();
-    i=(i+delta+count)%count;
-    filterDay(i);
-    setTimeout(window.rotasticUpdateDayNavigator,40);
-    setTimeout(window.rotasticUpdateDayNavigator,180);
-  };
-  function bind(){setTimeout(window.rotasticUpdateDayNavigator,50);setTimeout(window.rotasticUpdateDayNavigator,400);}
-  document.addEventListener('DOMContentLoaded',bind);
-  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('[data-rotastic-rota-toggle="1"]'))setTimeout(window.rotasticUpdateDayNavigator,120);},true);
-  var root=document.getElementById('scheduleMatrixContainer');
-  if(root&&window.MutationObserver)new MutationObserver(function(){setTimeout(window.rotasticUpdateDayNavigator,20);}).observe(root,{childList:true,subtree:true});
-})();
-</script>
 </body>
 </html>`;
   try {
@@ -17311,7 +17299,7 @@ function renderShiftCard(s, period, roomPill) {
         <div class="rotastic-shift-notice">
           <span class="uppercase tracking-wider font-black text-slate-600">Total on duty</span><strong class="text-slate-200">${dutyCount}</strong>
           <span class="uppercase tracking-wider font-black text-slate-600">On Leave</span><strong class="text-rose-300">${shiftLeaveCount}</strong>
-          <small class="rotastic-shift-day-total">Day total ${rotasticAvailableDoctorCountForDay(s)}</small>
+          <small class="rotastic-shift-day-total">Day total ${dayLeaveCount}</small>
         </div>
       </div>
 
@@ -17375,7 +17363,7 @@ const ROTASTIC_FULL_DOCTOR_NAMES = {
   'Dr Maya S.':'Dr Maya Sukkari',
   'Dr Laila A.':'Dr Laila Ahmed Said Ayoub',
   'Dr Saba T.':'Dr Saba Tahir',
-  'Dr Tayseer A.':'Dr Tayseer Fathielalim Abdelhalim Ayed',
+  'Dr Tayseer A.':'Dr Tayseer Fathjelalim Abdelhalim Ayed',
   'Dr Zaid SE.':'Dr Zaid Husameddin Yousef Sabe Eleish'
 };
 
