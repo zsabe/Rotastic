@@ -1,0 +1,47 @@
+name: Restore original main UI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    if: ${{ !contains(github.event.head_commit.message, 'Restore original main UI') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove design-mutating UI loaders
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          needles = [
+              '<script id="rotastic-admin-center-loader" src="./admin-comms-ui.js?v=20261026-5" defer></script>\n',
+              '<script id="rotastic-generate-cleanup" src="./generate-cleanup.js?v=20261026-1" defer></script>\n',
+              '<script id="rotastic-stability-ui" src="./stability-ui.js?v=20261026-1" defer></script>\n',
+          ]
+          old = s
+          for needle in needles:
+              s = s.replace(needle, '')
+          if s != old:
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit restoration if needed
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "index.html already restored"
+            exit 0
+          fi
+          git config user.name "zsabe"
+          git config user.email "zaidsabe@gmail.com"
+          git add index.html
+          git commit -m "Restore original main UI"
+          git push
