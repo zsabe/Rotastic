@@ -1,0 +1,120 @@
+name: Sync physician email directory from secure backend
+
+on:
+  push:
+    paths:
+      - '.github/workflows/sync-physician-email-directory.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Patch secure physician email sync
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old_lookup = """  const map = getPhysicianEmailMap();
+  const stored = String(map[docName] || '').trim().toLowerCase();
+  if (stored) return stored;
+  const permanentDirectory = {"""
+          new_lookup = """  const map = getPhysicianEmailMap();
+  const stored = String(map[docName] || '').trim().toLowerCase();
+  if (stored) return stored;
+  try {
+    const secureDirectory = Storage.getJSON('rotastic_physician_email_directory', {});
+    const secureStored = String((secureDirectory && secureDirectory[docName]) || '').trim().toLowerCase();
+    if (secureStored) return secureStored;
+  } catch (e) {}
+  const permanentDirectory = {"""
+          if s.count(old_lookup) != 1:
+              raise SystemExit(f'Expected one email lookup anchor, found {s.count(old_lookup)}')
+          s = s.replace(old_lookup, new_lookup, 1)
+
+          old_populate = """function populateAccessCodeDoctorSelect() {
+  const select = document.getElementById('accessCodeDoctorSelect');
+  if (!select || typeof getDoctorsAlphabetically !== 'function') return;
+  const current = select.value;
+  select.innerHTML = '<option value=\"\">Select physician</option>' + getDoctorsAlphabetically()
+    .filter(function(d){ return d && d.name; })
+    .map(function(d){ return '<option value=\"' + String(d.name).replace(/\"/g,'&quot;') + '\">' + d.name + '</option>'; })
+    .join('');
+  if (current) select.value = current;
+}"""
+          new_populate = """async function rotasticRefreshPhysicianEmailDirectory() {
+  try {
+    await rotasticBackendEnsureSession();
+    if (!rotasticBackendClient?.rpc) return;
+    const result = await rotasticBackendClient.rpc('rotastic_list_authorized_physicians');
+    if (result?.error) throw result.error;
+    const rows = Array.isArray(result?.data) ? result.data : [];
+    const directory = Storage.getJSON('rotastic_physician_email_directory', {}) || {};
+    const fullNames = (typeof ROTASTIC_FULL_DOCTOR_NAMES === 'object' && ROTASTIC_FULL_DOCTOR_NAMES) ? ROTASTIC_FULL_DOCTOR_NAMES : {};
+    rows.forEach(function(row) {
+      const physicianName = String(row?.physician_name || '').trim();
+      const email = String(row?.email || '').trim().toLowerCase();
+      if (!physicianName || !email) return;
+      directory[physicianName] = email;
+      Object.keys(fullNames).forEach(function(shortName) {
+        if (String(fullNames[shortName] || '').trim().toLowerCase() === physicianName.toLowerCase()) directory[shortName] = email;
+      });
+    });
+    Storage.setJSON('rotastic_physician_email_directory', directory);
+  } catch (e) {
+    console.warn('ROTASTIC: physician email directory refresh failed.', e?.message || e);
+  }
+}
+
+function populateAccessCodeDoctorSelect() {
+  const select = document.getElementById('accessCodeDoctorSelect');
+  if (!select || typeof getDoctorsAlphabetically !== 'function') return;
+  const current = select.value;
+  select.innerHTML = '<option value=\"\">Select physician</option>' + getDoctorsAlphabetically()
+    .filter(function(d){ return d && d.name; })
+    .map(function(d){ return '<option value=\"' + String(d.name).replace(/\"/g,'&quot;') + '\">' + d.name + '</option>'; })
+    .join('');
+  if (current) select.value = current;
+  rotasticRefreshPhysicianEmailDirectory();
+}"""
+          if s.count(old_populate) != 1:
+              raise SystemExit(f'Expected one access-code physician selector function, found {s.count(old_populate)}')
+          s = s.replace(old_populate, new_populate, 1)
+          p.write_text(s, encoding='utf-8')
+
+          sw = Path('service-worker.js')
+          w = sw.read_text(encoding='utf-8')
+          old_cache = "const CACHE = 'rotastic-v234-access-code-outlook';"
+          new_cache = "const CACHE = 'rotastic-v235-secure-email-directory';"
+          if old_cache in w:
+              w = w.replace(old_cache, new_cache, 1)
+          elif new_cache not in w:
+              raise SystemExit('Service worker cache marker not found')
+          sw.write_text(w, encoding='utf-8')
+          PY
+      - name: Verify patch
+        shell: bash
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = "index.html service-worker.js "
+          grep -q "rotasticRefreshPhysicianEmailDirectory" index.html
+          grep -q "rotastic_list_authorized_physicians" index.html
+          grep -q "rotastic_physician_email_directory" index.html
+          grep -q "rotastic-v235-secure-email-directory" service-worker.js
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js
+          git commit -m 'Load physician emails from secure backend'
+          git push origin HEAD:main
