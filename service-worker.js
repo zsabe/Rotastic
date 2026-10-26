@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v233-zaid-auth-session';
+const CACHE = 'rotastic-v234-access-code-outlook';
 const CORE = [
   './',
   './index.html',

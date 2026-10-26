@@ -8887,7 +8887,15 @@ function getKnownPhysicianEmail(docName) {
   const customRow = Array.isArray(custom) ? custom.find(function(row){ return row && row.name === docName && row.email; }) : null;
   if (customRow && customRow.email) return String(customRow.email).trim().toLowerCase();
   const map = getPhysicianEmailMap();
-  return String(map[docName] || '').trim().toLowerCase();
+  const stored = String(map[docName] || '').trim().toLowerCase();
+  if (stored) return stored;
+  const permanentDirectory = {
+    'Dr Zaid SE.': 'zeleish@phcc.gov.qa',
+    'Dr Mohamed M.': 'mmoursi@phcc.gov.qa',
+    'Dr Nabina': 'fnabina@phcc.gov.qa',
+    'Dr. Nabina': 'fnabina@phcc.gov.qa'
+  };
+  return String(permanentDirectory[docName] || '').trim().toLowerCase();
 }
 
 function saveKnownPhysicianEmail(docName, email) {
@@ -9082,7 +9090,11 @@ function sendLastAccessCodeViaOutlook() {
   const body = firstTime
     ? ('Dear ' + info.physicianName + ',\n\nYour ROTASTIC first-time setup code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter your PHCC email and this code to complete setup.\n\nRegards,\nDr Zaid')
     : ('Dear ' + info.physicianName + ',\n\nYour temporary ROTASTIC Admin View code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter this code under Temporary Administration Access.\n\nRegards,\nDr Zaid');
-  window.location.href = 'mailto:' + encodeURIComponent(info.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  const outlookUrl = 'https://outlook.office.com/mail/deeplink/compose?to=' + encodeURIComponent(info.email) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  const outlookWindow = window.open(outlookUrl, '_blank', 'noopener');
+  if (!outlookWindow) {
+    window.location.href = 'mailto:' + encodeURIComponent(info.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
 }
 
 async function createSelectedAccessCode() {
