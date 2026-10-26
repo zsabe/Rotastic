@@ -1,0 +1,6 @@
+function getCurrentUserShiftWindow() {
+  if (!activeUserDocName) return null;
+  const today = getTodayScheduleDay();
+  if (!today || isDoctorOnLeaveToday(activeUserDocName, getQatarTodayISO())) return null;
+  return getDoctorShiftTiming(today, activeUserDocName);
+}
