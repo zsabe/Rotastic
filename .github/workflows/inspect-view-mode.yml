@@ -1,16 +1,82 @@
-name: Inspect view mode code
+name: Apply view mode fix
 on:
   push:
     paths:
       - '.github/workflows/inspect-view-mode.yml'
 permissions:
-  contents: read
+  contents: write
 jobs:
-  inspect:
+  patch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show view mode block safely
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Patch view switch and layout
         shell: bash
         run: |
-          sed -n '9440,9735p' index.html | sed -E 's/[0-9]{5,6}/[redacted]/g'
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          old1="""  if (rotasticIsPermanentAdminIdentity()) {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  // Every non-permanent account must present an admin-issued code when
+  // moving from Colleague View into Admin View. A delegated grant alone
+  // never bypasses this challenge.
+  openAdminModal();"""
+          new1="""  // Every account must present an Admin View code when moving from
+  // Colleague View back into Admin View. Permanent admin PINs are verified
+  // by verifyAdminPasskey(); temporary issued codes continue through the
+  // secure backend redemption path.
+  openAdminModal();"""
+          if old1 in s: s=s.replace(old1,new1,1)
+          elif 'Every account must present an Admin View code when moving from' not in s: raise SystemExit('view badge block not found')
+          old2="""  // Verified permanent admins never need to re-enter an Admin View code.
+  // Their identity has already been established by the backend registration.
+  const role = rotasticResolvedVerifiedRole();
+  if (role === 'zaid' || role === 'moursi') {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  document.getElementById('adminModal').classList.remove('hidden');"""
+          new2="""  // Returning from Colleague View always requires the code challenge,
+  // including verified permanent admin accounts.
+  document.getElementById('adminModal').classList.remove('hidden');"""
+          if old2 in s: s=s.replace(old2,new2,1)
+          elif 'Returning from Colleague View always requires the code challenge' not in s: raise SystemExit('admin modal block not found')
+          p.write_text(s,encoding='utf-8')
+          q=Path('admin-comms-ui.js'); j=q.read_text(encoding='utf-8')
+          old='.rac-view-holder{margin-top:10px;max-width:100%}'
+          new='.rac-view-holder{margin-top:10px;max-width:100%;display:flex;align-items:center;gap:8px;overflow-x:auto}.rac-view-holder>button,.rac-view-holder>a,.rac-view-holder>[role=button]{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;max-width:100%!important;white-space:nowrap!important;padding-left:14px!important;padding-right:14px!important}.rac-view-holder #adminBadgeText{white-space:nowrap!important;display:inline!important}'
+          if old in j: j=j.replace(old,new,1)
+          elif 'white-space:nowrap!important' not in j: raise SystemExit('view holder css not found')
+          q.write_text(j,encoding='utf-8')
+          PY
+      - name: Verify and commit
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'Every account must present an Admin View code' index.html
+          grep -q 'Returning from Colleague View always requires the code challenge' index.html
+          grep -q 'white-space:nowrap!important' admin-comms-ui.js
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html admin-comms-ui.js
+          git commit -m 'Fix Admin View return challenge and switch layout'
+          git push origin HEAD:main
