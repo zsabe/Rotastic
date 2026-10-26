@@ -1,0 +1,16 @@
+name: Inspect view mode code
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-view-mode.yml'
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find view mode code
+        shell: bash
+        run: |
+          grep -n -i -E 'Colleague View|Admin View|Admin Login' index.html | head -120 || true
