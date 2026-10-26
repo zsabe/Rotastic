@@ -1,0 +1,42 @@
+name: Wire colleague metrics safely
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wire-colleague-metrics.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch only metrics routing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="""function renderMetricsView() {\n  if (!isAdminViewActive()) return;\n\n  const stats = buildDutyStats();"""
+          new="""function renderMetricsView() {\n  if (!isAdminViewActive()) {\n    if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();\n    return;\n  }\n  if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();\n\n  const stats = buildDutyStats();"""
+          if old not in s:
+              raise SystemExit('metrics target not found exactly')
+          s=s.replace(old,new,1)
+          required=['id="tickerContent"','You are off today','id="topActionGrid"','id="notificationBellBtn"','id="scheduleMatrixContainer"','id="tabMetrics"']
+          missing=[x for x in required if x not in s]
+          if missing:
+              raise SystemExit('baseline anchor missing: '+', '.join(missing))
+          p.write_text(s)
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm .github/workflows/wire-colleague-metrics.yml
+          git commit -m 'Wire colleague personal metrics without layout changes'
+          git push
