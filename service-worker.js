@@ -1,7 +1,8 @@
-const CACHE = 'rotastic-v237-design-restore';
+const CACHE = 'rotastic-v238-admin-center-safe';
 const CORE = [
   './',
   './index.html',
+  './admin-comms-ui.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -40,6 +41,10 @@ body.antialiased{background:#090d16!important;color:#e2e8f0!important}
 </style>`;
   if (!html.includes('rotastic-original-dark-lock')) {
     html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${darkLock}</head>`) : darkLock + html;
+  }
+  const adminCenterScript = '<script id="rotastic-admin-center-loader" src="./admin-comms-ui.js?v=20261026-3" defer></script>';
+  if (!html.includes('rotastic-admin-center-loader')) {
+    html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${adminCenterScript}</body>`) : html + adminCenterScript;
   }
   const headers = new Headers(response.headers);
   headers.delete('content-length');
