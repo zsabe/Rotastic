@@ -1,0 +1,45 @@
+name: Restore working ROTASTIC layout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/restore-working-layout.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore last working front-end and preserve requested layout
+        run: |
+          git checkout 86d3f9442fac300dce655d7a20f4c61eab96748e -- index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('service-worker.js')
+          s=p.read_text()
+          s,n=re.subn(r"rotastic-v\d+[^'\"]*",'rotastic-v243-working-layout-restored',s,count=1)
+          p.write_text(s)
+          PY
+          grep -q 'id="tickerContent"' index.html
+          grep -q 'You are off today' index.html
+          grep -q 'id="scheduleMatrixContainer"' index.html
+          grep -q 'id="topActionGrid"' index.html
+          grep -q 'id="topExportBtn"' index.html
+          grep -q 'id="rotasticDayNavName"' index.html
+          grep -q 'id="rotasticLiveMini"' index.html
+          grep -q 'id="driveTimeBtn"' index.html
+          grep -q 'id="weatherBadge"' index.html
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js
+          git rm -f .github/workflows/restore-working-layout.yml
+          git commit -m 'Restore working design with requested compact rota layout'
+          git push
