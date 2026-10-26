@@ -25,16 +25,16 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          # The Android/PWA launcher is the first splash. Suppress only the
-          # in-page HTML overlay so there is no second splash after handoff.
+          # Keep the native Android/PWA launch screen, but suppress the second
+          # in-page HTML splash from the very first browser paint.
           style = """\n<style id=\"rotastic-second-splash-removal\">\n#rotasticOpeningSplash { display: none !important; visibility: hidden !important; pointer-events: none !important; }\n</style>\n"""
           if 'id="rotastic-second-splash-removal"' not in s:
               if '</head>' not in s:
                   raise SystemExit('head closing tag not found')
               s = s.replace('</head>', style + '</head>', 1)
 
-          # Keep all existing post-splash startup work, but execute its handoff
-          # immediately because the HTML splash is intentionally not rendered.
+          # Preserve the existing handoff work (schedule/ticker) but do it
+          # immediately because the second HTML splash is no longer shown.
           if 'setTimeout(finishSplash, 4200);' in s:
               s = s.replace('setTimeout(finishSplash, 4200);', 'setTimeout(finishSplash, 0);', 1)
           elif 'setTimeout(finishSplash, 0);' not in s:
@@ -49,8 +49,8 @@ jobs:
 
           sw = Path('service-worker.js')
           w = sw.read_text(encoding='utf-8')
-          old_cache = "const CACHE = 'rotastic-v228-direct-splash-fix';"
-          new_cache = "const CACHE = 'rotastic-v229-no-second-splash';"
+          old_cache = "const CACHE = 'rotastic-v229-single-splash';"
+          new_cache = "const CACHE = 'rotastic-v230-no-html-splash';"
           if old_cache in w:
               w = w.replace(old_cache, new_cache, 1)
           elif new_cache not in w:
