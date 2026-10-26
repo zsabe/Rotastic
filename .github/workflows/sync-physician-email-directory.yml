@@ -1,6 +1,7 @@
 name: Sync physician email directory from secure backend
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - '.github/workflows/sync-physician-email-directory.yml'
