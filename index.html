@@ -17607,7 +17607,11 @@ window.addEventListener('storage', function(event) {
 });
 
 function renderMetricsView() {
-  if (!isAdminViewActive()) return;
+  if (!isAdminViewActive()) {
+    if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();
+    return;
+  }
+  if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();
 
   const stats = buildDutyStats();
   const active = stats.filter(r => r.shifts > 0);
