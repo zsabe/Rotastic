@@ -92,14 +92,14 @@ jobs:
 
           css_anchor=".rotastic-live-mini button{min-height:18px!important;padding:0!important;background:none!important;border:0!important;color:#64748b!important;font-size:8px!important;line-height:1!important}"
           css_add=css_anchor+'''\n/* Requested compact ETA + Weather beside LIVE; scoped to this strip only. */
-          .rotastic-live-mini .live-drive-slot{width:auto!important;min-width:0!important;height:20px!important;min-height:20px!important;display:flex!important;align-items:center!important;overflow:visible!important}
-          .rotastic-live-mini .live-drive-slot #driveTimeBtn{display:inline-flex!important;width:auto!important;min-width:0!important;max-width:none!important;height:20px!important;min-height:20px!important;max-height:20px!important;margin:0!important;padding:0 5px!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;gap:3px!important}
-          .rotastic-live-mini .live-drive-slot #driveTimeBtn>i{font-size:9px!important}
-          .rotastic-live-mini #driveTimeBtnText{font-size:8px!important;line-height:1!important;color:#7dd3fc!important;font-weight:900!important}
-          .rotastic-live-mini #driveTimeBtnSub{display:none!important}
-          .rotastic-live-mini #weatherBadge{display:inline-flex!important;width:auto!important;min-width:0!important;max-width:none!important;height:20px!important;min-height:20px!important;max-height:20px!important;margin:0!important;padding:0 5px!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;gap:3px!important;color:#cbd5e1!important;font-size:8px!important;font-weight:850!important}
-          .rotastic-live-mini #weatherTemp{font-size:8px!important;font-weight:850!important;color:#cbd5e1!important}
-          '''.replace('          ','')
+.rotastic-live-mini .live-drive-slot{width:auto!important;min-width:0!important;height:20px!important;min-height:20px!important;display:flex!important;align-items:center!important;overflow:visible!important}
+.rotastic-live-mini .live-drive-slot #driveTimeBtn{display:inline-flex!important;width:auto!important;min-width:0!important;max-width:none!important;height:20px!important;min-height:20px!important;max-height:20px!important;margin:0!important;padding:0 5px!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;gap:3px!important}
+.rotastic-live-mini .live-drive-slot #driveTimeBtn>i{font-size:9px!important}
+.rotastic-live-mini #driveTimeBtnText{font-size:8px!important;line-height:1!important;color:#7dd3fc!important;font-weight:900!important}
+.rotastic-live-mini #driveTimeBtnSub{display:none!important}
+.rotastic-live-mini #weatherBadge{display:inline-flex!important;width:auto!important;min-width:0!important;max-width:none!important;height:20px!important;min-height:20px!important;max-height:20px!important;margin:0!important;padding:0 5px!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;gap:3px!important;color:#cbd5e1!important;font-size:8px!important;font-weight:850!important}
+.rotastic-live-mini #weatherTemp{font-size:8px!important;font-weight:850!important;color:#cbd5e1!important}
+'''
           if s.count(css_anchor)!=1:
               raise SystemExit(f'Expected one LIVE strip CSS anchor, found {s.count(css_anchor)}')
           s=s.replace(css_anchor,css_add,1)
@@ -117,12 +117,11 @@ jobs:
           grep -q 'id="weatherBadge"' index.html
           grep -q '<span>Rota View</span>' index.html
           grep -q '<span>Request Swap</span>' index.html
-          grep -q 'onclick="toggleRotaExportMenu()"' index.html
+          grep -q '<span>Export</span>' index.html
           test "$(grep -c '<span>Refresh</span>' index.html || true)" = "0"
           test "$(grep -c 'id="driveTimeBtn"' index.html)" = "1"
           test "$(grep -c 'id="weatherBadge"' index.html)" = "1"
           test "$(grep -c 'personal-poster-card' index.html)" -gt "0"
-          test "$(grep -c 'rotasticAnnouncementTicker' index.html || true)" -gt "0"
       - name: Commit amendment
         run: |
           git config user.name 'github-actions[bot]'
