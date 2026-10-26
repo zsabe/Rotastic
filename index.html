@@ -9549,6 +9549,26 @@ function closeAdminModal() {
 async function verifyAdminPasskey() {
   var input = document.getElementById('adminPasskeyInput').value.trim().toUpperCase();
   var statusEl = document.getElementById('adminModalStatus');
+
+  // Safety path for a stale/cached screen: a verified Zaid/Moursi account can
+  // unlock Admin View with its existing personal PIN. Normally they enter
+  // Admin View directly and never see this modal.
+  const role = rotasticResolvedVerifiedRole();
+  const permanentPinOk = false;
+  if (permanentPinOk) {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked.</span>';
+    setTimeout(function() {
+      closeAdminModal();
+      switchTab('schedule');
+    }, 200);
+    return;
+  }
+
   try {
     await rotasticBackendEnsureSession();
     if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified sign-in is required.');
@@ -12204,11 +12224,10 @@ window.rotasticLogoutAndSwitchAccount=async function(){
 function refreshSettingsIdentity(){const name=String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||Storage.get('rotastic_user_doc_name','')||'').trim();const n=document.getElementById('rotasticViewingDoctor');if(n)n.textContent=name||'Not signed in';const t=document.getElementById('settingsViewSwitchText');if(t)t.textContent=(typeof isAdminViewActive==='function'&&isAdminViewActive())?'Switch to Colleague View':'Switch to Admin View';}
 
 function mine(n){const me=String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||Storage.get('rotastic_user_doc_name','')||'').trim(),r=String(n?.recipient||n?.recipient_name||'').trim();return !!me&&(r===me||r==='*'||/^all(?:\s|$)/i.test(r)||r.split(' + ').map(x=>x.trim()).includes(me));}
-function purgeLocalNotificationHistory(){const cutoff=Date.now()-3*24*60*60*1000,q=Storage.getJSON('rotastic_notification_queue',[])||[],keep=q.filter(n=>{const t=new Date(n.createdAt||n.created_at||0).getTime();return t&&t>=cutoff;});if(keep.length!==q.length)Storage.setJSON('rotastic_notification_queue',keep);}
 function todayNotifications(){const day=qatarDayKey(new Date());return (Storage.getJSON('rotastic_notification_queue',[])||[]).filter(n=>mine(n)&&qatarDayKey(n.createdAt||n.created_at||Date.now())===day).sort((a,b)=>new Date(b.createdAt||b.created_at||0)-new Date(a.createdAt||a.created_at||0));}
-function updateBell(){purgeLocalNotificationHistory();const count=todayNotifications().filter(n=>!n.read&&!n.readAt&&!n.read_at).length,b=document.getElementById('notificationUnreadBadge');if(!b)return;b.textContent=count>99?'99+':String(count);b.classList.toggle('hidden',count===0);}
+function updateBell(){const count=todayNotifications().filter(n=>!n.read&&!n.readAt&&!n.read_at).length,b=document.getElementById('notificationUnreadBadge');if(!b)return;b.textContent=count>99?'99+':String(count);b.classList.toggle('hidden',count===0);}
 window.closeRotasticNotificationCenter=()=>document.getElementById('rotasticNotificationCenterOverlay')?.classList.add('hidden');
-window.openRotasticNotificationCenter=async function(){purgeLocalNotificationHistory();try{if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient&&typeof rotasticBackendUser!=='undefined'&&rotasticBackendUser)await rotasticBackendClient.rpc('rotastic_cleanup_my_notifications')}catch(e){}const items=todayNotifications(),list=document.getElementById('rotasticNotificationTodayList');if(list)list.innerHTML=items.length?items.map(n=>'<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div class="flex justify-between gap-3"><div class="text-xs font-black text-white">'+esc(n.title||'ROTASTIC')+'</div><div class="text-[9px] text-slate-500 whitespace-nowrap">'+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',hour:'2-digit',minute:'2-digit'}).format(new Date(n.createdAt||n.created_at||Date.now()))+'</div></div><div class="text-[11px] text-slate-300 mt-1">'+esc(n.message||'')+'</div></div>').join(''):'<div class="text-sm text-slate-500 text-center py-8">No notifications today.</div>';document.getElementById('rotasticNotificationCenterOverlay')?.classList.remove('hidden');const q=Storage.getJSON('rotastic_notification_queue',[])||[];items.forEach(n=>{n.read=true;if(n.backendId&&typeof rotasticBackendMarkNotificationRead==='function')rotasticBackendMarkNotificationRead(n.backendId)});Storage.setJSON('rotastic_notification_queue',q);updateBell();};
+window.openRotasticNotificationCenter=async function(){try{if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient&&typeof rotasticBackendUser!=='undefined'&&rotasticBackendUser)await rotasticBackendClient.rpc('rotastic_cleanup_my_notifications')}catch(e){}const items=todayNotifications(),list=document.getElementById('rotasticNotificationTodayList');if(list)list.innerHTML=items.length?items.map(n=>'<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div class="flex justify-between gap-3"><div class="text-xs font-black text-white">'+esc(n.title||'ROTASTIC')+'</div><div class="text-[9px] text-slate-500 whitespace-nowrap">'+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',hour:'2-digit',minute:'2-digit'}).format(new Date(n.createdAt||n.created_at||Date.now()))+'</div></div><div class="text-[11px] text-slate-300 mt-1">'+esc(n.message||'')+'</div></div>').join(''):'<div class="text-sm text-slate-500 text-center py-8">No notifications today.</div>';document.getElementById('rotasticNotificationCenterOverlay')?.classList.remove('hidden');const q=Storage.getJSON('rotastic_notification_queue',[])||[];items.forEach(n=>{n.read=true;if(n.backendId&&typeof rotasticBackendMarkNotificationRead==='function')rotasticBackendMarkNotificationRead(n.backendId)});Storage.setJSON('rotastic_notification_queue',q);updateBell();};
 
 async function renderMoursiInbox(){const card=document.getElementById('moursiApprovalInboxCard');if(!card)return;const role=typeof rotasticResolvedVerifiedRole==='function'?rotasticResolvedVerifiedRole():'';const isM=/moursi|morsi/i.test(String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||''))||role==='moursi';card.classList.toggle('hidden',!isM);if(!isM)return;const list=document.getElementById('moursiApprovalInboxList');try{const r=await rotasticBackendClient.rpc('rotastic_moursi_approval_inbox');if(r.error)throw r.error;const rows=Array.isArray(r.data)?r.data:[];list.innerHTML=rows.length?rows.map(x=>{const informed=x.action_mode==='inform';return '<div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-xs font-black text-white">'+esc(x.title||x.request_kind)+'</div><div class="text-[10px] text-cyan-300 font-bold mt-0.5">'+esc(x.physician_name||'')+'</div><div class="text-[11px] text-slate-300 mt-1 leading-relaxed">'+esc(x.detail||'')+'</div></div></div><div class="grid '+(informed?'grid-cols-1':'grid-cols-2')+' gap-2 mt-3">'+(informed?'<button class="py-2 rounded-lg bg-cyan-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'informed\')">Informed</button>':'<button class="py-2 rounded-lg bg-emerald-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'approve\')">Approve</button><button class="py-2 rounded-lg bg-rose-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'decline\')">Decline</button>')+'</div></div>'}).join(''):'<div class="text-xs text-slate-500 text-center py-5">No pending approvals.</div>';}catch(e){list.textContent=String(e?.message||'Could not load approvals.')}}
 window.actMoursiApproval=async function(kind,id,action){let note='';if(action==='decline')note=prompt('Reason / amendment requested (optional):','')||'';try{const r=await rotasticBackendClient.rpc('rotastic_moursi_request_action',{p_kind:kind,p_id:id,p_action:action==='informed'?'informed':action,p_note:note});if(r.error)throw r.error;await renderMoursiInbox();if(typeof rotasticBackendHydrateNotifications==='function')await rotasticBackendHydrateNotifications();}catch(e){alert(String(e?.message||'Could not update this request.'))}};
@@ -16228,33 +16247,34 @@ async function generateDutyScheduleFromPlanner() {
   await rotasticRefreshGenerationLock();
   if (!rotasticGuardNewGeneration(true)) return false;
   const weekSelect = document.getElementById('cycleStartDate');
-  const groupInput = document.getElementById('wednesdayAMOBGroup');
-  const rangeSelect = document.getElementById('rotasticGenerationRange');
-  const firstWeekISO = weekSelect ? weekSelect.value : '';
-  const firstGroup = getWednesdayAMOBGroupValue();
-  const weeks = Math.max(1, parseInt(rangeSelect?.value || '1', 10) || 1);
-  if (!firstWeekISO) { alert('Please choose the week commencing Sunday.'); if (weekSelect) weekSelect.focus(); return false; }
-  if (!firstGroup) {
-    if (groupInput) { groupInput.focus(); groupInput.classList.add('ring-2','ring-rose-500/70','rounded'); setTimeout(function(){ groupInput.classList.remove('ring-2','ring-rose-500/70','rounded'); },1800); }
-    alert('Please select or enter which group is on AM on Wednesday before generating the schedule.'); return false;
+  const weekISO = weekSelect ? weekSelect.value : '';
+
+  if (!weekISO) {
+    alert('Please choose the week commencing Sunday.');
+    if (weekSelect) weekSelect.focus();
+    return false;
   }
-  function addDaysISO(iso, days) { const d=new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+days); return d.toISOString().slice(0,10); }
-  const generatedSeries=[];
-  for (let i=0;i<weeks;i++) {
-    const weekISO=addDaysISO(firstWeekISO,i*7); let group=firstGroup;
-    try { if (i>0 && typeof getRecommendedWednesdayAMGroupForWeek==='function') group=getRecommendedWednesdayAMGroupForWeek(weekISO)||group; } catch(e) {}
-    if (weekSelect) weekSelect.value=weekISO; if (groupInput) groupInput.value=group;
-    Storage.set('rotastic_selected_week_commencing',weekISO); Storage.set('rotastic_wednesday_am_ob_group',group); Storage.set('rotastic_wednesday_am_group',group);
-    generateDutySchedule(); generatedSeries.push({weekStart:weekISO,wednesdayAMGroup:group,schedule:JSON.parse(JSON.stringify(currentSchedule||[]))});
+
+  Storage.set('rotastic_selected_week_commencing', weekISO);
+
+  const input = document.getElementById('wednesdayAMOBGroup');
+  const group = getWednesdayAMOBGroupValue();
+
+  if (!group) {
+    if (input) {
+      input.focus();
+      input.classList.add('ring-2','ring-rose-500/70','rounded');
+      setTimeout(function() { input.classList.remove('ring-2','ring-rose-500/70','rounded'); }, 1800);
+    }
+    alert('Please select or enter which group is on AM on Wednesday before generating the schedule.');
+    return false;
   }
-  Storage.setJSON('rotastic_generated_schedule_series',generatedSeries);
-  if (generatedSeries.length) {
-    const first=generatedSeries[0]; currentSchedule=JSON.parse(JSON.stringify(first.schedule||[]));
-    if (weekSelect) weekSelect.value=first.weekStart; if (groupInput) groupInput.value=first.wednesdayAMGroup||firstGroup;
-    Storage.set('rotastic_selected_week_commencing',first.weekStart); Storage.set('rotastic_wednesday_am_ob_group',first.wednesdayAMGroup||firstGroup); Storage.set('rotastic_wednesday_am_group',first.wednesdayAMGroup||firstGroup);
-  }
-  try { if (typeof scheduleShiftNotifications==='function') await scheduleShiftNotifications(generatedSeries.flatMap(function(x){return x.schedule||[];})); } catch(e) { console.warn('ROTASTIC shift notification scheduling:',e); }
-  switchTab('schedule'); renderScheduleView(); return true;
+
+  Storage.set('rotastic_wednesday_am_ob_group', group);
+  Storage.set('rotastic_wednesday_am_group', group);
+  generateDutySchedule();
+  switchTab('schedule');
+  return true;
 }
 
 
@@ -17587,11 +17607,7 @@ window.addEventListener('storage', function(event) {
 });
 
 function renderMetricsView() {
-  if (!isAdminViewActive()) {
-    if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();
-    return;
-  }
-  if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();
+  if (!isAdminViewActive()) return;
 
   const stats = buildDutyStats();
   const active = stats.filter(r => r.shifts > 0);
@@ -19599,15 +19615,6 @@ function renderAutoGenerationStatus() {
 }
 
 async function generateAutomaticWeeklyDraftIfDue() {
-  try {
-    const qatarToday = typeof getQatarTodayISO === 'function' ? getQatarTodayISO() : '';
-    if (qatarToday === '2026-10-28') {
-      const status = document.getElementById('autoGenerationStatus');
-      if (status) status.textContent = 'Manual exception: no automatic rota generation on Wednesday 28 Oct 2026. Normal weekly generation resumes next Wednesday.';
-      return false;
-    }
-  } catch (e) {}
-
   await rotasticRefreshGenerationLock();
   if (!rotasticGuardNewGeneration(false)) { renderAutoGenerationStatus(); return false; }
   const due = getMostRecentWednesday2200Qatar();
