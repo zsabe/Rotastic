@@ -29,6 +29,10 @@ jobs:
           for m in re.finditer(r'id=["\']([^"\']*splash[^"\']*)["\']', s, re.I):
               line = s.count('\n', 0, m.start()) + 1
               print(line, m.group(1))
+          print('\nREGISTRATION GATE OCCURRENCES:')
+          for i,line in enumerate(s.splitlines(),1):
+              if 'rotasticRegistrationGate' in line:
+                  print(i, line[:700])
           print('\nLINES CONTAINING splash + fixed/inset/z-index/display:')
           for i,line in enumerate(s.splitlines(),1):
               lo=line.lower()
