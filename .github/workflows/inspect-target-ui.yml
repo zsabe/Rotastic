@@ -1,0 +1,43 @@
+name: Inspect target UI
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, 'UI target inspection') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract exact target snippets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          needles=['live-rota-meta-row','driveTimeBtn','weatherBadge','topActionGrid','You are off today','personal-poster','personalDuty','rotaExportToggleBtn','rotaExportActions']
+          out=[]
+          for n in needles:
+              out.append('\n===== '+n+' =====\n')
+              start=0
+              found=0
+              while True:
+                  i=s.find(n,start)
+                  if i<0: break
+                  found+=1
+                  a=max(0,i-900); b=min(len(s),i+1800)
+                  out.append(s[a:b])
+                  out.append('\n---\n')
+                  start=i+len(n)
+                  if found>=4: break
+              if not found: out.append('(not found)\n')
+          Path('_ui_target_inspection.txt').write_text(''.join(out),encoding='utf-8')
+          PY
+      - name: Commit inspection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _ui_target_inspection.txt
+          git commit -m "UI target inspection"
+          git push
