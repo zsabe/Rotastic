@@ -1,0 +1,40 @@
+name: Inspect live row and poster
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, 'Write live poster inspection') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract exact contexts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          needles = ['live-rota-meta-row','driveTimeBtn','weatherBadge','topActionGrid','You are off today','personalPoster','personal-poster','off today']
+          out=[]
+          for n in needles:
+              idx=s.find(n)
+              out.append('\n===== '+n+' =====\n')
+              if idx<0:
+                  out.append('NOT FOUND\n')
+              else:
+                  a=max(0,idx-1800); b=min(len(s),idx+2600)
+                  out.append(s[a:b]+'\n')
+          Path('inspection-live-poster.txt').write_text(''.join(out),encoding='utf-8')
+          PY
+      - name: Commit inspection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add inspection-live-poster.txt
+          git commit -m "Write live poster inspection"
+          git push
