@@ -1,5 +1,6 @@
 name: Fix view mode switch
 on:
+  workflow_dispatch:
   push:
     paths:
       - '.github/workflows/fix-view-switch.yml'
@@ -37,13 +38,14 @@ jobs:
   // never bypasses this challenge.
   openAdminModal();"""
           new1 = """  // Every account must present an Admin View code when moving from
-  // Colleague View back into Admin View. Permanent Dr Z / Dr Moursi PINs
-  // are verified by verifyAdminPasskey(); temporary issued codes continue
-  // through the secure backend redemption path.
+  // Colleague View back into Admin View. Permanent admin PINs are verified
+  // by verifyAdminPasskey(); temporary issued codes continue through the
+  // secure backend redemption path.
   openAdminModal();"""
-          if old1 not in s:
+          if old1 in s:
+              s = s.replace(old1, new1, 1)
+          elif 'Every account must present an Admin View code when moving from' not in s:
               raise SystemExit('handleViewBadgeClick permanent bypass block not found')
-          s = s.replace(old1, new1, 1)
 
           old2 = """  // Verified permanent admins never need to re-enter an Admin View code.
   // Their identity has already been established by the backend registration.
@@ -62,18 +64,20 @@ jobs:
           new2 = """  // Returning from Colleague View always requires the code challenge,
   // including verified permanent admin accounts.
   document.getElementById('adminModal').classList.remove('hidden');"""
-          if old2 not in s:
+          if old2 in s:
+              s = s.replace(old2, new2, 1)
+          elif 'Returning from Colleague View always requires the code challenge' not in s:
               raise SystemExit('openAdminModal permanent bypass block not found')
-          s = s.replace(old2, new2, 1)
           p.write_text(s, encoding='utf-8')
 
           q = Path('admin-comms-ui.js')
           j = q.read_text(encoding='utf-8')
           old_css = ".rac-view-holder{margin-top:10px;max-width:100%}"
           new_css = ".rac-view-holder{margin-top:10px;max-width:100%;display:flex;align-items:center;gap:8px;overflow-x:auto}.rac-view-holder>button,.rac-view-holder>a,.rac-view-holder>[role=button]{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;max-width:100%!important;white-space:nowrap!important;padding-left:14px!important;padding-right:14px!important}.rac-view-holder #adminBadgeText{white-space:nowrap!important;display:inline!important}"
-          if old_css not in j:
+          if old_css in j:
+              j = j.replace(old_css, new_css, 1)
+          elif 'white-space:nowrap!important' not in j:
               raise SystemExit('view-holder CSS anchor not found')
-          j = j.replace(old_css, new_css, 1)
           q.write_text(j, encoding='utf-8')
           PY
       - name: Verify
@@ -86,6 +90,7 @@ jobs:
       - name: Commit
         shell: bash
         run: |
+          if git diff --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html admin-comms-ui.js
