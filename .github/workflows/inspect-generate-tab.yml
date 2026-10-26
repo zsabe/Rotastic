@@ -1,0 +1,44 @@
+name: Inspect generate tab
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-generate-tab.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show relevant generate and rota code
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8').splitlines()
+          terms=[
+            'Delegated Admin','Smart Rules Assistant','Schedule Amendment Assistant',
+            'Clinical Lead','Generate schedule','Rota approval','Physician directory',
+            'Day total','day total','Developed by Dr. Zaid','shift notification',
+            'notification','generateSchedule','autoGenerate','Wednesday'
+          ]
+          hits=[]
+          for i,line in enumerate(s):
+            if any(t.lower() in line.lower() for t in terms):
+              hits.append(i)
+          merged=[]
+          for i in hits:
+            a=max(0,i-12); b=min(len(s),i+28)
+            if merged and a<=merged[-1][1]+5: merged[-1]=(merged[-1][0],max(merged[-1][1],b))
+            else: merged.append((a,b))
+          for a,b in merged[:30]:
+            print(f'--- lines {a+1}-{b} ---')
+            for n in range(a,b):
+              line=s[n]
+              line=re.sub(r'(?i)(sb_secret_[A-Za-z0-9_\-]+)', '[secret-redacted]', line)
+              print(f'{n+1}: {line}')
+          PY
