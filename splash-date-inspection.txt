@@ -1,0 +1,2846 @@
+===== January #1 at 527470 =====
+UFN+CXJT3TWR+CoFCCqB2T3TWRZCoHdClBSTI84VZQhV0Ke6ayLOQi8Cmvgl5iMp7pWR52SkjqgzsiBT3TWRKhsUOclVlJJGd0udggyUudkrpkQOUo6pvmS8xJT3TWR58FSRVnCK6ZFzbog5NZ6pcpJWTiTIQgqk901ku6o7BICUuUrpKjsqyqzlUXJrpKugVZyEPNulB+aV06XKoHIKT5Ksp7prKuuVSQlVnKZOl8VQQ5wUuUkkueqRVlDzblNdOi2z6pM4QnKTJTXSsjzuqO4whBPVLnfoklZVkBVlJ13SZSTogUmRlJlDlDdOlLslV1CEncFUCU109kQ6bqspMpPkknSuSKknimunSgpEJJSF2Cmunsj6JChB2VE5TXunASOOUOUpOEKYokQO6XqhDvRUST0TJJR4ocqspEydL80hO6QndKTlJOkJVKsqs4STqkhVZVZTJJMZSeKU+SAlCiConOVRIwk8SkPTCFOqO+6QpQUhSKcJPRDlU4pMhRlSBI4oRnKXKQE52GUBRBf/Z"/>
+<div class="rotastic-splash-welcome" id="rotasticSplashWelcome">Welcome, Doctor</div>
+<div class="rotastic-splash-date" id="rotasticSplashDate">Today is Monday, 1 January 2026</div>
+<div class="rotastic-splash-room hidden" id="rotasticSplashRoom">You are in Room 24 today.</div>
+<div aria-hidden="true" class="rotastic-splash-progress-wrap">
+<div class="rotastic-splash-progress" id="rotasticSplashProgress"></div>
+</div>
+</div>
+</div>
+<header class="bg-[#0b101c]/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-30 no-print">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm border border-teal-400/30">
+<img alt="ROTASTIC logo" class="w-full h-full object-cover" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABim
+===== January #2 at 1730912 =====
+button>
+        `;
+      }).filter(Boolean).join('');
+    }
+  }
+
+  const stamp = document.getElementById('plannerLiveUpdatedAt');
+  if (stamp) {
+    stamp.textContent = 'Updated ' + new Date().toLocaleTimeString([], {
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
+  if (typeof initializePlannerExportScopeControls === 'function') initializePlannerExportScopeControls();
+}
+
+function initializePlannerExportScopeControls() {
+  const scope = document.getElementById('plannerExportScope');
+  const month = document.getElementById('plannerExportMonth');
+  const year = document.getElementById('plannerExportYear');
+  if (!scope || !month || !year) return;
+
+  if (!month.options.length) {
+    ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach(function(label, index){
+      const option=document.createElement('option'); option.value=String(index); option.textContent=label; month.appendChild(option);
+    });
+  }
+  if (!year.options.length) {
+    const currentYear=parseInt(String(getQatarTodayISO()).slice(0,4),10) || new Date().getFullYear();
+    for(let y=currentYear-1;y<=currentYear+2;y+=1){ const option=document.createElement('option'); option.value=String(y); option.textContent=String(y); year.appendChild(option); }
+  }
+
+  const weekSelect=document.getElementById('plannerWeekSelect');
+  const anchor=(weekSelect && weekSelect.value) ? weekSelect.value : getQatarTodayISO();
+  const parts=String(anchor).split('-').map(Number);
+  if (parts.length===3) { year.value=String(parts[0]); month.value=String(Math.max(0,parts[1]-1)); }
+  updatePlannerExportPeriodControls();
+}
+
+function updatePlannerExportPeriodControls() {
+  const scope=document.getElementById('plannerExportScope');
+  const monthWrap=document.getElementById('plannerExportMonthWrap');
+  const hint=document.getElementById('plannerExportHint');
+  if (!s
+===== January #3 at 1735202 =====
+ing(d).padStart(2,'0');
+    const entries=(byDate.get(iso)||[]).slice().sort(function(a,b){ return String(a.doc||'').localeCompare(String(b.doc||'')); });
+    days.push({day:d,iso:iso,entries:entries});
+  }
+  return {year:year,month:monthIndex,firstDow:firstDow,daysInMonth:daysInMonth,days:days};
+}
+
+function rotasticPlannerGroupStyle(docName) {
+  const group=getDoctorRotaGroup(docName);
+  if(group===1) return {label:'G1',fill:'#dbeafe',stroke:'#60a5fa',text:'#1e3a8a'};
+  if(group===2) return {label:'G2',fill:'#fef3c7',stroke:'#f59e0b',text:'#78350f'};
+  return {label:'—',fill:'#e2e8f0',stroke:'#94a3b8',text:'#334155'};
+}
+
+function rotasticPlannerExportLabel(selection) {
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return selection.scope==='year' ? String(selection.year) : monthNames[selection.month]+'_'+selection.year;
+}
+
+function rotasticPlannerJsPdfCtor(){
+  if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if(window.jsPDF) return window.jsPDF;
+  return null;
+}
+
+function rotasticDrawPlannerLegendPdf(doc,x,y){
+  doc.setFontSize(8); doc.setTextColor(51,65,85);
+  doc.setFillColor(219,234,254); doc.setDrawColor(96,165,250); doc.roundedRect(x,y,20,5,1,1,'FD'); doc.text('Group 1',x+2,y+3.5);
+  doc.setFillColor(254,243,199); doc.setDrawColor(245,158,11); doc.roundedRect(x+23,y,20,5,1,1,'FD'); doc.text('Group 2',x+25,y+3.5);
+}
+
+function rotasticDrawPlannerMonthPdf(doc,year,monthIndex,compact){
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const data=rotasticPlannerMonthData(year,monthIndex);
+  const pageW=doc.internal.pageSize.getWidth(), pageH=doc.internal.pageSize.getHeight();
+  const margin=8, top=compact?12:17;
+  doc.
+===== January #4 at 1736041 =====
+year' ? String(selection.year) : monthNames[selection.month]+'_'+selection.year;
+}
+
+function rotasticPlannerJsPdfCtor(){
+  if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if(window.jsPDF) return window.jsPDF;
+  return null;
+}
+
+function rotasticDrawPlannerLegendPdf(doc,x,y){
+  doc.setFontSize(8); doc.setTextColor(51,65,85);
+  doc.setFillColor(219,234,254); doc.setDrawColor(96,165,250); doc.roundedRect(x,y,20,5,1,1,'FD'); doc.text('Group 1',x+2,y+3.5);
+  doc.setFillColor(254,243,199); doc.setDrawColor(245,158,11); doc.roundedRect(x+23,y,20,5,1,1,'FD'); doc.text('Group 2',x+25,y+3.5);
+}
+
+function rotasticDrawPlannerMonthPdf(doc,year,monthIndex,compact){
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const data=rotasticPlannerMonthData(year,monthIndex);
+  const pageW=doc.internal.pageSize.getWidth(), pageH=doc.internal.pageSize.getHeight();
+  const margin=8, top=compact?12:17;
+  doc.setTextColor(15,23,42); doc.setFont('helvetica','bold'); doc.setFontSize(compact?13:18);
+  doc.text(monthNames[monthIndex]+' '+year,margin,8);
+  if(!compact){ doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(71,85,105); doc.text('ROTASTIC Leave Planner · Abu Nakhla Health Centre',margin,12); }
+  rotasticDrawPlannerLegendPdf(doc,pageW-53,4);
+  const gridW=pageW-margin*2, cellW=gridW/7, headerH=6, cellH=(pageH-top-margin-headerH)/6;
+  doc.setFontSize(7); doc.setFont('helvetica','bold');
+  dayNames.forEach(function(name,i){ doc.setFillColor(226,232,240); doc.setDrawColor(148,163,184); doc.rect(margin+i*cellW,top,cellW,headerH,'FD'); doc.setTextColor(51,65,85); doc.text(name,margin+i*cellW+2,top+4); });
+  let cursor=1-data.firstDow;
+  for(let w=0;w<6;w+=1){
+    for(let dow=0;dow<7;dow+=1,cursor+=1){
+      con
+===== January #5 at 1741952 =====
+d try again.'); return; }
+  rotasticShowExportBusy('Preparing planner…'); await rotasticYieldForExport();
+  try{
+    const doc=new Ctor({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+    if(selection.scope==='year') rotasticDrawAnnualOverviewPdf(doc,selection.year); else rotasticDrawPlannerMonthPdf(doc,selection.year,selection.month,false);
+    doc.save('ROTASTIC_Leave_Planner_'+rotasticPlannerExportLabel(selection)+'.pdf');
+  }catch(error){ console.warn('Fast planner PDF export:',error); alert('Planner PDF export could not be completed.'); }
+  finally{ rotasticHideExportBusy(); }
+}
+
+function rotasticDrawMonthCanvas(ctx,year,monthIndex,x,y,w,h,compact){
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December']; const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; const data=rotasticPlannerMonthData(year,monthIndex);
+  ctx.save(); ctx.fillStyle='#fff'; ctx.fillRect(x,y,w,h); ctx.strokeStyle='#94a3b8'; ctx.strokeRect(x,y,w,h); ctx.fillStyle='#0f172a'; ctx.font=(compact?'700 22px':'700 34px')+' Arial'; ctx.fillText(monthNames[monthIndex]+' '+year,x+12,y+(compact?27:42));
+  const top=y+(compact?38:58), header=compact?20:30, cw=(w-16)/7,ch=(h-(top-y)-10-header)/6; ctx.font=(compact?'700 11px':'700 16px')+' Arial'; days.forEach(function(d,i){ctx.fillStyle='#e2e8f0';ctx.fillRect(x+8+i*cw,top,cw,header);ctx.strokeStyle='#94a3b8';ctx.strokeRect(x+8+i*cw,top,cw,header);ctx.fillStyle='#334155';ctx.fillText(d,x+12+i*cw,top+header*.68)});
+  let cursor=1-data.firstDow; for(let r=0;r<6;r++){ for(let c=0;c<7;c++,cursor++){ const cx=x+8+c*cw,cy=top+header+r*ch; ctx.fillStyle=(c===5||c===6)?'#f8fafc':'#fff';ctx.fillRect(cx,cy,cw,ch);ctx.strokeStyle='#cbd5e1';ctx.strokeRect(cx,cy,cw,ch); if(cursor<1||cursor>data.daysInMonth) continue; const day=data.days[cursor-1];ctx.fillStyle='#0f172a';ctx.fon
+===== January #6 at 1749938 =====
+{
+      if (!String(iso).startsWith(String(year) + '-')) return;
+      if (!byDate.has(iso)) byDate.set(iso, []);
+      byDate.get(iso).push(entry);
+    });
+  });
+  return byDate;
+}
+
+function getAnnualPlannerGroup(docName) {
+  const group = getDoctorRotaGroup(docName);
+  return group === 1 ? 'G1' : group === 2 ? 'G2' : '—';
+}
+
+function buildAnnualLeavePlannerPDFElement(year) {
+  const root = document.createElement('div');
+  root.id = 'annualLeavePlannerPdfExport';
+  root.style.cssText = 'position:fixed;left:-20000px;top:0;width:277mm;background:#fff;color:#0f172a;font-family:Arial,Helvetica,sans-serif;z-index:-1;';
+  const byDate = getAnnualPlannerEntriesByDate(year);
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  monthNames.forEach(function(monthName, monthIndex) {
+    const page = document.createElement('section');
+    page.style.cssText = 'width:277mm;min-height:190mm;box-sizing:border-box;padding:8mm 7mm 7mm;background:#fff;page-break-after:always;break-after:page;';
+    const header = document.createElement('div');
+    header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.4px solid #0f172a;padding-bottom:4px;margin-bottom:6px">' +
+      '<div><div style="font-size:18px;font-weight:800">ROTASTIC Annual Leave Planner</div><div style="font-size:10px;color:#475569">Abu Nakhla Health Centre · '+monthName+' '+year+'</div></div>' +
+      '<div style="font-size:9px;text-align:right"><span style="display:inline-block;padding:3px 6px;background:#dbeafe;border:1px solid #60a5fa;border-radius:5px;margin-left:4px">Group 1</span><span style="display:inline-block;padding:3px 6px;background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;margin-left:4px">Group 2</span
+===== rotastic-splash-date #1 at 58883 =====
+lid rgba(16,185,129,.16);
+    }
+
+    @media (max-width: 420px) {
+      .leave-date-state {
+        font-size: 6.5px;
+        letter-spacing: .03em;
+        padding: .18rem .32rem;
+      }
+    }
+
+
+    .leave-date-card {
+      min-height: 82px;
+    }
+
+    .leave-date-groups {
+      margin-top: .18rem;
+      color: #cbd5e1;
+      font-size: 6.5px;
+      font-weight: 850;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      line-height: 1.1;
+    }
+
+    .leave-date-groups.is-empty {
+      opacity: 0;
+    }
+
+    @media (max-width: 430px) {
+      .leave-date-card, .leave-date-pad {
+        min-height: 78px;
+      }
+
+      .leave-date-groups {
+        font-size: 5.9px;
+      }
+    }
+
+
+    .rotastic-splash-date {
+      position: absolute;
+      left: 50%;
+      bottom: calc(15vh - 2.05rem);
+      transform: translateX(-50%);
+      width: min(92vw, 760px);
+      text-align: center;
+      color: rgba(226,232,240,.86);
+      font-size: clamp(.72rem, 1.8vw, .92rem);
+      font-weight: 700;
+      letter-spacing: .015em;
+      line-height: 1.25;
+      text-shadow: 0 1px 14px rgba(15,23,42,.85);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .rotastic-splash-date {
+        bottom: calc(15vh - 1.8rem);
+        font-size: .74rem;
+      }
+    }
+
+
+    /* Stable announcement geometry: all normal ticker items use one fixed height.
+       Abu Nakhla centre animation remains exempt via ticker-fullwidth-mode. */
+    #swapsNewsTicker:not(.hidden) {
+      min-height: 78px;
+    }
+
+    #tickerInnerRow {
+      height: 78px;
+      min-height: 78px;
+      max-height: 78px;
+      align-items: center !important;
+      padding-top: 5px !important;
+      padding-bottom: 5px !important;
+      overflow: hidden;
+    }
+
+    #tickerInnerRow:not(.ticker-fullwidth-mode) .news-stage {
+      height: 68px;
+      min-height: 68px;
+      max-height: 68px;
+      p
+===== rotastic-splash-date #2 at 59381 =====
+opacity: 0;
+    }
+
+    @media (max-width: 430px) {
+      .leave-date-card, .leave-date-pad {
+        min-height: 78px;
+      }
+
+      .leave-date-groups {
+        font-size: 5.9px;
+      }
+    }
+
+
+    .rotastic-splash-date {
+      position: absolute;
+      left: 50%;
+      bottom: calc(15vh - 2.05rem);
+      transform: translateX(-50%);
+      width: min(92vw, 760px);
+      text-align: center;
+      color: rgba(226,232,240,.86);
+      font-size: clamp(.72rem, 1.8vw, .92rem);
+      font-weight: 700;
+      letter-spacing: .015em;
+      line-height: 1.25;
+      text-shadow: 0 1px 14px rgba(15,23,42,.85);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .rotastic-splash-date {
+        bottom: calc(15vh - 1.8rem);
+        font-size: .74rem;
+      }
+    }
+
+
+    /* Stable announcement geometry: all normal ticker items use one fixed height.
+       Abu Nakhla centre animation remains exempt via ticker-fullwidth-mode. */
+    #swapsNewsTicker:not(.hidden) {
+      min-height: 78px;
+    }
+
+    #tickerInnerRow {
+      height: 78px;
+      min-height: 78px;
+      max-height: 78px;
+      align-items: center !important;
+      padding-top: 5px !important;
+      padding-bottom: 5px !important;
+      overflow: hidden;
+    }
+
+    #tickerInnerRow:not(.ticker-fullwidth-mode) .news-stage {
+      height: 68px;
+      min-height: 68px;
+      max-height: 68px;
+      padding: 0 !important;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    #tickerInnerRow:not(.ticker-fullwidth-mode) .news-drop-item {
+      height: 68px;
+      min-height: 68px;
+      max-height: 68px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    .ticker-type-badge {
+      width: 66px !important;
+      min-width: 66px !important;
+      max-width: 66px !important;
+      height: 68px !important;
+      min-height: 68px !import
+===== rotastic-splash-date #3 at 527405 =====
+Uk6PCXOfihyqHVOmsj6pcABIDsqz0STJfPySpAdvNUnTJUp6IQUqdJKqSdFWUkyPKUFN+CXJT3TWR+CoFCCqB2T3TWRZCoHdClBSTI84VZQhV0Ke6ayLOQi8Cmvgl5iMp7pWR52SkjqgzsiBT3TWRKhsUOclVlJJGd0udggyUudkrpkQOUo6pvmS8xJT3TWR58FSRVnCK6ZFzbog5NZ6pcpJWTiTIQgqk901ku6o7BICUuUrpKjsqyqzlUXJrpKugVZyEPNulB+aV06XKoHIKT5Ksp7prKuuVSQlVnKZOl8VQQ5wUuUkkueqRVlDzblNdOi2z6pM4QnKTJTXSsjzuqO4whBPVLnfoklZVkBVlJ13SZSTogUmRlJlDlDdOlLslV1CEncFUCU109kQ6bqspMpPkknSuSKknimunSgpEJJSF2Cmunsj6JChB2VE5TXunASOOUOUpOEKYokQO6XqhDvRUST0TJJR4ocqspEydL80hO6QndKTlJOkJVKsqs4STqkhVZVZTJJMZSeKU+SAlCiConOVRIwk8SkPTCFOqO+6QpQUhSKcJPRDlU4pMhRlSBI4oRnKXKQE52GUBRBf/Z"/>
+<div class="rotastic-splash-welcome" id="rotasticSplashWelcome">Welcome, Doctor</div>
+<div class="rotastic-splash-date" id="rotasticSplashDate">Today is Monday, 1 January 2026</div>
+<div class="rotastic-splash-room hidden" id="rotasticSplashRoom">You are in Room 24 today.</div>
+<div aria-hidden="true" class="rotastic-splash-progress-wrap">
+<div class="rotastic-splash-progress" id="rotasticSplashProgress"></div>
+</div>
+</div>
+</div>
+<header class="bg-[#0b101c]/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-30 no-print">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm border border-teal-400/30">
+<img alt="ROTASTIC logo" class="w-full h-full object-cover" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5V
+===== getQatarLongDateText #1 at 1032027 =====
+document.body.style.overflow = 'hidden';
+}
+
+function closeSwapRequestModal() {
+  const modal = document.getElementById('swapRequestModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+
+function saveUserPreferences() {
+  try { saveLeaveBalanceSettings(); } catch (e) {}
+  saveNotificationPreferencesFromUI();
+  renderNotificationPreferences();
+
+  const toast = document.getElementById('userApprovalToast');
+  const msg = document.getElementById('userApprovalToastMessage');
+  if (toast && msg) {
+    msg.innerText = 'Preferences saved.';
+    toast.classList.remove('hidden');
+    setTimeout(function(){ toast.classList.add('hidden'); }, 1800);
+  }
+}
+
+
+function getQatarLongDateText(isoDate) {
+  try {
+    const iso = isoDate || getQatarTodayISO();
+    const parts = String(iso).split('-').map(Number);
+    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 9, 0, 0));
+
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Asia/Qatar',
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }).format(d);
+  } catch (e) {
+    return isoDate || getQatarTodayISO();
+  }
+}
+
+function getQatarTodayISO() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Qatar',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+
+    const map = {};
+    parts.forEach(function(p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
+    });
+
+    return map.year + '-' + map.month + '-' + map.day;
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function doctorMatches(rawName, doctorName) {
+  if (!rawName || !doctorName) return false;
+  return cleanDoctorName(rawName) === cleanDoctorName(doctorName);
+}
+
+function getRoomAssignmentsForDoctor(shift, doctorName) {
+  const rooms = [];
+
+  Object.keys((shift && shift.r
+===== getQatarLongDateText #2 at 1129412 =====
+day[timing.period];
+  if (!shift) return '';
+
+  const rooms = getRoomAssignmentsForDoctor(shift, profile);
+  if (!rooms || !rooms.length) return '';
+
+  if (rooms.length === 1) {
+    return 'You are in Room ' + rooms[0] + ' today.';
+  }
+
+  return 'You are in Rooms ' + rooms.join(' and ') + ' today.';
+}
+
+function updateOpeningSplashName() {
+  const el = document.getElementById('rotasticSplashWelcome');
+  if (!el) return;
+
+  const profile = getSplashDoctorName();
+  const doctor = profile ? getDoctorFirstNameDisplay(profile) : 'Doctor';
+  el.textContent = 'Welcome, ' + doctor;
+
+  const dateEl = document.getElementById('rotasticSplashDate');
+  if (dateEl) {
+    dateEl.textContent = 'Today is ' + getQatarLongDateText(getQatarTodayISO());
+  }
+
+  const roomEl = document.getElementById('rotasticSplashRoom');
+  if (roomEl) {
+    const roomText = getSplashRoomText();
+    if (roomText) {
+      roomEl.textContent = roomText;
+      roomEl.classList.remove('hidden');
+    } else {
+      roomEl.textContent = '';
+      roomEl.classList.add('hidden');
+    }
+  }
+}
+
+
+function ensureRotasticTickerAlive() {
+  const ticker = document.getElementById('swapsNewsTicker');
+  if (!ticker) return;
+
+  // The announcement/news bar belongs on the Rota tab only.
+  if (rotasticActiveTab !== 'schedule') return;
+
+  ticker.classList.remove('hidden');
+
+  // If nothing is currently displayed, restart the normal opening/ticker flow.
+  const content = document.getElementById('tickerContent');
+  const hasVisibleContent =
+    content &&
+    String(content.textContent || '').trim().length > 0;
+
+  if (!hasVisibleContent) {
+    try {
+      if (!profileSetupIsComplete()) {
+        renderPersistentFirstSetupTicker();
+      } else if (!rotasticOpeningTickerActive) {
+        startOpeningTickerSequence();
+      }
+    } catch (e) {
+      console.warn('ROTASTIC ticker recovery:', e);
+      try { renderNextTickerSlot(); } 
+===== getQatarLongDateText #3 at 1269501 =====
+iftDay() {
+  const todayISO = getQatarTodayISO();
+
+  // Personal View is about TODAY, not whichever rota day happens to be selected.
+  const exact = Array.isArray(currentSchedule)
+    ? currentSchedule.find(function(day) {
+        return day && day.isoDate === todayISO;
+      })
+    : null;
+
+  if (exact) return exact;
+
+  const today = getTodayScheduleDay();
+  if (today && today.isoDate === todayISO) return today;
+
+  // Keep the personal card alive even when today's rota has no row at all.
+  // This allows an off/leave message instead of an empty screen.
+  return {
+    day:new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Asia/Qatar',
+      weekday:'long'
+    }).format(new Date()),
+    date:getQatarLongDateText(todayISO),
+    isoDate:todayISO,
+    am:null,
+    pm:null
+  };
+}
+
+
+function getRoomSideLabel(roomNumber) {
+  const room = Number(roomNumber);
+
+  // Abu Nakhla rota room-side convention used in ROTASTIC.
+  if ([9,10,12,13,14].includes(room)) return 'male side';
+  if ([21,22,24,25,26,27].includes(room)) return 'female side';
+  return '';
+}
+
+function cleanClinicLabelForSentence(label) {
+  return String(label || '')
+    .replace(/[👶🤰🩺😷👂🚭🌸]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getMyShiftAssignmentSentence(shift, doctorName, rooms, emergency, clinics) {
+  if (!shift || !doctorName) return '';
+
+  if (clinics && clinics.length) {
+    const clinic = cleanClinicLabelForSentence(clinics[0]);
+    return 'You are doing ' + clinic + ' today.';
+  }
+
+  if (emergency && emergency.length) {
+    const duty = String(emergency[0]).replace(/[🚑🧸]/g, '').replace(/\s+/g, ' ').trim();
+    return 'You are covering ' + duty + ' today.';
+  }
+
+  if (rooms && rooms.length) {
+    const primaryRoom = rooms[0];
+    const side = getRoomSideLabel(primaryRoom);
+
+    if (side) {
+      return 'You are covering the ' + side + ' today. You are in Room ' + primaryRoom + '.';
+    }
+
+===== getQatarLongDateText #4 at 1455283 =====
+ {
+  if (!leaveInfo) return ROTASTIC_PERSONAL_POSTER_ART.off;
+  const type = String(leaveInfo.type || '').toLowerCase();
+  if (type === 'annual') return ROTASTIC_PERSONAL_POSTER_ART.annual;
+  if (type === 'sick') return ROTASTIC_PERSONAL_POSTER_ART.sick;
+  if (type === 'casual') return ROTASTIC_PERSONAL_POSTER_ART.casual;
+  return Object.assign({}, ROTASTIC_PERSONAL_POSTER_ART.annual, {
+    title:leaveInfo.label || 'Approved Leave',
+    icon:leaveInfo.emoji || '🌿',
+    message:'Thank you for your hard work. Rest, recharge and enjoy your time away. 🌿☀️'
+  });
+}
+
+function buildMyShiftRestDayCard(day, leaveInfo) {
+  const isoDate = (day && day.isoDate) || getQatarTodayISO();
+  const dateText = getQatarLongDateText(isoDate);
+  const doctor = activeUserDocName || '';
+  const theme = getPersonalPosterTheme(leaveInfo);
+  const isLeave = !!leaveInfo;
+  const headline = isLeave ? (leaveInfo.type === 'annual' ? 'Annual Leave' : leaveInfo.type === 'sick' ? 'Sick Leave' : leaveInfo.type === 'casual' ? 'Casual Leave' : (leaveInfo.label || theme.title)) : 'You are off today';
+  const message = isLeave ? theme.message : getRotasticOffDayEncouragement(doctor, isoDate);
+  const subText = isLeave ? '' : '';
+
+  return `
+    <div class="personal-poster-card" style="--poster-accent:${theme.accent};--poster-accent2:${theme.accent2};">
+      <div class="personal-poster-art" style="background-image:url('${theme.image}')"></div>
+      <div class="personal-poster-shade"></div>
+      <div class="personal-poster-content">
+        <div class="personal-poster-kicker">Personal View · ${dateText}</div>
+        <div class="personal-poster-icon">${theme.icon}</div>
+        <div class="personal-poster-title">${headline}</div>
+        <div class="personal-poster-message">${message}</div>
+        ${subText ? `<div class="personal-poster-sub">${subText}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function s
+===== getQatarLongDateText #5 at 1458557 =====
+ duty today = full-size friendly off-day card.
+  if (!day || !timing || !briefing) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, null);
+  }
+
+  const shift = day[timing.period] || null;
+  if (!shift) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, null);
+  }
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  const emergency = collectEmergencyDuties(shift, doctor);
+  const clinics = collectSpecialClinicDuties(shift, doctor);
+  const codeBlue = collectCodeBlueDuties(
+    timing.period === 'am' ? day.cbAM : day.cbPM,
+    doctor
+  );
+  const shiftLead = cleanDoctorName(
+    day[timing.period === 'am' ? 'shiftLeadAM' : 'shiftLeadPM'] || ''
+  );
+
+  const todayText = getQatarLongDateText(todayISO);
+  const assignmentSentence = getMyShiftAssignmentSentence(
+    shift, doctor, rooms, emergency, clinics
+  );
+  const shiftWindow = getActiveUserShiftWindowForDay(day, doctor);
+
+  const roomText = rooms.length === 1
+    ? 'Room ' + rooms[0]
+    : rooms.length > 1
+      ? 'Rooms ' + rooms.join(' / ')
+      : (clinics.length ? cleanClinicLabelForSentence(clinics[0]) : 'Duty assigned');
+
+  return `
+    <div class="clean-card my-shift-presence-card rounded-2xl p-5 sm:p-6 border border-sky-500/20">
+      <div class="pb-4 border-b border-slate-800">
+        <div class="text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Personal View</div>
+        <div class="text-lg sm:text-xl font-black text-white mt-1">Today · ${todayText}</div>
+        ${assignmentSentence ? `
+          <div class="text-sm sm:text-base text-slate-200 font-semibold mt-2 leading-relaxed">${assignmentSentence}</div>
+        ` : ''}
+      </div>
+
+      <div class="flex items-start justify-between gap-4 mt-4">
+        <div class="min-w-0 flex-1">
+          <div class="text-xl sm:text-2xl font-black text-white">${briefing.title || timing.label}</div>
+          <div class="mt-2 tex
+===== getQatarTodayISO #1 at 1023215 =====
+e);
+}
+
+
+function historicalLeavePromptKey(docName) {
+  return 'rotastic_historical_leave_prompted_v1_' + String(canonicalRotaName(docName) || docName || '').replace(/[^a-z0-9]+/gi,'_').toLowerCase();
+}
+
+function offerHistoricalLeaveOnboarding(docName) {
+  if (!docName) return;
+  const key = historicalLeavePromptKey(docName);
+  if (Storage.get(key)) return;
+  Storage.set(key, '1');
+  setTimeout(function() {
+    const yes = window.confirm('Balances saved. Do you also want to add leave you took in the previous 12 months? Past leave is recorded directly and does not need approval.');
+    if (yes) openHistoricalLeaveModal();
+  }, 120);
+}
+
+function getHistoricalLeaveDateBounds() {
+  const today = getQatarTodayISO();
+  const end = parseLocalDateOnly(today);
+  end.setDate(end.getDate() - 1);
+  const start = new Date(end);
+  start.setFullYear(start.getFullYear() - 1);
+  start.setDate(start.getDate() + 1);
+  const iso = function(d) {
+    return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+  };
+  return {min:iso(start), max:iso(end), today:today};
+}
+
+function openHistoricalLeaveModal() {
+  const modal = document.getElementById('historicalLeaveModal');
+  if (!modal) return false;
+  const docName = resolveCurrentBalanceDoctor();
+  if (!docName) {
+    alert('Please select your physician profile first.');
+    return false;
+  }
+  const bounds = getHistoricalLeaveDateBounds();
+  ['historicalLeaveStart','historicalLeaveEnd'].forEach(function(id){
+    const el=document.getElementById(id);
+    if (!el) return;
+    el.min=bounds.min;
+    el.max=bounds.max;
+    if (!el.value || el.value < bounds.min || el.value > bounds.max) el.value=bounds.max;
+  });
+  const who=document.getElementById('historicalLeaveDoctorName');
+  if (who) who.textContent=rotasticDisplayDoctorName(docName);
+  modal.classList.remove('hidden');
+  modal.style.di
+===== getQatarTodayISO #2 at 1032094 =====
+stModal() {
+  const modal = document.getElementById('swapRequestModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+
+function saveUserPreferences() {
+  try { saveLeaveBalanceSettings(); } catch (e) {}
+  saveNotificationPreferencesFromUI();
+  renderNotificationPreferences();
+
+  const toast = document.getElementById('userApprovalToast');
+  const msg = document.getElementById('userApprovalToastMessage');
+  if (toast && msg) {
+    msg.innerText = 'Preferences saved.';
+    toast.classList.remove('hidden');
+    setTimeout(function(){ toast.classList.add('hidden'); }, 1800);
+  }
+}
+
+
+function getQatarLongDateText(isoDate) {
+  try {
+    const iso = isoDate || getQatarTodayISO();
+    const parts = String(iso).split('-').map(Number);
+    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 9, 0, 0));
+
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Asia/Qatar',
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }).format(d);
+  } catch (e) {
+    return isoDate || getQatarTodayISO();
+  }
+}
+
+function getQatarTodayISO() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Qatar',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+
+    const map = {};
+    parts.forEach(function(p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
+    });
+
+    return map.year + '-' + map.month + '-' + map.day;
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function doctorMatches(rawName, doctorName) {
+  if (!rawName || !doctorName) return false;
+  return cleanDoctorName(rawName) === cleanDoctorName(doctorName);
+}
+
+function getRoomAssignmentsForDoctor(shift, doctorName) {
+  const rooms = [];
+
+  Object.keys((shift && shift.rooms) || {}).forEach(function(room) {
+    if (doctorMatches(shift.r
+===== getQatarTodayISO #3 at 1032461 =====
+valToast');
+  const msg = document.getElementById('userApprovalToastMessage');
+  if (toast && msg) {
+    msg.innerText = 'Preferences saved.';
+    toast.classList.remove('hidden');
+    setTimeout(function(){ toast.classList.add('hidden'); }, 1800);
+  }
+}
+
+
+function getQatarLongDateText(isoDate) {
+  try {
+    const iso = isoDate || getQatarTodayISO();
+    const parts = String(iso).split('-').map(Number);
+    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 9, 0, 0));
+
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Asia/Qatar',
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }).format(d);
+  } catch (e) {
+    return isoDate || getQatarTodayISO();
+  }
+}
+
+function getQatarTodayISO() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Qatar',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+
+    const map = {};
+    parts.forEach(function(p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
+    });
+
+    return map.year + '-' + map.month + '-' + map.day;
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function doctorMatches(rawName, doctorName) {
+  if (!rawName || !doctorName) return false;
+  return cleanDoctorName(rawName) === cleanDoctorName(doctorName);
+}
+
+function getRoomAssignmentsForDoctor(shift, doctorName) {
+  const rooms = [];
+
+  Object.keys((shift && shift.rooms) || {}).forEach(function(room) {
+    if (doctorMatches(shift.rooms[room], doctorName)) {
+      rooms.push(room);
+    }
+  });
+
+  return rooms;
+}
+
+function collectSpecialClinicDuties(shift, doctorName) {
+  if (!shift) return [];
+
+  const duties = [];
+
+  const clinicMap = [
+    ['wbcDoc', 'Well-Baby Clinic 👶'],
+    ['ancDoc', 'ANC 🤰'],
+    ['ncdDoc', 'NCD clinic 🩺'],
+    ['isoDoc', 'Isolation clinic 😷'],
+    ['smokingDoc', 'Smok
+===== getQatarTodayISO #4 at 1032497 =====
+etElementById('userApprovalToastMessage');
+  if (toast && msg) {
+    msg.innerText = 'Preferences saved.';
+    toast.classList.remove('hidden');
+    setTimeout(function(){ toast.classList.add('hidden'); }, 1800);
+  }
+}
+
+
+function getQatarLongDateText(isoDate) {
+  try {
+    const iso = isoDate || getQatarTodayISO();
+    const parts = String(iso).split('-').map(Number);
+    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 9, 0, 0));
+
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Asia/Qatar',
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }).format(d);
+  } catch (e) {
+    return isoDate || getQatarTodayISO();
+  }
+}
+
+function getQatarTodayISO() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Qatar',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(new Date());
+
+    const map = {};
+    parts.forEach(function(p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
+    });
+
+    return map.year + '-' + map.month + '-' + map.day;
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function doctorMatches(rawName, doctorName) {
+  if (!rawName || !doctorName) return false;
+  return cleanDoctorName(rawName) === cleanDoctorName(doctorName);
+}
+
+function getRoomAssignmentsForDoctor(shift, doctorName) {
+  const rooms = [];
+
+  Object.keys((shift && shift.rooms) || {}).forEach(function(room) {
+    if (doctorMatches(shift.rooms[room], doctorName)) {
+      rooms.push(room);
+    }
+  });
+
+  return rooms;
+}
+
+function collectSpecialClinicDuties(shift, doctorName) {
+  if (!shift) return [];
+
+  const duties = [];
+
+  const clinicMap = [
+    ['wbcDoc', 'Well-Baby Clinic 👶'],
+    ['ancDoc', 'ANC 🤰'],
+    ['ncdDoc', 'NCD clinic 🩺'],
+    ['isoDoc', 'Isolation clinic 😷'],
+    ['smokingDoc', 'Smoking Cessation Clinic 🚭'],
+    ['iucd
+===== getQatarTodayISO #5 at 1038420 =====
+oji + ' You are on the ' + shiftTitle + ' (' + hours + ') today.',
+    details: parts.join(' ')
+  };
+}
+
+function isDoctorOnLeaveToday(doctorName, isoDate) {
+  const doctor = DOCTORS.find(function(d) {
+    return d.name === doctorName;
+  });
+
+  if (doctor && Array.isArray(doctor.leaves) && doctor.leaves.indexOf(isoDate) !== -1) {
+    return true;
+  }
+
+  const submitted = Storage.getJSON('rotastic_leave_submissions', []);
+
+  return submitted.some(function(r) {
+    if (r.doc !== doctorName) return false;
+    if (!r.startDate) return false;
+
+    const end = r.endDate || r.startDate;
+    return isoDate >= r.startDate && isoDate <= end;
+  });
+}
+
+function getTodayScheduleDay() {
+  const todayISO = getQatarTodayISO();
+
+  return currentSchedule.find(function(day) {
+    return day.isoDate === todayISO;
+  }) || null;
+}
+
+
+const ABU_NAKHLA_LAT = 25.18239;
+const ABU_NAKHLA_LNG = 51.37947;
+
+// Greeting weather is deliberately fixed to Doha so every user sees the same
+// local Doha conditions regardless of device geolocation permissions.
+const DOHA_WEATHER_LAT = 25.2854;
+const DOHA_WEATHER_LNG = 51.5310;
+const DOHA_WEATHER_CACHE_KEY = 'rotastic_doha_weather_cache';
+
+function getSecondTuesdayOfFebruary(year) {
+  const d = new Date(Date.UTC(year, 1, 1));
+  const firstDay = d.getUTCDay();
+  const daysToTuesday = (2 - firstDay + 7) % 7;
+  const firstTuesday = 1 + daysToTuesday;
+  return year + '-02-' + String(firstTuesday + 7).padStart(2, '0');
+}
+
+function getQatarHolidayInfo(isoDate) {
+  if (!isoDate) return null;
+
+  const year = parseInt(isoDate.slice(0, 4), 10);
+  const md = isoDate.slice(5);
+
+  // Qatar National Day — fixed annually.
+  if (md === '12-18') {
+    return {
+      name: 'Qatar National Day',
+      greeting: 'Happy Qatar National Day! 🇶🇦',
+      className: 'text-rose-300'
+    };
+  }
+
+  // Qatar National Sports Day — second Tuesday of February.
+  if (isoDate === getSecondTu
+===== getQatarTodayISO #6 at 1074279 =====
+;
+  }
+}
+
+function isWithinArrivalWindowForShift(timing) {
+  if (!timing) return false;
+
+  const nowMinutes = getQatarClockMinutesNow();
+  // Allow arrival before the formal start so staff entering the centre shortly
+  // before duty still receive the welcome. Stop after the shift finishes.
+  const earliest = Math.max(0, Number(timing.startMinutes || 0) - 90);
+  const latest = Math.min(24 * 60 - 1, Number(timing.endMinutes || 0) + 20);
+
+  return nowMinutes >= earliest && nowMinutes <= latest;
+}
+
+function isDoctorEligibleForArrivalWelcome(doctorName, day, timing) {
+  if (!doctorName || !day || !timing) return false;
+  if (isDrNabina && isDrNabina(doctorName)) return false;
+
+  const todayISO = getQatarTodayISO();
+  if (day.isoDate !== todayISO) return false;
+
+  // Never welcome somebody who is away on any confirmed leave.
+  if (isDoctorOnAnyActiveLeaveForArrival(doctorName, todayISO)) return false;
+
+  // The doctor must have an actual duty entry for this shift.
+  const briefing = buildShiftBriefing(day, doctorName, timing.period);
+  if (!briefing) return false;
+
+  // A welcome is relevant only around that doctor's own working window.
+  if (!isWithinArrivalWindowForShift(timing)) return false;
+
+  return true;
+}
+
+function getTodayArrivalAssignment() {
+  const doctor = activeUserDocName || '';
+  const day = getTodayScheduleDay();
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  if (!isDoctorEligibleForArrivalWelcome(doctor, day, timing)) {
+    return null;
+  }
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  const clinics = collectSpecialClinicDuties(shift, doctor);
+
+  let assignment = '';
+  if (rooms.length === 1) {
+    assignment = 'Room ' + rooms[0];
+  } else if (rooms.length > 1) {
+    assignment = 'Rooms ' + rooms.join(' /
+===== getQatarTodayISO #7 at 1075743 =====
+  if (!isDoctorEligibleForArrivalWelcome(doctor, day, timing)) {
+    return null;
+  }
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  const clinics = collectSpecialClinicDuties(shift, doctor);
+
+  let assignment = '';
+  if (rooms.length === 1) {
+    assignment = 'Room ' + rooms[0];
+  } else if (rooms.length > 1) {
+    assignment = 'Rooms ' + rooms.join(' / ');
+  } else if (clinics.length) {
+    assignment = cleanClinicLabelForSentence(clinics[0]);
+  }
+
+  return {
+    doctor:doctor,
+    assignment:assignment,
+    timing:timing
+  };
+}
+
+function getArrivalNotificationKey() {
+  return 'rotastic_arrival_welcome_' +
+    getQatarTodayISO() + '_' +
+    encodeURIComponent(String(activeUserDocName || 'doctor'));
+}
+
+function showAbuNakhlaArrivalWelcome() {
+  const assignment = getTodayArrivalAssignment();
+  if (!assignment) return;
+
+  const key = getArrivalNotificationKey();
+  if (Storage.get(key, '') === 'sent') return;
+
+  const firstName = getDoctorFirstNameDisplay(assignment.doctor);
+  const body = assignment.assignment
+    ? 'Welcome to Abu Nakhla, ' + firstName + '. You are in ' + assignment.assignment + ' today.'
+    : 'Welcome to Abu Nakhla, ' + firstName + '. Have a safe and smooth shift today.';
+
+  requestBrowserNotificationPermission();
+
+  const sent = sendBrowserNotification(
+    'Welcome to Abu Nakhla 👋',
+    body,
+    'rotastic-arrival-' + getQatarTodayISO()
+  );
+
+  // Keep an in-app copy too, even if the browser notification permission is
+  // unavailable on a local content:// preview.
+  queueInAppNotification(
+    assignment.doctor,
+    body,
+    'arrival-welcome'
+  );
+
+  Storage.set(key, 'sent');
+
+  const toast = document.getElementById('userApprovalToast');
+  const msg = document.getElementById('userApprovalToastMessage');
+  if (toast && msg) {
+    msg.innerText = body;
+    toast.class
+===== getQatarTodayISO #8 at 1076485 =====
+mponent(String(activeUserDocName || 'doctor'));
+}
+
+function showAbuNakhlaArrivalWelcome() {
+  const assignment = getTodayArrivalAssignment();
+  if (!assignment) return;
+
+  const key = getArrivalNotificationKey();
+  if (Storage.get(key, '') === 'sent') return;
+
+  const firstName = getDoctorFirstNameDisplay(assignment.doctor);
+  const body = assignment.assignment
+    ? 'Welcome to Abu Nakhla, ' + firstName + '. You are in ' + assignment.assignment + ' today.'
+    : 'Welcome to Abu Nakhla, ' + firstName + '. Have a safe and smooth shift today.';
+
+  requestBrowserNotificationPermission();
+
+  const sent = sendBrowserNotification(
+    'Welcome to Abu Nakhla 👋',
+    body,
+    'rotastic-arrival-' + getQatarTodayISO()
+  );
+
+  // Keep an in-app copy too, even if the browser notification permission is
+  // unavailable on a local content:// preview.
+  queueInAppNotification(
+    assignment.doctor,
+    body,
+    'arrival-welcome'
+  );
+
+  Storage.set(key, 'sent');
+
+  const toast = document.getElementById('userApprovalToast');
+  const msg = document.getElementById('userApprovalToastMessage');
+  if (toast && msg) {
+    msg.innerText = body;
+    toast.classList.remove('hidden');
+  }
+
+  return sent;
+}
+
+
+let rotasticBackgroundGeoWatchId = null;
+
+function processAbuNakhlaArrivalPosition(positionLike) {
+  if (!activeUserDocName || !positionLike) return;
+
+  const coords = positionLike.coords || positionLike;
+  const lat = Number(coords.latitude ?? coords.lat);
+  const lon = Number(coords.longitude ?? coords.lon);
+  const accuracy = Number(coords.accuracy);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  if (Number.isFinite(accuracy) && accuracy > 250) return;
+
+  // Check leave + rota + shift eligibility before even considering the geofence.
+  const assignment = getTodayArrivalAssignment();
+  if (!assignment) {
+    rotasticWasInsideAbuNakhla = false;
+    return;
+  }
+
+  cons
+===== getQatarTodayISO #9 at 1096996 =====
+show only the
+  // more clinically significant assignment instead of presenting two shifts.
+  const amScore = getBriefingPriority(scheduleDay, doctorName, 'am');
+  const pmScore = getBriefingPriority(scheduleDay, doctorName, 'pm');
+
+  if (pmScore > amScore) return pm;
+  return am;
+}
+
+
+function getDoctorFirstNameDisplay(doctorName) {
+  const raw = String(doctorName || '').trim();
+  if (!raw) return 'Doctor';
+
+  // Stored names are typically "Dr Husam S", "Dr Zaid SE.", etc.
+  const withoutTitle = raw.replace(/^Dr\.?\s+/i, '').trim();
+  const first = withoutTitle.split(/\s+/)[0] || '';
+  return first ? 'Dr ' + first : 'Doctor';
+}
+
+function getQatarDateOffsetISO(offsetDays) {
+  const baseISO = getQatarTodayISO();
+  const parts = baseISO.split('-').map(Number);
+  const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + (offsetDays || 0), 12, 0, 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function getDoctorShiftTiming(scheduleDay, doctorName) {
+  if (!scheduleDay || !doctorName) return null;
+
+  const candidates = ['am', 'pm'].map(function(period) {
+    const briefing = buildShiftBriefing(scheduleDay, doctorName, period);
+    if (!briefing) return null;
+
+    const shift = scheduleDay[period] || {};
+    const isAM = period === 'am';
+    const isTimed = doctorMatches(shift.timed1Doc, doctorName) || doctorMatches(shift.timed2Doc, doctorName);
+
+    return {
+      period: period,
+      label: isTimed
+        ? (isAM ? '09:00–16:00' : '14:00–20:00')
+        : (isAM ? '07:00–14:00' : '16:00–22:00'),
+      startMinutes: isTimed ? (isAM ? 9 * 60 : 14 * 60) : (isAM ? 7 * 60 : 16 * 60),
+      endMinutes: isTimed ? (isAM ? 16 * 60 : 20 * 60) : (isAM ? 14 * 60 : 22 * 60),
+      briefing: briefing
+    };
+  }).filter(Boolean);
+
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  // Defensive: if legacy data places a doctor in both period
+===== getQatarTodayISO #10 at 1099458 =====
+oDate === tomorrowISO; });
+
+  if (!tomorrow || isDoctorOnLeaveToday(doctorName, tomorrowISO)) {
+    if (isDoctorOnLeaveToday(doctorName, tomorrowISO)) return 'Tomorrow: you are on leave.';
+    return 'Tomorrow: no published clinical duty.';
+  }
+
+  const timing = getDoctorShiftTiming(tomorrow, doctorName);
+  if (!timing) return 'Tomorrow: no published clinical duty.';
+
+  const details = timing.briefing && timing.briefing.details ? ' ' + timing.briefing.details : '';
+  return 'Tomorrow: ' + timing.label + '.' + details;
+}
+
+function getCurrentUserShiftWindow() {
+  if (!activeUserDocName) return null;
+  const today = getTodayScheduleDay();
+  if (!today || isDoctorOnLeaveToday(activeUserDocName, getQatarTodayISO())) return null;
+  return getDoctorShiftTiming(today, activeUserDocName);
+}
+
+const ROTASTIC_SHIFT_END_MESSAGES = [
+  'Great work today, {name} 👏',
+  'Shift done — thank you, {name} 💙',
+  'Well done today, {name} 🙌',
+  'Thank you for your care today 🌟',
+  'Shift complete ✅ Time to recharge.',
+  'Another shift completed. Well done!',
+  'Great job today — rest well 🌙',
+  'You made a difference today. Thank you!'
+];
+
+function getNextShiftEndMessage() {
+  const name = getDoctorFirstNameDisplay(activeUserDocName);
+  const last = parseInt(Storage.get('rotastic_last_shift_message_index', '-1'), 10);
+  let index = Math.floor(Math.random() * ROTASTIC_SHIFT_END_MESSAGES.length);
+
+  if (ROTASTIC_SHIFT_END_MESSAGES.length > 1 && index === last) {
+    index = (index + 1) % ROTASTIC_SHIFT_END_MESSAGES.length;
+  }
+
+  Storage.set('rotastic_last_shift_message_index', String(index));
+  return ROTASTIC_SHIFT_END_MESSAGES[index].replace('{name}', name);
+}
+
+function getShiftCompletionKey(shift) {
+  return [getQatarTodayISO(), activeUserDocName || '', shift ? shift.endMinutes : ''].join('|');
+}
+
+function checkShiftEndAppreciation() {
+  const shift = getCurrentUserShiftWindow();
+  if (!sh
+===== getQatarTodayISO #11 at 1100475 =====
+her shift completed. Well done!',
+  'Great job today — rest well 🌙',
+  'You made a difference today. Thank you!'
+];
+
+function getNextShiftEndMessage() {
+  const name = getDoctorFirstNameDisplay(activeUserDocName);
+  const last = parseInt(Storage.get('rotastic_last_shift_message_index', '-1'), 10);
+  let index = Math.floor(Math.random() * ROTASTIC_SHIFT_END_MESSAGES.length);
+
+  if (ROTASTIC_SHIFT_END_MESSAGES.length > 1 && index === last) {
+    index = (index + 1) % ROTASTIC_SHIFT_END_MESSAGES.length;
+  }
+
+  Storage.set('rotastic_last_shift_message_index', String(index));
+  return ROTASTIC_SHIFT_END_MESSAGES[index].replace('{name}', name);
+}
+
+function getShiftCompletionKey(shift) {
+  return [getQatarTodayISO(), activeUserDocName || '', shift ? shift.endMinutes : ''].join('|');
+}
+
+function checkShiftEndAppreciation() {
+  const shift = getCurrentUserShiftWindow();
+  if (!shift || !activeUserDocName) return;
+
+  const now = getQatarNowParts();
+  const key = getShiftCompletionKey(shift);
+  const sentKey = Storage.get('rotastic_shift_end_thanks_key', '');
+
+  // Trigger once as the shift clock reaches its end. A two-minute grace window
+  // handles timer throttling on phones without sending an old notification hours later.
+  const elapsed = now.minutes - shift.endMinutes;
+  if (elapsed < 0 || elapsed > 2 || sentKey === key) return;
+
+  const message = getNextShiftEndMessage();
+  Storage.set('rotastic_shift_end_thanks_key', key);
+
+  if (typeof sendTargetedPush === 'function') {
+    // sendTargetedPush also stores the in-app notification and uses the configured
+    // backend when available, with same-device browser notification as fallback.
+    sendTargetedPush(
+      activeUserDocName,
+      'Shift complete',
+      message,
+      'shift-complete',
+      { shiftEndMinutes: shift.endMinutes, date: getQatarTodayISO() }
+    );
+  } else {
+    queueInAppNotification(activeUserDocNam
+===== getQatarTodayISO #12 at 1101593 =====
+. A two-minute grace window
+  // handles timer throttling on phones without sending an old notification hours later.
+  const elapsed = now.minutes - shift.endMinutes;
+  if (elapsed < 0 || elapsed > 2 || sentKey === key) return;
+
+  const message = getNextShiftEndMessage();
+  Storage.set('rotastic_shift_end_thanks_key', key);
+
+  if (typeof sendTargetedPush === 'function') {
+    // sendTargetedPush also stores the in-app notification and uses the configured
+    // backend when available, with same-device browser notification as fallback.
+    sendTargetedPush(
+      activeUserDocName,
+      'Shift complete',
+      message,
+      'shift-complete',
+      { shiftEndMinutes: shift.endMinutes, date: getQatarTodayISO() }
+    );
+  } else {
+    queueInAppNotification(activeUserDocName, message, 'shift-complete');
+    sendBrowserNotification('Shift complete', message);
+  }
+}
+
+function getLastThirtyMinuteTickerMessage() {
+  const shift = getCurrentUserShiftWindow();
+  if (!shift || !activeUserDocName) return '';
+
+  const now = getQatarNowParts();
+  const minutesLeft = shift.endMinutes - now.minutes;
+  if (minutesLeft <= 0 || minutesLeft > 30) return '';
+
+  const firstName = getDoctorFirstNameDisplay(activeUserDocName);
+  const cheerful = [
+    'Nearly there, ' + firstName + ' — almost home time 😊',
+    'Final stretch, ' + firstName + ' — nearly there 🙌',
+    'Almost done, ' + firstName + ' — time to recharge soon ✨'
+  ];
+  const line = cheerful[Math.floor(now.minutes / 5) % cheerful.length];
+  return line + '  ' + getTomorrowScheduleNote(activeUserDocName);
+}
+
+
+
+function getFocusedRotaDay() {
+  if (!Array.isArray(currentSchedule) || !currentSchedule.length) return null;
+
+  if (activeDayIndex >= 0 && currentSchedule[activeDayIndex]) {
+    return currentSchedule[activeDayIndex];
+  }
+
+  return getTodayScheduleDay() || currentSchedule[0];
+}
+
+function openRotaFocusView() {
+  const overl
+===== getQatarTodayISO #13 at 1126867 =====
+e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline.value) || (prefs && prefs.value) || '').trim();
+  }
+
+  return profile;
+}
+
+
+function getRotasticGreetingContext(profileName) {
+  const now = new Date();
+  const qatarHour = parseInt(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      hour: '2-digit',
+      hour12: false
+    }).format(now),
+    10
+  );
+
+  let greeting = 'Good morning';
+  if (qatarHour >= 12 && qatarHour < 17) greeting = 'Good afternoon';
+  else if (qatarHour >= 17) greeting = 'Good evening';
+
+  const todayISO = getQatarTodayISO();
+  const holiday = getQatarHolidayInfo(todayISO);
+  const doctor = profileName ? getDoctorFirstNameDisplay(profileName) : 'Doctor';
+
+  return {
+    standardGreeting: greeting + ', ' + doctor,
+    splashGreeting: holiday
+      ? holiday.greeting.replace(/[!]+$/, '') + ', ' + doctor
+      : greeting + ', ' + doctor,
+    holiday: holiday
+  };
+}
+
+
+function getSplashShiftNote() {
+  const profile = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!profile || !day) {
+    return 'A smooth day ahead — and time to unwind soon.';
+  }
+
+  const timing = getDoctorShiftTiming(day, profile);
+  if (!timing) {
+    return 'Enjoy the breathing space — time to unwind soon.';
+  }
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone:'Asia/Qatar',
+    hour:'2-digit',
+    minute:'2-digit',
+    hour12:false
+  }).formatToParts(new Date());
+
+  const hh = Number(parts.find(function(p){return p.type==='hour';})?.value || 0);
+  const mm = Number(parts.find(function(p){return p.type==='minute';})?.value || 0);
+  const nowMin = hh*60 + mm;
+
+  let endMin = null;
+  if (timing.label && timing.label.indexOf('09:00–16:00') !== -1) endMin = 16*60;
+  e
+===== getQatarTodayISO #14 at 1129433 =====
+ if (!shift) return '';
+
+  const rooms = getRoomAssignmentsForDoctor(shift, profile);
+  if (!rooms || !rooms.length) return '';
+
+  if (rooms.length === 1) {
+    return 'You are in Room ' + rooms[0] + ' today.';
+  }
+
+  return 'You are in Rooms ' + rooms.join(' and ') + ' today.';
+}
+
+function updateOpeningSplashName() {
+  const el = document.getElementById('rotasticSplashWelcome');
+  if (!el) return;
+
+  const profile = getSplashDoctorName();
+  const doctor = profile ? getDoctorFirstNameDisplay(profile) : 'Doctor';
+  el.textContent = 'Welcome, ' + doctor;
+
+  const dateEl = document.getElementById('rotasticSplashDate');
+  if (dateEl) {
+    dateEl.textContent = 'Today is ' + getQatarLongDateText(getQatarTodayISO());
+  }
+
+  const roomEl = document.getElementById('rotasticSplashRoom');
+  if (roomEl) {
+    const roomText = getSplashRoomText();
+    if (roomText) {
+      roomEl.textContent = roomText;
+      roomEl.classList.remove('hidden');
+    } else {
+      roomEl.textContent = '';
+      roomEl.classList.add('hidden');
+    }
+  }
+}
+
+
+function ensureRotasticTickerAlive() {
+  const ticker = document.getElementById('swapsNewsTicker');
+  if (!ticker) return;
+
+  // The announcement/news bar belongs on the Rota tab only.
+  if (rotasticActiveTab !== 'schedule') return;
+
+  ticker.classList.remove('hidden');
+
+  // If nothing is currently displayed, restart the normal opening/ticker flow.
+  const content = document.getElementById('tickerContent');
+  const hasVisibleContent =
+    content &&
+    String(content.textContent || '').trim().length > 0;
+
+  if (!hasVisibleContent) {
+    try {
+      if (!profileSetupIsComplete()) {
+        renderPersistentFirstSetupTicker();
+      } else if (!rotasticOpeningTickerActive) {
+        startOpeningTickerSequence();
+      }
+    } catch (e) {
+      console.warn('ROTASTIC ticker recovery:', e);
+      try { renderNextTickerSlot(); } catch (_) {}
+    }
+  
+===== getQatarTodayISO #15 at 1133873 =====
+ocument.getElementById('cozyGreetingText');
+  const sentenceEl = document.getElementById('cozyDutySentence');
+  const iconEl = document.getElementById('greetingIcon');
+  const holidayLine = document.getElementById('holidayGreetingLine');
+
+  const now = new Date();
+  const qatarHour = parseInt(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      hour: '2-digit',
+      hour12: false
+    }).format(now),
+    10
+  );
+
+  let iconClass = 'fa-solid fa-sun text-amber-400';
+
+  if (qatarHour >= 12 && qatarHour < 17) {
+    iconClass = 'fa-solid fa-cloud-sun text-amber-400';
+  } else if (qatarHour >= 17) {
+    iconClass = 'fa-solid fa-moon text-indigo-400';
+  }
+
+  const todayISO = getQatarTodayISO();
+  const greetingContext = getRotasticGreetingContext(activeUserDocName);
+  const holiday = greetingContext.holiday;
+
+  if (greetingEl) {
+    greetingEl.innerText = greetingContext.standardGreeting;
+  }
+
+  if (iconEl) {
+    iconEl.className = 'inline-flex items-center justify-center w-6 text-base flex-shrink-0';
+    iconEl.innerHTML = '<i class="' + iconClass + '"></i>';
+  }
+
+  if (holidayLine) {
+    if (holiday) {
+      holidayLine.innerText = holiday.greeting;
+      holidayLine.className = 'text-xs mt-1.5 font-extrabold ' + holiday.className;
+      holidayLine.classList.remove('hidden');
+    } else {
+      holidayLine.classList.add('hidden');
+      holidayLine.innerText = '';
+    }
+  }
+
+  updateAbuNakhlaWeather();
+
+  if (!sentenceEl) return;
+
+  if (!activeUserDocName) {
+    sentenceEl.innerHTML =
+      '👋 Select your physician profile to see your personal briefing for today.';
+    return;
+  }
+
+  if (isDoctorOnLeaveToday(activeUserDocName, todayISO)) {
+    sentenceEl.innerHTML =
+      '<span class="text-emerald-300 font-bold">🏖️🌴 You are off today — enjoy your leave! 😎☀️</span> ' +
+      '<span class="text-slate-400">Rest, recharge, and enjoy the day. 🍹✨</span>'
+===== getQatarTodayISO #16 at 1136483 =====
+function nextMedicalFact() {
+  currentMedicalFactIndex = (currentMedicalFactIndex + 1) % WEIRD_MEDICAL_FACTS.length;
+  renderMedicalFact();
+}
+
+function randomMedicalFact() {
+  currentMedicalFactIndex = Math.floor(Math.random() * WEIRD_MEDICAL_FACTS.length);
+  renderMedicalFact();
+}
+
+function renderMedicalFact() {
+  const fact = WEIRD_MEDICAL_FACTS[currentMedicalFactIndex];
+  const title = document.getElementById('medicalFactTitle');
+  const text = document.getElementById('medicalFactText');
+
+  if (title) title.innerText = fact.title;
+  if (text) text.innerText = fact.fact;
+}
+
+function buildAwaitingApprovalScreen() {
+  let nextWeekText = '';
+  try {
+    const thisSunday = getPlannerSundayISO(getQatarTodayISO());
+    const nextSunday = addPlannerDays(thisSunday, 7);
+    nextWeekText = new Date(nextSunday + 'T12:00:00').toLocaleDateString('en-GB', {
+      day:'numeric', month:'long', year:'numeric'
+    });
+  } catch (e) {}
+
+  return `
+    <div class="rota-pending-poster clean-card rounded-2xl overflow-hidden border border-amber-500/30">
+      <div class="rota-pending-poster-inner">
+        <div class="rota-pending-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+        <div class="text-[9px] uppercase tracking-[.18em] font-black text-amber-300">Rota under review</div>
+        <h3 class="text-2xl sm:text-3xl font-black text-white mt-2">Awaiting Approval by Clinical Lead</h3>
+        ${nextWeekText ? `<div class="text-xs text-slate-400 mt-2">Week commencing ${nextWeekText}</div>` : ''}
+        <p class="text-sm text-slate-300 max-w-xl mx-auto mt-4 leading-relaxed">
+          The rota has not yet been released. It will appear here automatically after Clinical Lead approval.
+        </p>
+        <div class="inline-flex items-center gap-2 mt-5 px-3 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-200">
+          <span clas
+===== getQatarTodayISO #17 at 1199609 =====
+ency;
+  if (mappedDuty === 'codeblue') return !!rec.exemptCodeBlue;
+  if (mappedDuty === 'twilight') return !!rec.exemptTwilight;
+  return false;
+}
+function uniqueAvailable(list, day) {
+  const seen={}; return (list||[]).map(canonicalRotaName).filter(function(n){ if(!n||seen[n]||doctorIsOnLeaveForDay(n,day))return false; seen[n]=1; return true; });
+}
+function chooseRotating(list, seed, used, predicate) {
+  const arr=(list||[]).filter(function(n){return !used.has(n) && (!predicate || predicate(n));});
+  if(!arr.length) return '';
+  const idx=Math.abs(seed)%arr.length; const val=arr[idx]; used.add(val); return val;
+}
+
+function getSundayWeekStartISO(isoDate) {
+  const parts = String(isoDate || getQatarTodayISO()).split('-').map(Number);
+  if (parts.length !== 3 || parts.some(function(v){ return !Number.isFinite(v); })) {
+    return '';
+  }
+
+  const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+  const day = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() - day);
+
+  return [
+    d.getUTCFullYear(),
+    String(d.getUTCMonth() + 1).padStart(2,'0'),
+    String(d.getUTCDate()).padStart(2,'0')
+  ].join('-');
+}
+
+function weekRotationIndex(iso){ const anchor=new Date('2026-10-11T00:00:00'); const d=new Date((iso||'2026-10-11')+'T00:00:00'); return Math.round((d-anchor)/(7*86400000)); }
+function getGroupForPeriod(dayIndex, period, selectedWedAM) {
+  const wedGroup=/2|B/i.test(String(selectedWedAM||'')) ? 2 : 1;
+  const amGroup = dayIndex < 3 ? (wedGroup===1?2:1) : wedGroup;
+  return period==='AM' ? amGroup : (amGroup===1?2:1);
+}
+function blankRooms(){ return {9:'-',10:'-',12:'-',13:'-',14:'-',39:'-',21:'-',22:'-',24:'-',25:'-',26:'-',27:'-'}; }
+function makeBlankShift(){ return {med:'',fed:'',ped:'',timed1Doc:'',timed2Doc:'',rooms:blankRooms(),noRoomDocs:[],smokingDoc:'',iucdDoc:'',sdiDoc:''}; }
+function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) retu
+===== getQatarTodayISO #18 at 1268831 =====
+MutationCheckTimer = null;
+function scheduleRotaMutationCheck() {
+  if (rotasticRotaMutationCheckTimer) clearTimeout(rotasticRotaMutationCheckTimer);
+  rotasticRotaMutationCheckTimer = setTimeout(function() {
+    detectRotaChangeAndAlert();
+  }, 350);
+}
+
+
+let rotasticRotaDisplayMode = 'myshift';
+let rotasticRotaUserToggled = false;
+
+function getCurrentRotaDisplayMode() {
+  // Dr Nabina has no clinical shifts, so her useful default is the full rota.
+  if (typeof isDrNabina === 'function' && isDrNabina(activeUserDocName)) {
+    return rotasticRotaDisplayMode === 'myshift' ? 'rota' : rotasticRotaDisplayMode;
+  }
+  return rotasticRotaDisplayMode;
+}
+
+function getMyShiftDay() {
+  const todayISO = getQatarTodayISO();
+
+  // Personal View is about TODAY, not whichever rota day happens to be selected.
+  const exact = Array.isArray(currentSchedule)
+    ? currentSchedule.find(function(day) {
+        return day && day.isoDate === todayISO;
+      })
+    : null;
+
+  if (exact) return exact;
+
+  const today = getTodayScheduleDay();
+  if (today && today.isoDate === todayISO) return today;
+
+  // Keep the personal card alive even when today's rota has no row at all.
+  // This allows an off/leave message instead of an empty screen.
+  return {
+    day:new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Asia/Qatar',
+      weekday:'long'
+    }).format(new Date()),
+    date:getQatarLongDateText(todayISO),
+    isoDate:todayISO,
+    am:null,
+    pm:null
+  };
+}
+
+
+function getRoomSideLabel(roomNumber) {
+  const room = Number(roomNumber);
+
+  // Abu Nakhla rota room-side convention used in ROTASTIC.
+  if ([9,10,12,13,14].includes(room)) return 'male side';
+  if ([21,22,24,25,26,27].includes(room)) return 'female side';
+  return '';
+}
+
+function cleanClinicLabelForSentence(label) {
+  return String(label || '')
+    .replace(/[👶🤰🩺😷👂🚭🌸]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getMyShiftA
+===== getQatarTodayISO #19 at 1455244 =====
+ction getPersonalPosterTheme(leaveInfo) {
+  if (!leaveInfo) return ROTASTIC_PERSONAL_POSTER_ART.off;
+  const type = String(leaveInfo.type || '').toLowerCase();
+  if (type === 'annual') return ROTASTIC_PERSONAL_POSTER_ART.annual;
+  if (type === 'sick') return ROTASTIC_PERSONAL_POSTER_ART.sick;
+  if (type === 'casual') return ROTASTIC_PERSONAL_POSTER_ART.casual;
+  return Object.assign({}, ROTASTIC_PERSONAL_POSTER_ART.annual, {
+    title:leaveInfo.label || 'Approved Leave',
+    icon:leaveInfo.emoji || '🌿',
+    message:'Thank you for your hard work. Rest, recharge and enjoy your time away. 🌿☀️'
+  });
+}
+
+function buildMyShiftRestDayCard(day, leaveInfo) {
+  const isoDate = (day && day.isoDate) || getQatarTodayISO();
+  const dateText = getQatarLongDateText(isoDate);
+  const doctor = activeUserDocName || '';
+  const theme = getPersonalPosterTheme(leaveInfo);
+  const isLeave = !!leaveInfo;
+  const headline = isLeave ? (leaveInfo.type === 'annual' ? 'Annual Leave' : leaveInfo.type === 'sick' ? 'Sick Leave' : leaveInfo.type === 'casual' ? 'Casual Leave' : (leaveInfo.label || theme.title)) : 'You are off today';
+  const message = isLeave ? theme.message : getRotasticOffDayEncouragement(doctor, isoDate);
+  const subText = isLeave ? '' : '';
+
+  return `
+    <div class="personal-poster-card" style="--poster-accent:${theme.accent};--poster-accent2:${theme.accent2};">
+      <div class="personal-poster-art" style="background-image:url('${theme.image}')"></div>
+      <div class="personal-poster-shade"></div>
+      <div class="personal-poster-content">
+        <div class="personal-poster-kicker">Personal View · ${dateText}</div>
+        <div class="personal-poster-icon">${theme.icon}</div>
+        <div class="personal-poster-title">${headline}</div>
+        <div class="personal-poster-message">${message}</div>
+        ${subText ? `<div class="personal-poster-sub">${subText}</div>` : ''}
+
+===== getQatarTodayISO #20 at 1456753 =====
+/div>
+      <div class="personal-poster-content">
+        <div class="personal-poster-kicker">Personal View · ${dateText}</div>
+        <div class="personal-poster-icon">${theme.icon}</div>
+        <div class="personal-poster-title">${headline}</div>
+        <div class="personal-poster-message">${message}</div>
+        ${subText ? `<div class="personal-poster-sub">${subText}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function safeBuildMyShiftMainView() {
+  try {
+    const html = buildMyShiftMainView();
+    if (String(html || '').trim()) return html;
+  } catch (e) {
+    console.warn('ROTASTIC personal view recovery:', e);
+  }
+  const leaveInfo = getMyShiftLeaveForDate(activeUserDocName || '', getQatarTodayISO());
+  return buildMyShiftRestDayCard({isoDate:getQatarTodayISO()}, leaveInfo);
+}
+
+function buildMyShiftMainView() {
+  const doctor = activeUserDocName || '';
+  const day = getMyShiftDay();
+  const todayISO = getQatarTodayISO();
+
+  if (!doctor) {
+    return `
+      <div class="clean-card my-shift-presence-card rounded-2xl p-6 text-center border border-sky-500/15">
+        <div class="text-[10px] uppercase tracking-[.15em] text-sky-300 font-black">Personal View</div>
+        <div class="text-lg font-black text-white mt-2">Choose your physician profile</div>
+        <div class="text-xs text-slate-400 mt-2">Your own duty, clinic, room and responsibilities will appear here.</div>
+      </div>
+    `;
+  }
+
+  // Leave takes priority over any stale/generated duty row.
+  const leaveInfo = getMyShiftLeaveForDate(doctor, todayISO);
+  if (leaveInfo) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, leaveInfo);
+  }
+
+  const timing = day ? getDoctorShiftTiming(day, doctor) : null;
+  const briefing = (day && timing) ? chooseSingleDailyBriefing(day, doctor) : null;
+
+  // No actual duty today = full-size friendly off-day card.
+  if (!day || !timing || !briefing) {
+    return 
+===== getQatarTodayISO #21 at 1456816 =====
+class="personal-poster-kicker">Personal View · ${dateText}</div>
+        <div class="personal-poster-icon">${theme.icon}</div>
+        <div class="personal-poster-title">${headline}</div>
+        <div class="personal-poster-message">${message}</div>
+        ${subText ? `<div class="personal-poster-sub">${subText}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function safeBuildMyShiftMainView() {
+  try {
+    const html = buildMyShiftMainView();
+    if (String(html || '').trim()) return html;
+  } catch (e) {
+    console.warn('ROTASTIC personal view recovery:', e);
+  }
+  const leaveInfo = getMyShiftLeaveForDate(activeUserDocName || '', getQatarTodayISO());
+  return buildMyShiftRestDayCard({isoDate:getQatarTodayISO()}, leaveInfo);
+}
+
+function buildMyShiftMainView() {
+  const doctor = activeUserDocName || '';
+  const day = getMyShiftDay();
+  const todayISO = getQatarTodayISO();
+
+  if (!doctor) {
+    return `
+      <div class="clean-card my-shift-presence-card rounded-2xl p-6 text-center border border-sky-500/15">
+        <div class="text-[10px] uppercase tracking-[.15em] text-sky-300 font-black">Personal View</div>
+        <div class="text-lg font-black text-white mt-2">Choose your physician profile</div>
+        <div class="text-xs text-slate-400 mt-2">Your own duty, clinic, room and responsibilities will appear here.</div>
+      </div>
+    `;
+  }
+
+  // Leave takes priority over any stale/generated duty row.
+  const leaveInfo = getMyShiftLeaveForDate(doctor, todayISO);
+  if (leaveInfo) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, leaveInfo);
+  }
+
+  const timing = day ? getDoctorShiftTiming(day, doctor) : null;
+  const briefing = (day && timing) ? chooseSingleDailyBriefing(day, doctor) : null;
+
+  // No actual duty today = full-size friendly off-day card.
+  if (!day || !timing || !briefing) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, null);
+  }
+
+  const
+===== getQatarTodayISO #22 at 1456978 =====
+-title">${headline}</div>
+        <div class="personal-poster-message">${message}</div>
+        ${subText ? `<div class="personal-poster-sub">${subText}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function safeBuildMyShiftMainView() {
+  try {
+    const html = buildMyShiftMainView();
+    if (String(html || '').trim()) return html;
+  } catch (e) {
+    console.warn('ROTASTIC personal view recovery:', e);
+  }
+  const leaveInfo = getMyShiftLeaveForDate(activeUserDocName || '', getQatarTodayISO());
+  return buildMyShiftRestDayCard({isoDate:getQatarTodayISO()}, leaveInfo);
+}
+
+function buildMyShiftMainView() {
+  const doctor = activeUserDocName || '';
+  const day = getMyShiftDay();
+  const todayISO = getQatarTodayISO();
+
+  if (!doctor) {
+    return `
+      <div class="clean-card my-shift-presence-card rounded-2xl p-6 text-center border border-sky-500/15">
+        <div class="text-[10px] uppercase tracking-[.15em] text-sky-300 font-black">Personal View</div>
+        <div class="text-lg font-black text-white mt-2">Choose your physician profile</div>
+        <div class="text-xs text-slate-400 mt-2">Your own duty, clinic, room and responsibilities will appear here.</div>
+      </div>
+    `;
+  }
+
+  // Leave takes priority over any stale/generated duty row.
+  const leaveInfo = getMyShiftLeaveForDate(doctor, todayISO);
+  if (leaveInfo) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, leaveInfo);
+  }
+
+  const timing = day ? getDoctorShiftTiming(day, doctor) : null;
+  const briefing = (day && timing) ? chooseSingleDailyBriefing(day, doctor) : null;
+
+  // No actual duty today = full-size friendly off-day card.
+  if (!day || !timing || !briefing) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, null);
+  }
+
+  const shift = day[timing.period] || null;
+  if (!shift) {
+    return buildMyShiftRestDayCard({isoDate:todayISO}, null);
+  }
+
+  const rooms = getRoomAssignmentsForDocto
+===== getQatarTodayISO #23 at 1562181 =====
+Id('autoGenerationStatus');
+  if (!el) return;
+
+  const draft = Storage.getJSON('rotastic_auto_generated_draft', null);
+
+  if (draft && draft.weekStart) {
+    el.textContent =
+      'Latest automatic draft: week commencing ' +
+      formatWeekCommencingLabel(draft.weekStart) +
+      ' • generated ' +
+      formatWorkflowTime(draft.generatedAt);
+  } else {
+    el.textContent = 'Next automatic draft is due Wednesday at 22:00 Qatar time.';
+  }
+}
+
+async function generateAutomaticWeeklyDraftIfDue() {
+  await rotasticRefreshGenerationLock();
+  if (!rotasticGuardNewGeneration(false)) { renderAutoGenerationStatus(); return false; }
+  const due = getMostRecentWednesday2200Qatar();
+  const todayISO = getQatarTodayISO();
+
+  // Do not create a draft for a Sunday that has already passed.
+  if (!due.targetSunday || due.targetSunday < todayISO) {
+    renderAutoGenerationStatus();
+    return false;
+  }
+
+  const lastKey = Storage.get(ROTASTIC_AUTO_GENERATION_KEY, '');
+  if (lastKey === due.key) {
+    renderAutoGenerationStatus();
+    return false;
+  }
+
+  populateWeekCommencingSundayOptions(due.targetSunday);
+
+  const weekSelect = document.getElementById('cycleStartDate');
+  if (weekSelect) weekSelect.value = due.targetSunday;
+
+  const recommended = getRecommendedWednesdayAMGroupForWeek(due.targetSunday);
+  const group = document.getElementById('wednesdayAMOBGroup');
+
+  if (group) {
+    group.value = recommended;
+    Storage.set('rotastic_wednesday_am_group', recommended);
+    Storage.set('rotastic_wednesday_am_ob_group', recommended);
+  }
+
+  Storage.set('rotastic_selected_week_commencing', due.targetSunday);
+
+  // Generate without requiring a human click.
+  generateDutySchedule();
+
+  const draft = {
+    weekStart:due.targetSunday,
+    generatedAt:new Date().toISOString(),
+    wednesdayAMGroup:recommended,
+    generatedBy:'ROTASTIC automatic scheduler',
+    status:'awaiting-zaid-review
+===== getQatarTodayISO #24 at 1720902 =====
+-900/60 border border-slate-800">
+          <div class="text-xs font-bold text-slate-100">${entry.emoji || '🏖️'} ${entry.doc}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">${entry.typeLabel || 'Approved Leave'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  modal.classList.remove('hidden');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLeaveDateDetails() {
+  const modal = document.getElementById('leaveDateDetailsModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+  document.body.style.overflow = '';
+}
+
+function getPlannerSundayISO(isoDate) {
+  const base = new Date((isoDate || getQatarTodayISO()) + 'T12:00:00');
+  if (Number.isNaN(base.getTime())) return getQatarTodayISO();
+
+  const day = base.getDay();
+  base.setDate(base.getDate() - day);
+
+  return (
+    base.getFullYear() + '-' +
+    String(base.getMonth() + 1).padStart(2, '0') + '-' +
+    String(base.getDate()).padStart(2, '0')
+  );
+}
+
+function addPlannerDays(isoDate, amount) {
+  const d = new Date(isoDate + 'T12:00:00');
+  d.setDate(d.getDate() + Number(amount || 0));
+  return (
+    d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
+}
+
+function formatPlannerWeekOption(weekStartISO) {
+  const start = new Date(weekStartISO + 'T12:00:00');
+  const end = new Date(addPlannerDays(weekStartISO, 4) + 'T12:00:00');
+
+  const startText = start.toLocaleDateString('en-GB', {
+    day:'numeric',
+    month:'short',
+    year:'numeric'
+  });
+
+  const endText = end.toLocaleDateString('en-GB', {
+    day:'numeric',
+    month:'short',
+    year:'numeric'
+  });
+
+  return startText + ' – ' + endText;
+}
+
+function populatePlannerWeekSelect() {
+  const select = document.getElementById('plannerWeekSelect');
+  if (!select) return;
+
+  const currentSunday = g
+===== getQatarTodayISO #25 at 1720981 =====
+slate-100">${entry.emoji || '🏖️'} ${entry.doc}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">${entry.typeLabel || 'Approved Leave'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  modal.classList.remove('hidden');
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLeaveDateDetails() {
+  const modal = document.getElementById('leaveDateDetailsModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+  document.body.style.overflow = '';
+}
+
+function getPlannerSundayISO(isoDate) {
+  const base = new Date((isoDate || getQatarTodayISO()) + 'T12:00:00');
+  if (Number.isNaN(base.getTime())) return getQatarTodayISO();
+
+  const day = base.getDay();
+  base.setDate(base.getDate() - day);
+
+  return (
+    base.getFullYear() + '-' +
+    String(base.getMonth() + 1).padStart(2, '0') + '-' +
+    String(base.getDate()).padStart(2, '0')
+  );
+}
+
+function addPlannerDays(isoDate, amount) {
+  const d = new Date(isoDate + 'T12:00:00');
+  d.setDate(d.getDate() + Number(amount || 0));
+  return (
+    d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
+}
+
+function formatPlannerWeekOption(weekStartISO) {
+  const start = new Date(weekStartISO + 'T12:00:00');
+  const end = new Date(addPlannerDays(weekStartISO, 4) + 'T12:00:00');
+
+  const startText = start.toLocaleDateString('en-GB', {
+    day:'numeric',
+    month:'short',
+    year:'numeric'
+  });
+
+  const endText = end.toLocaleDateString('en-GB', {
+    day:'numeric',
+    month:'short',
+    year:'numeric'
+  });
+
+  return startText + ' – ' + endText;
+}
+
+function populatePlannerWeekSelect() {
+  const select = document.getElementById('plannerWeekSelect');
+  if (!select) return;
+
+  const currentSunday = getPlannerSundayISO(getQatarTodayISO());
+  const saved = Storage.get('rotastic_p
+===== getQatarTodayISO #26 at 1722121 =====
+ 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
+}
+
+function formatPlannerWeekOption(weekStartISO) {
+  const start = new Date(weekStartISO + 'T12:00:00');
+  const end = new Date(addPlannerDays(weekStartISO, 4) + 'T12:00:00');
+
+  const startText = start.toLocaleDateString('en-GB', {
+    day:'numeric',
+    month:'short',
+    year:'numeric'
+  });
+
+  const endText = end.toLocaleDateString('en-GB', {
+    day:'numeric',
+    month:'short',
+    year:'numeric'
+  });
+
+  return startText + ' – ' + endText;
+}
+
+function populatePlannerWeekSelect() {
+  const select = document.getElementById('plannerWeekSelect');
+  if (!select) return;
+
+  const currentSunday = getPlannerSundayISO(getQatarTodayISO());
+  const saved = Storage.get('rotastic_planner_week_start', currentSunday) || currentSunday;
+
+  const starts = [];
+  for (let offset = -16; offset <= 20; offset++) {
+    starts.push(addPlannerDays(currentSunday, offset * 7));
+  }
+
+  // Ensure any saved week remains selectable.
+  if (!starts.includes(saved)) starts.push(saved);
+  starts.sort();
+
+  select.innerHTML = starts.map(function(iso) {
+    return '<option value="' + iso + '">' + formatPlannerWeekOption(iso) + '</option>';
+  }).join('');
+
+  select.value = starts.includes(saved) ? saved : currentSunday;
+}
+
+function changePlannerWeek(delta) {
+  const select = document.getElementById('plannerWeekSelect');
+  if (!select) return;
+
+  const current = select.value || getPlannerSundayISO(getQatarTodayISO());
+  const next = addPlannerDays(current, Number(delta || 0) * 7);
+
+  if (![...select.options].some(function(opt){ return opt.value === next; })) {
+    const option = document.createElement('option');
+    option.value = next;
+    option.textContent = formatPlannerWeekOption(next);
+    select.appendChild(option);
+  }
+
+  select.value = next;
+  Storage.set('rotastic_planner_week_start', next);
+  renderWeeklyLeavePlann
+===== getQatarTodayISO #27 at 1722885 =====
+er_week_start', currentSunday) || currentSunday;
+
+  const starts = [];
+  for (let offset = -16; offset <= 20; offset++) {
+    starts.push(addPlannerDays(currentSunday, offset * 7));
+  }
+
+  // Ensure any saved week remains selectable.
+  if (!starts.includes(saved)) starts.push(saved);
+  starts.sort();
+
+  select.innerHTML = starts.map(function(iso) {
+    return '<option value="' + iso + '">' + formatPlannerWeekOption(iso) + '</option>';
+  }).join('');
+
+  select.value = starts.includes(saved) ? saved : currentSunday;
+}
+
+function changePlannerWeek(delta) {
+  const select = document.getElementById('plannerWeekSelect');
+  if (!select) return;
+
+  const current = select.value || getPlannerSundayISO(getQatarTodayISO());
+  const next = addPlannerDays(current, Number(delta || 0) * 7);
+
+  if (![...select.options].some(function(opt){ return opt.value === next; })) {
+    const option = document.createElement('option');
+    option.value = next;
+    option.textContent = formatPlannerWeekOption(next);
+    select.appendChild(option);
+  }
+
+  select.value = next;
+  Storage.set('rotastic_planner_week_start', next);
+  renderWeeklyLeavePlanner();
+}
+
+function getPlannerWeekGroupBreakdown(entries) {
+  const rules = getAutoRotaRules();
+  const group1 = new Set((rules.group1 || []).map(canonicalRotaName));
+  const group2 = new Set((rules.group2 || []).map(canonicalRotaName));
+
+  const result = {
+    group1:[],
+    group2:[],
+    other:[]
+  };
+
+  (entries || []).forEach(function(entry) {
+    const name = canonicalRotaName(entry.doc || '');
+    if (!name) return;
+
+    if (group1.has(name)) result.group1.push(entry);
+    else if (group2.has(name)) result.group2.push(entry);
+    else result.other.push(entry);
+  });
+
+  return result;
+}
+
+function renderWeeklyLeavePlanner() {
+  const select = document.getElementById('plannerWeekSelect');
+  const calendar = document.getElementById('weeklyLeaveCalendar'
+===== getQatarTodayISO #28 at 1724242 =====
+calRotaName));
+
+  const result = {
+    group1:[],
+    group2:[],
+    other:[]
+  };
+
+  (entries || []).forEach(function(entry) {
+    const name = canonicalRotaName(entry.doc || '');
+    if (!name) return;
+
+    if (group1.has(name)) result.group1.push(entry);
+    else if (group2.has(name)) result.group2.push(entry);
+    else result.other.push(entry);
+  });
+
+  return result;
+}
+
+function renderWeeklyLeavePlanner() {
+  const select = document.getElementById('plannerWeekSelect');
+  const calendar = document.getElementById('weeklyLeaveCalendar');
+
+  if (!select || !calendar) return;
+
+  if (!select.options.length) populatePlannerWeekSelect();
+
+  const weekStart = select.value || getPlannerSundayISO(getQatarTodayISO());
+  Storage.set('rotastic_planner_week_start', weekStart);
+
+  const todayISO = getQatarTodayISO();
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday'];
+  const shortNames = ['Sun','Mon','Tue','Wed','Thu'];
+
+  const weekDates = dayNames.map(function(_, index) {
+    return addPlannerDays(weekStart, index);
+  });
+
+  const g1Unique = new Set();
+  const g2Unique = new Set();
+  let g1DoctorDays = 0;
+  let g2DoctorDays = 0;
+
+  const dayCards = weekDates.map(function(iso, index) {
+    const entries = getApprovedLeaveForDate(iso);
+    const breakdown = getPlannerWeekGroupBreakdown(entries);
+
+    breakdown.group1.forEach(function(entry) {
+      const name = canonicalRotaName(entry.doc || '');
+      if (name) {
+        g1Unique.add(name);
+        g1DoctorDays += 1;
+      }
+    });
+
+    breakdown.group2.forEach(function(entry) {
+      const name = canonicalRotaName(entry.doc || '');
+      if (name) {
+        g2Unique.add(name);
+        g2DoctorDays += 1;
+      }
+    });
+
+    const total = entries.length;
+    const isToday = iso === todayISO;
+    const dateObj = new Date(iso + 'T12:00:00');
+    const dateLabel = dateObj.toLocaleDateString('en-GB', {
+      
+===== getQatarTodayISO #29 at 1724340 =====
+[]).forEach(function(entry) {
+    const name = canonicalRotaName(entry.doc || '');
+    if (!name) return;
+
+    if (group1.has(name)) result.group1.push(entry);
+    else if (group2.has(name)) result.group2.push(entry);
+    else result.other.push(entry);
+  });
+
+  return result;
+}
+
+function renderWeeklyLeavePlanner() {
+  const select = document.getElementById('plannerWeekSelect');
+  const calendar = document.getElementById('weeklyLeaveCalendar');
+
+  if (!select || !calendar) return;
+
+  if (!select.options.length) populatePlannerWeekSelect();
+
+  const weekStart = select.value || getPlannerSundayISO(getQatarTodayISO());
+  Storage.set('rotastic_planner_week_start', weekStart);
+
+  const todayISO = getQatarTodayISO();
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday'];
+  const shortNames = ['Sun','Mon','Tue','Wed','Thu'];
+
+  const weekDates = dayNames.map(function(_, index) {
+    return addPlannerDays(weekStart, index);
+  });
+
+  const g1Unique = new Set();
+  const g2Unique = new Set();
+  let g1DoctorDays = 0;
+  let g2DoctorDays = 0;
+
+  const dayCards = weekDates.map(function(iso, index) {
+    const entries = getApprovedLeaveForDate(iso);
+    const breakdown = getPlannerWeekGroupBreakdown(entries);
+
+    breakdown.group1.forEach(function(entry) {
+      const name = canonicalRotaName(entry.doc || '');
+      if (name) {
+        g1Unique.add(name);
+        g1DoctorDays += 1;
+      }
+    });
+
+    breakdown.group2.forEach(function(entry) {
+      const name = canonicalRotaName(entry.doc || '');
+      if (name) {
+        g2Unique.add(name);
+        g2DoctorDays += 1;
+      }
+    });
+
+    const total = entries.length;
+    const isToday = iso === todayISO;
+    const dateObj = new Date(iso + 'T12:00:00');
+    const dateLabel = dateObj.toLocaleDateString('en-GB', {
+      day:'numeric',
+      month:'short'
+    });
+
+    function namesFor(items) {
+      if (!items.length
+===== getQatarTodayISO #30 at 1731268 =====
+erExportScopeControls();
+}
+
+function initializePlannerExportScopeControls() {
+  const scope = document.getElementById('plannerExportScope');
+  const month = document.getElementById('plannerExportMonth');
+  const year = document.getElementById('plannerExportYear');
+  if (!scope || !month || !year) return;
+
+  if (!month.options.length) {
+    ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach(function(label, index){
+      const option=document.createElement('option'); option.value=String(index); option.textContent=label; month.appendChild(option);
+    });
+  }
+  if (!year.options.length) {
+    const currentYear=parseInt(String(getQatarTodayISO()).slice(0,4),10) || new Date().getFullYear();
+    for(let y=currentYear-1;y<=currentYear+2;y+=1){ const option=document.createElement('option'); option.value=String(y); option.textContent=String(y); year.appendChild(option); }
+  }
+
+  const weekSelect=document.getElementById('plannerWeekSelect');
+  const anchor=(weekSelect && weekSelect.value) ? weekSelect.value : getQatarTodayISO();
+  const parts=String(anchor).split('-').map(Number);
+  if (parts.length===3) { year.value=String(parts[0]); month.value=String(Math.max(0,parts[1]-1)); }
+  updatePlannerExportPeriodControls();
+}
+
+function updatePlannerExportPeriodControls() {
+  const scope=document.getElementById('plannerExportScope');
+  const monthWrap=document.getElementById('plannerExportMonthWrap');
+  const hint=document.getElementById('plannerExportHint');
+  if (!scope) return;
+  const annual=scope.value === 'year';
+  if (monthWrap) monthWrap.style.display = annual ? 'none' : '';
+  if (hint) hint.textContent = annual
+    ? 'Annual export creates a 12-month year-at-a-glance planner with dates, booked leave names and Group 1 / Group 2 colour coding.'
+    : 'Exports the selected month with approved leave. Empty month
+===== getQatarTodayISO #31 at 1731652 =====
+','June','July','August','September','October','November','December'].forEach(function(label, index){
+      const option=document.createElement('option'); option.value=String(index); option.textContent=label; month.appendChild(option);
+    });
+  }
+  if (!year.options.length) {
+    const currentYear=parseInt(String(getQatarTodayISO()).slice(0,4),10) || new Date().getFullYear();
+    for(let y=currentYear-1;y<=currentYear+2;y+=1){ const option=document.createElement('option'); option.value=String(y); option.textContent=String(y); year.appendChild(option); }
+  }
+
+  const weekSelect=document.getElementById('plannerWeekSelect');
+  const anchor=(weekSelect && weekSelect.value) ? weekSelect.value : getQatarTodayISO();
+  const parts=String(anchor).split('-').map(Number);
+  if (parts.length===3) { year.value=String(parts[0]); month.value=String(Math.max(0,parts[1]-1)); }
+  updatePlannerExportPeriodControls();
+}
+
+function updatePlannerExportPeriodControls() {
+  const scope=document.getElementById('plannerExportScope');
+  const monthWrap=document.getElementById('plannerExportMonthWrap');
+  const hint=document.getElementById('plannerExportHint');
+  if (!scope) return;
+  const annual=scope.value === 'year';
+  if (monthWrap) monthWrap.style.display = annual ? 'none' : '';
+  if (hint) hint.textContent = annual
+    ? 'Annual export creates a 12-month year-at-a-glance planner with dates, booked leave names and Group 1 / Group 2 colour coding.'
+    : 'Exports the selected month with approved leave. Empty months still export as a complete calendar.';
+}
+function buildPlannerScopeExportElement() {
+  initializePlannerExportScopeControls();
+  const scope=document.getElementById('plannerExportScope');
+  const month=document.getElementById('plannerExportMonth');
+  const year=document.getElementById('plannerExportYear');
+  const selectedScope=scope ? scope.value : 'month';
+  const y=parseInt(ye
+===== getQatarTodayISO #32 at 1732892 =====
+style.display = annual ? 'none' : '';
+  if (hint) hint.textContent = annual
+    ? 'Annual export creates a 12-month year-at-a-glance planner with dates, booked leave names and Group 1 / Group 2 colour coding.'
+    : 'Exports the selected month with approved leave. Empty months still export as a complete calendar.';
+}
+function buildPlannerScopeExportElement() {
+  initializePlannerExportScopeControls();
+  const scope=document.getElementById('plannerExportScope');
+  const month=document.getElementById('plannerExportMonth');
+  const year=document.getElementById('plannerExportYear');
+  const selectedScope=scope ? scope.value : 'month';
+  const y=parseInt(year && year.value,10) || parseInt(String(getQatarTodayISO()).slice(0,4),10);
+  const m=Math.max(0,Math.min(11,parseInt(month && month.value,10) || 0));
+  const root=buildAnnualLeavePlannerPDFElement(y);
+  root.id='rotasticPlannerScopeExport';
+  if (selectedScope === 'month') {
+    Array.from(root.children).forEach(function(page,index){ if(index!==m) page.remove(); });
+    const only=root.querySelector('section'); if(only) { only.style.pageBreakAfter='auto'; only.style.breakAfter='auto'; }
+  } else {
+    const pages=root.querySelectorAll('section'); if(pages.length) { const last=pages[pages.length-1]; last.style.pageBreakAfter='auto'; last.style.breakAfter='auto'; }
+  }
+  return {element:root, scope:selectedScope, year:y, month:m};
+}
+
+
+function rotasticPlannerExportSelection() {
+  initializePlannerExportScopeControls();
+  const scope=document.getElementById('plannerExportScope');
+  const month=document.getElementById('plannerExportMonth');
+  const year=document.getElementById('plannerExportYear');
+  const selectedScope=scope ? scope.value : 'month';
+  const y=parseInt(year && year.value,10) || parseInt(String(getQatarTodayISO()).slice(0,4),10);
+  const m=Math.max(0,Math.min(11,parseInt(month && month.value,10) || 0));
+  re
+===== getQatarTodayISO #33 at 1733977 =====
+{ only.style.pageBreakAfter='auto'; only.style.breakAfter='auto'; }
+  } else {
+    const pages=root.querySelectorAll('section'); if(pages.length) { const last=pages[pages.length-1]; last.style.pageBreakAfter='auto'; last.style.breakAfter='auto'; }
+  }
+  return {element:root, scope:selectedScope, year:y, month:m};
+}
+
+
+function rotasticPlannerExportSelection() {
+  initializePlannerExportScopeControls();
+  const scope=document.getElementById('plannerExportScope');
+  const month=document.getElementById('plannerExportMonth');
+  const year=document.getElementById('plannerExportYear');
+  const selectedScope=scope ? scope.value : 'month';
+  const y=parseInt(year && year.value,10) || parseInt(String(getQatarTodayISO()).slice(0,4),10);
+  const m=Math.max(0,Math.min(11,parseInt(month && month.value,10) || 0));
+  return {scope:selectedScope,year:y,month:m};
+}
+
+function rotasticPlannerMonthData(year, monthIndex) {
+  const byDate=getAnnualPlannerEntriesByDate(year);
+  const daysInMonth=new Date(year,monthIndex+1,0,12,0,0).getDate();
+  const firstDow=new Date(year,monthIndex,1,12,0,0).getDay();
+  const days=[];
+  for(let d=1;d<=daysInMonth;d+=1){
+    const iso=String(year)+'-'+String(monthIndex+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const entries=(byDate.get(iso)||[]).slice().sort(function(a,b){ return String(a.doc||'').localeCompare(String(b.doc||'')); });
+    days.push({day:d,iso:iso,entries:entries});
+  }
+  return {year:year,month:monthIndex,firstDow:firstDow,daysInMonth:daysInMonth,days:days};
+}
+
+function rotasticPlannerGroupStyle(docName) {
+  const group=getDoctorRotaGroup(docName);
+  if(group===1) return {label:'G1',fill:'#dbeafe',stroke:'#60a5fa',text:'#1e3a8a'};
+  if(group===2) return {label:'G2',fill:'#fef3c7',stroke:'#f59e0b',text:'#78350f'};
+  return {label:'—',fill:'#e2e8f0',stroke:'#94a3b8',text:'#334155'};
+}
+
+function rotasticPlannerExportLabel(selection
+===== getQatarTodayISO #34 at 1748394 =====
+
+    pagebreak:{mode:['css','legacy']}
+  }).from(element).save().then(function(){ element.remove(); }).catch(function(error){
+    console.warn('Planner PDF export:',error);
+    element.remove();
+    alert('Planner PDF export could not be completed.');
+  });
+}
+
+function canExportAnnualLeavePlanner() {
+  const name = String(activeUserDocName || '').trim();
+  let adminAllowed = false;
+  try { adminAllowed = isCurrentUserAdmin(); } catch (e) {}
+  return adminAllowed || /\bEnan\b/i.test(name) || /\bHus+s?am\b/i.test(name);
+}
+
+function initializeAnnualLeaveExportYear() {
+  const select = document.getElementById('annualLeaveExportYear');
+  if (!select) return;
+  const currentYear = parseInt(String(getQatarTodayISO()).slice(0,4), 10) || new Date().getFullYear();
+  if (!select.options.length) {
+    for (let year = currentYear - 1; year <= currentYear + 2; year += 1) {
+      const option = document.createElement('option');
+      option.value = String(year);
+      option.textContent = String(year);
+      if (year === currentYear) option.selected = true;
+      select.appendChild(option);
+    }
+  }
+}
+
+function updateAnnualLeaveExportAccess() {
+  const controls = document.getElementById('annualLeaveExportControls');
+  if (!controls) return;
+  initializeAnnualLeaveExportYear();
+  controls.classList.toggle('hidden', !canExportAnnualLeavePlanner());
+}
+
+function getAnnualPlannerEntriesByDate(year) {
+  const byDate = new Map();
+  getAllPlannerLeaveEntries().forEach(function(entry) {
+    expandLeaveEntryDates(entry).forEach(function(iso) {
+      if (!String(iso).startsWith(String(year) + '-')) return;
+      if (!byDate.has(iso)) byDate.set(iso, []);
+      byDate.get(iso).push(entry);
+    });
+  });
+  return byDate;
+}
+
+function getAnnualPlannerGroup(docName) {
+  const group = getDoctorRotaGroup(docName);
+  return group === 1 ? 'G1' : group === 2 ? 'G2' : '—';
+}
+
+function buildAnnualLeavePl
+===== getQatarTodayISO #35 at 1755225 =====
+C Annual Leave Planner '+year+'</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>@page{size:A4 landscape;margin:0}body{margin:0;background:#fff}section:last-child{page-break-after:auto!important}</style></head><body>'+element.innerHTML+'</body></html>');
+  win.document.close();
+  setTimeout(function(){ win.focus(); win.print(); }, 350);
+}
+
+function exportAnnualLeavePlannerPDF() {
+  if (!canExportAnnualLeavePlanner()) {
+    alert('Annual planner export is available to admins and the two leave coordinators.');
+    return;
+  }
+  const select = document.getElementById('annualLeaveExportYear');
+  const year = parseInt(select && select.value, 10) || parseInt(String(getQatarTodayISO()).slice(0,4),10);
+  const element = buildAnnualLeavePlannerPDFElement(year);
+  document.body.appendChild(element);
+
+  if (typeof html2pdf === 'function') {
+    const options = {
+      margin:0,
+      filename:'ROTASTIC_Annual_Leave_Planner_'+year+'.pdf',
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:1.6,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
+      pagebreak:{mode:['css','legacy']}
+    };
+    html2pdf().set(options).from(element).save().catch(function(error) {
+      console.warn('Annual leave PDF export:', error);
+      fallbackPrintAnnualLeavePlanner(element, year);
+    }).finally(function(){ element.remove(); });
+  } else {
+    fallbackPrintAnnualLeavePlanner(element, year);
+    setTimeout(function(){ element.remove(); }, 1500);
+  }
+}
+
+function renderAnnualLeaveCalendar() {
+  renderWeeklyLeavePlanner();
+  updateAnnualLeaveExportAccess();
+}
+
+function initializePlannerToCurrentMonth() {
+  // Kept under the legacy function name because older startup calls use it.
+  populatePlannerWeekSelect();
+
+  const select = document.getElementById('plannerWeekSelect');
+  if (select && !select.value
+===== getQatarTodayISO #36 at 1756475 =====
+tion(error) {
+      console.warn('Annual leave PDF export:', error);
+      fallbackPrintAnnualLeavePlanner(element, year);
+    }).finally(function(){ element.remove(); });
+  } else {
+    fallbackPrintAnnualLeavePlanner(element, year);
+    setTimeout(function(){ element.remove(); }, 1500);
+  }
+}
+
+function renderAnnualLeaveCalendar() {
+  renderWeeklyLeavePlanner();
+  updateAnnualLeaveExportAccess();
+}
+
+function initializePlannerToCurrentMonth() {
+  // Kept under the legacy function name because older startup calls use it.
+  populatePlannerWeekSelect();
+
+  const select = document.getElementById('plannerWeekSelect');
+  if (select && !select.value) {
+    const currentSunday = getPlannerSundayISO(getQatarTodayISO());
+    select.value = currentSunday;
+    Storage.set('rotastic_planner_week_start', currentSunday);
+  }
+}
+
+function exportCleanName(value) {
+  if (!value || value === '-') return '';
+  return String(value).replace(/^Dr\s+/,'Dr ').replace(/\s+P$/,'').trim();
+}
+
+function exportSpecialLines(shift, isAM) {
+  const out = [];
+  if (shift.ancDoc) out.push({label:'ANC (32)', doctor:exportCleanName(shift.ancDoc), cls:'export-anc'});
+  if (shift.ncdDoc) out.push({label:'NCD (32)', doctor:exportCleanName(shift.ncdDoc), cls:'export-anc'});
+  if (shift.wbcDoc) out.push({label:'WBC', doctor:exportCleanName(shift.wbcDoc), cls: shift.wbcDoc === 'No Clinic' ? 'export-no-clinic' : 'export-wbc'});
+  if (shift.isoDoc) out.push({label:'Isolation', doctor:exportCleanName(shift.isoDoc), cls:'export-isolation'});
+  if (shift.smokingDoc) out.push({label:'Smoking Clinic', doctor:exportCleanName(shift.smokingDoc), cls:'export-special'});
+  if (shift.iucdDoc) out.push({label:'IUCD', doctor:exportCleanName(shift.iucdDoc), cls:'export-special'});
+  return out;
+}
+
+function buildExportDutyRows(shift, isAM) {
+  const rows = [
+    {label:'Emergency Duty', doctor:'', cls:'export-emergency'},
+    {l
+===== getQatarTodayISO #37 at 1784738 =====
+', e); }
+  renderAnnualLeaveCalendar();
+  renderRecentLeaveSubmissions();
+  onUnifiedLeaveTypeChange();
+  showNotificationsForCurrentUser();
+  renderRotaApprovalWorkflow();
+
+  // Preserve the original rota/settings UI. Add only the requested opening sequence:
+  // Fast personalised splash, then a 12.5-second typewriter daily briefing in the ticker, then normal ticker rotation.
+  tickerSlotCounter = 0;
+  pendingCentreTicker = false;
+  initializeRotasticTextSize();
+  initializeRotaZoom();
+
+  requestBrowserNotificationPermission();
+  checkShiftEndAppreciation();
+  setInterval(checkShiftEndAppreciation, 15000);
+
+  // Default leave form dates to today in Qatar for easier testing.
+  const today = getQatarTodayISO();
+  const startInput = document.getElementById('unifiedLeaveStart');
+  const endInput = document.getElementById('unifiedLeaveEnd');
+  if (startInput && !startInput.value) startInput.value = today;
+  if (endInput && !endInput.value) endInput.value = today;
+
+  const annInput = document.getElementById('adminAnnouncementText');
+  if (annInput) annInput.addEventListener('input', updateAnnouncementCharCount);
+
+  setTimeout(initRotasticBackend, 650);
+  setTimeout(rotasticRunLaunchSelfTest, 1800);
+  setTimeout(initializeTickerSwipeHistory, 250);
+  setTimeout(updateRotaChromeVisibility, 300);
+  setTimeout(function() {
+    const container = document.getElementById('scheduleMatrixContainer');
+    if (container && getCurrentRotaDisplayMode() === 'myshift' && !String(container.innerHTML || '').trim()) {
+      container.innerHTML = safeBuildMyShiftMainView();
+    }
+  }, 700);
+  setTimeout(function(){ try { updateDriveTimeLine(false); } catch(e) {} }, 500);
+  setTimeout(startAbuNakhlaArrivalWatcher, 1200);
+});
+
+window.addEventListener('load', function() {
+  // Opening ticker sequence is started from DOMContentLoaded so the Abu Nakhla
+  // banner is not replaced prematurely by th
+===== Today is #1 at 527451 =====
+p6IQUqdJKqSdFWUkyPKUFN+CXJT3TWR+CoFCCqB2T3TWRZCoHdClBSTI84VZQhV0Ke6ayLOQi8Cmvgl5iMp7pWR52SkjqgzsiBT3TWRKhsUOclVlJJGd0udggyUudkrpkQOUo6pvmS8xJT3TWR58FSRVnCK6ZFzbog5NZ6pcpJWTiTIQgqk901ku6o7BICUuUrpKjsqyqzlUXJrpKugVZyEPNulB+aV06XKoHIKT5Ksp7prKuuVSQlVnKZOl8VQQ5wUuUkkueqRVlDzblNdOi2z6pM4QnKTJTXSsjzuqO4whBPVLnfoklZVkBVlJ13SZSTogUmRlJlDlDdOlLslV1CEncFUCU109kQ6bqspMpPkknSuSKknimunSgpEJJSF2Cmunsj6JChB2VE5TXunASOOUOUpOEKYokQO6XqhDvRUST0TJJR4ocqspEydL80hO6QndKTlJOkJVKsqs4STqkhVZVZTJJMZSeKU+SAlCiConOVRIwk8SkPTCFOqO+6QpQUhSKcJPRDlU4pMhRlSBI4oRnKXKQE52GUBRBf/Z"/>
+<div class="rotastic-splash-welcome" id="rotasticSplashWelcome">Welcome, Doctor</div>
+<div class="rotastic-splash-date" id="rotasticSplashDate">Today is Monday, 1 January 2026</div>
+<div class="rotastic-splash-room hidden" id="rotasticSplashRoom">You are in Room 24 today.</div>
+<div aria-hidden="true" class="rotastic-splash-progress-wrap">
+<div class="rotastic-splash-progress" id="rotasticSplashProgress"></div>
+</div>
+</div>
+</div>
+<header class="bg-[#0b101c]/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-30 no-print">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm border border-teal-400/30">
+<img alt="ROTASTIC logo" class="w-full h-full object-cover" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AA
+===== Today is #2 at 1129399 =====
+onst shift = day[timing.period];
+  if (!shift) return '';
+
+  const rooms = getRoomAssignmentsForDoctor(shift, profile);
+  if (!rooms || !rooms.length) return '';
+
+  if (rooms.length === 1) {
+    return 'You are in Room ' + rooms[0] + ' today.';
+  }
+
+  return 'You are in Rooms ' + rooms.join(' and ') + ' today.';
+}
+
+function updateOpeningSplashName() {
+  const el = document.getElementById('rotasticSplashWelcome');
+  if (!el) return;
+
+  const profile = getSplashDoctorName();
+  const doctor = profile ? getDoctorFirstNameDisplay(profile) : 'Doctor';
+  el.textContent = 'Welcome, ' + doctor;
+
+  const dateEl = document.getElementById('rotasticSplashDate');
+  if (dateEl) {
+    dateEl.textContent = 'Today is ' + getQatarLongDateText(getQatarTodayISO());
+  }
+
+  const roomEl = document.getElementById('rotasticSplashRoom');
+  if (roomEl) {
+    const roomText = getSplashRoomText();
+    if (roomText) {
+      roomEl.textContent = roomText;
+      roomEl.classList.remove('hidden');
+    } else {
+      roomEl.textContent = '';
+      roomEl.classList.add('hidden');
+    }
+  }
+}
+
+
+function ensureRotasticTickerAlive() {
+  const ticker = document.getElementById('swapsNewsTicker');
+  if (!ticker) return;
+
+  // The announcement/news bar belongs on the Rota tab only.
+  if (rotasticActiveTab !== 'schedule') return;
+
+  ticker.classList.remove('hidden');
+
+  // If nothing is currently displayed, restart the normal opening/ticker flow.
+  const content = document.getElementById('tickerContent');
+  const hasVisibleContent =
+    content &&
+    String(content.textContent || '').trim().length > 0;
+
+  if (!hasVisibleContent) {
+    try {
+      if (!profileSetupIsComplete()) {
+        renderPersistentFirstSetupTicker();
+      } else if (!rotasticOpeningTickerActive) {
+        startOpeningTickerSequence();
+      }
+    } catch (e) {
+      console.warn('ROTASTIC ticker recovery:', e);
+      try { renderNextTic
