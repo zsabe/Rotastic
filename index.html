@@ -6198,6 +6198,22 @@ button,input,select,textarea{font-size:max(16px,1em);}
 #tabAnnouncements,#tabAnnouncements *{max-width:100%;box-sizing:border-box}#tabAnnouncements p,#tabAnnouncements div{overflow-wrap:anywhere}
 @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto!important}.live-rota-meta-row>div:first-child,.live-drive-slot,#weatherBadge,.live-drive-slot #driveTimeBtn{min-height:28px!important;height:28px!important}#settingsViewSwitchBtn,#rotasticLogoutBtn{font-size:10px!important;padding-left:8px!important;padding-right:8px!important}}
 </style>
+
+<style id="rotastic-requested-compact-rota">
+/* Requested minor reordering only: preserve the restored visual design. */
+.live-rota-meta-row{grid-template-columns:auto minmax(92px,1fr) auto!important;gap:6px!important;align-items:center!important}
+.rotastic-live-inline{display:flex!important;align-items:center!important;gap:5px!important;margin:0!important;min-width:0!important;white-space:nowrap!important}
+.rotastic-live-inline #liveRotaUpdatedAt{max-width:72px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#topActionGrid{margin-top:2px!important}
+#rotaSecondaryTools{min-height:0!important;height:0!important;margin:0!important;padding:0!important;overflow:visible!important}
+#rotaSecondaryTools>div{height:0!important;min-height:0!important;overflow:visible!important}
+#rotaDaySelector{margin:3px 0 7px!important;padding:4px 2px!important;overflow:visible!important}
+.rotastic-day-nav-arrow{width:36px!important;height:36px!important;flex:0 0 36px!important;border-radius:10px!important;border:1px solid rgba(51,65,85,.95)!important;background:rgba(15,23,42,.78)!important;color:#cbd5e1!important;display:grid!important;place-items:center!important}
+.rotastic-day-nav-copy{min-width:0!important;flex:1!important;text-align:center!important;line-height:1.1!important}
+.rotastic-day-nav-name{font-size:15px!important;font-weight:900!important;color:#f8fafc!important}
+.rotastic-day-nav-meta{margin-top:3px!important;font-size:10px!important;font-weight:750!important;color:#7dd3fc!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+@media(max-width:520px){.live-rota-meta-row{grid-template-columns:minmax(72px,auto) minmax(92px,1fr) minmax(62px,auto)!important;gap:5px!important}.rotastic-live-inline #liveRotaUpdatedAt{display:none!important}.live-drive-slot #driveTimeBtn{height:24px!important;padding:0 6px!important}.live-drive-slot #driveTimeBtnText{font-size:9px!important}.live-drive-slot #driveTimeBtnSub{display:none!important}#weatherBadge{height:24px!important;font-size:9px!important}}
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
@@ -6408,11 +6424,14 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
 <div class="w-full space-y-1.5">
 <div class="live-rota-meta-row w-full">
-<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
-<i class="fa-solid fa-arrow-up-from-bracket"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
-</button>
+<div class="rotastic-live-mini rotastic-live-inline" id="rotasticLiveMini">
+<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+</span>
+<span class="rotastic-live-mini-label">LIVE</span>
+<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
+</div>
 <div class="live-drive-slot">
 <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
 <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
@@ -6455,11 +6474,6 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 <div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
 <div class="relative flex items-center justify-end gap-2">
-<button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
-<i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
-</button>
 <div class="flex items-center space-x-2" id="rotaExportActions">
 <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToImageReport()" type="button">
 <i class="fa-regular fa-image text-[10px]"></i>
@@ -6476,21 +6490,14 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 </div>
 </div>
-<div class="rotastic-live-mini" id="rotasticLiveMini">
-<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
-  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
-  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-</span>
-<span class="rotastic-live-mini-label">LIVE</span>
-<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
+
+<div class="flex items-center justify-between gap-2 py-1" id="rotaDaySelector">
+<button aria-label="Previous rota day" class="rotastic-day-nav-arrow" onclick="rotasticMoveRotaDay(-1)" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+<div class="rotastic-day-nav-copy">
+<div class="rotastic-day-nav-name" id="rotasticDayNavName">Sunday</div>
+<div class="rotastic-day-nav-meta" id="rotasticDayNavMeta">Date · Room —</div>
 </div>
-<div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(1)" type="button">Mon</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(2)" type="button">Tue</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(3)" type="button">Wed</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(4)" type="button">Thu</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(-1)" type="button">All Week</button>
+<button aria-label="Next rota day" class="rotastic-day-nav-arrow" onclick="rotasticMoveRotaDay(1)" type="button"><i class="fa-solid fa-chevron-right"></i></button>
 </div>
 <div class="space-y-4" id="scheduleMatrixContainer"></div>
 </div>
@@ -12230,7 +12237,63 @@ function shrinkCredits(){document.querySelectorAll('body *').forEach(el=>{if(el.
 function boot(){try{const q=Storage.getJSON('rotastic_notification_queue',[])||[],cut=Date.now()-3*24*60*60*1000;Storage.setJSON('rotastic_notification_queue',q.filter(n=>{const t=new Date(n?.createdAt||n?.created_at||0).getTime();return !t||t>=cut;}));if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient&&typeof rotasticBackendUser!=='undefined'&&rotasticBackendUser)rotasticBackendClient.rpc('rotastic_cleanup_my_notifications').catch(()=>{});}catch(e){}refreshSettingsIdentity();updateBell();refreshSecureDirectory();renderRotaDayHeader();renderMoursiInbox();shrinkCredits();setInterval(()=>{updateBell();refreshSettingsIdentity()},60000);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,50));else setTimeout(boot,50);
 })();
-</script>\n</body>
+</script>\n
+<script id="rotastic-requested-day-navigation">
+(function(){
+  function qatarDateLabel(iso){
+    if(!iso)return '';
+    try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',day:'numeric',month:'short',year:'numeric'}).format(new Date(iso+'T12:00:00+03:00'));}catch(_){return iso;}
+  }
+  function selectedIndex(){
+    if(typeof activeDayIndex==='number' && activeDayIndex>=0)return activeDayIndex;
+    return 0;
+  }
+  function roomFromRenderedRota(){
+    var name=(typeof activeUserDocName!=='undefined'&&activeUserDocName)?String(activeUserDocName).trim():'';
+    var root=document.getElementById('scheduleMatrixContainer');
+    if(name&&root){
+      var nodes=[].slice.call(root.querySelectorAll('.rotastic-room-grid > *, .room-card, [class*="room"]'));
+      for(var i=0;i<nodes.length;i++){
+        var t=String(nodes[i].textContent||'').replace(/\s+/g,' ').trim();
+        if(t.indexOf(name)===-1)continue;
+        var m=t.match(/\bRoom\s*(\d+[A-Za-z]?)\b/i);
+        if(m)return m[1];
+      }
+    }
+    var hero=document.getElementById('mainRoomHeroNumber');
+    var h=hero?String(hero.textContent||'').trim():'';
+    return h&&h!=='—'?h:'';
+  }
+  window.rotasticUpdateDayNavigator=function(){
+    var days=(typeof currentSchedule!=='undefined'&&Array.isArray(currentSchedule))?currentSchedule:[];
+    if(!days.length)return;
+    var i=Math.max(0,Math.min(selectedIndex(),days.length-1));
+    var d=days[i]||{};
+    var n=document.getElementById('rotasticDayNavName');
+    var m=document.getElementById('rotasticDayNavMeta');
+    if(n)n.textContent=String(d.day||d.dayName||['Sunday','Monday','Tuesday','Wednesday','Thursday'][i]||'Day');
+    var room=roomFromRenderedRota();
+    var date=qatarDateLabel(d.isoDate||'');
+    if(m)m.textContent=(date||String(d.dateLabel||''))+(room?' · Room '+room:' · Room —');
+  };
+  window.rotasticMoveRotaDay=function(delta){
+    var days=(typeof currentSchedule!=='undefined'&&Array.isArray(currentSchedule))?currentSchedule:[];
+    if(!days.length||typeof filterDay!=='function')return;
+    var count=Math.min(days.length,5);
+    var i=selectedIndex();
+    i=(i+delta+count)%count;
+    filterDay(i);
+    setTimeout(window.rotasticUpdateDayNavigator,40);
+    setTimeout(window.rotasticUpdateDayNavigator,180);
+  };
+  function bind(){setTimeout(window.rotasticUpdateDayNavigator,50);setTimeout(window.rotasticUpdateDayNavigator,400);}
+  document.addEventListener('DOMContentLoaded',bind);
+  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('[data-rotastic-rota-toggle="1"]'))setTimeout(window.rotasticUpdateDayNavigator,120);},true);
+  var root=document.getElementById('scheduleMatrixContainer');
+  if(root&&window.MutationObserver)new MutationObserver(function(){setTimeout(window.rotasticUpdateDayNavigator,20);}).observe(root,{childList:true,subtree:true});
+})();
+</script>
+</body>
 </html>`;
   try {
     if (frame.dataset.blobUrl) {
