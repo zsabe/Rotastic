@@ -19286,6 +19286,9 @@ function rotasticNextWednesday2200After(iso) {
 function rotasticLocalGenerationLock() {
   const workflow = getRotaApprovalWorkflow();
   if (!workflow || !workflow.approvedAt || workflow.status !== 'approved') return {locked:false};
+  if (String(workflow.snapshot?.weekStart || '') === '2026-11-01') {
+    return {locked:false, unlock_at:null, week_start:'2026-11-01', status:workflow.status, first_rota_exemption:true};
+  }
   const unlock = rotasticNextWednesday2200After(workflow.approvedAt);
   return {
     locked: !!(unlock && Date.now() < new Date(unlock).getTime()),

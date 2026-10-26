@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v231-approved-rota-lock';
+const CACHE = 'rotastic-v232-first-week-exemption';
 const CORE = [
   './',
   './index.html',
