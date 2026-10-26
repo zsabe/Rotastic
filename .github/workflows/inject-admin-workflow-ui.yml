@@ -1,0 +1,49 @@
+name: Inject unified admin workflow UI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/inject-admin-workflow-ui.yml'
+      - 'admin-workflow-ui.js'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Inject admin workflow script
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          tag = '<script id="rotastic-admin-workflow-loader" src="./admin-workflow-ui.js?v=20261026-2" defer></script>'
+          if 'rotastic-admin-workflow-loader' not in s:
+              if '</body>' not in s.lower():
+                  raise SystemExit('No closing body tag found')
+              i = s.lower().rfind('</body>')
+              s = s[:i] + tag + '\n' + s[i:]
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Verify
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'rotastic-admin-workflow-loader' index.html
+      - name: Commit
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Load unified admin approvals UI directly'
+          git push origin HEAD:main
