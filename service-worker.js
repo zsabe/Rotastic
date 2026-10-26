@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v241-restored-features-final';
+const CACHE = 'rotastic-v242-functional-continuation';
 const CORE = [
   './',
   './index.html',
