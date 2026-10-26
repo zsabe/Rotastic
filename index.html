@@ -6190,6 +6190,57 @@ button,input,select,textarea{font-size:max(16px,1em);}
 }
 </style>
 
+
+<style id="rotastic-live-row-poster-v2">
+/* Preserve original design: restore the existing LIVE / ETA / temperature row. */
+.live-rota-meta-row {
+  display: grid !important;
+  grid-template-columns: minmax(74px,auto) minmax(92px,1fr) minmax(74px,auto) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.live-rota-meta-row > * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.live-drive-slot {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+#driveTimeBtn, #weatherBadge {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+#driveTimeBtn {
+  width: auto !important;
+  min-width: 88px !important;
+  max-width: 112px !important;
+}
+#weatherBadge {
+  width: auto !important;
+  min-width: 68px !important;
+  justify-content: center !important;
+}
+/* Slightly extend the existing personal poster downward; no redesign. */
+.personal-poster-card, .personal-poster-content {
+  min-height: 430px !important;
+}
+@media (max-width: 520px) {
+  .live-rota-meta-row {
+    grid-template-columns: minmax(72px,auto) minmax(88px,1fr) minmax(68px,auto) !important;
+    gap: 5px !important;
+  }
+  .personal-poster-card, .personal-poster-content {
+    min-height: 438px !important;
+  }
+}
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
