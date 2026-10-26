@@ -1,0 +1,39 @@
+name: Exempt first rota from generation lock
+on:
+  push:
+    paths:
+      - '.github/workflows/exempt-first-rota-lock.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch first-week exemption
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""function rotasticLocalGenerationLock() {\n  const workflow = getRotaApprovalWorkflow();\n  if (!workflow || !workflow.approvedAt || workflow.status !== 'approved') return {locked:false};\n  const unlock = rotasticNextWednesday2200After(workflow.approvedAt);\n"""
+          new="""function rotasticLocalGenerationLock() {\n  const workflow = getRotaApprovalWorkflow();\n  if (!workflow || !workflow.approvedAt || workflow.status !== 'approved') return {locked:false};\n  if (String(workflow.snapshot?.weekStart || '') === '2026-11-01') {\n    return {locked:false, unlock_at:null, week_start:'2026-11-01', status:workflow.status, first_rota_exemption:true};\n  }\n  const unlock = rotasticNextWednesday2200After(workflow.approvedAt);\n"""
+          if old not in s:
+              raise SystemExit('local generation lock anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          sw=Path('service-worker.js')
+          w=sw.read_text(encoding='utf-8')
+          import re
+          w=re.sub(r"const CACHE = '[^']+';", "const CACHE = 'rotastic-v232-first-week-exemption';", w, count=1)
+          sw.write_text(w,encoding='utf-8')
+          PY
+          rm -f .github/workflows/exempt-first-rota-lock.yml
+      - name: Commit exemption
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js .github/workflows/exempt-first-rota-lock.yml
+          git commit -m 'Exempt week commencing 1 Nov 2026 from generation lock'
+          git push
