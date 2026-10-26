@@ -1,4 +1,4 @@
-name: Inspect shift timing helper
+name: Inspect doctor shift timing helper
 
 on:
   push:
@@ -16,13 +16,13 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
-      - name: Extract shift helper
+      - name: Extract doctor shift helper
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          key='function getCurrentUserShiftWindow'
+          key='function getDoctorShiftTiming'
           i=s.find(key)
           if i<0: raise SystemExit('helper not found')
           b=s.find('{',i); depth=0; end=None
@@ -38,5 +38,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add tmp-shift-context.txt
-          git commit -m 'Temporary shift timing inspection'
+          git commit -m 'Update temporary shift timing inspection'
           git push origin HEAD:main
