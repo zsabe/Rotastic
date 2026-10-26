@@ -9394,7 +9394,7 @@ function switchTab(tab) {
     else if (tab === 'usersettings') { renderTempAdminCodeManager(); renderAdminGrantList(); syncSettingsAnnouncementCount(); loadLeaveBalanceSettings(); renderNotificationPreferences(); populateSettingsProfileDropdown(); rotasticUpdateNotificationPermissionUI(); }
     else if (tab === 'metrics' && adminMode) renderMetricsView();
     else if (tab === 'announcements' && adminMode) renderAnnouncementAdminView();
-    else if (tab === 'generator' && adminMode) { renderPhysicianManagement(); initializeAutoRotaRuleSettings(); renderSmartRotaRules(); renderRotaApprovalWorkflow(); renderScheduleAmendmentAssistantAccess(); }
+    else if (tab === 'generator' && adminMode) { renderPhysicianManagement(); initializeAutoRotaRuleSettings(); renderSmartRotaRules(); renderRotaApprovalWorkflow(); renderScheduleAmendmentAssistantAccess(); rotasticRefreshGenerationLock(); }
   } catch (e) { console.warn('ROTASTIC tab initialization recovered:', tab, e); }
   try { updateTickerVisibilityForTab(tab); } catch (e) {}
   try { rotasticUpdateBottomNavState(tab); } catch (e) {}
@@ -14369,10 +14369,22 @@ function confirmScheduleAmendment() {
     status.classList.remove('hidden');
   }
 
+  const approvedWorkflow = getRotaApprovalWorkflow();
+  if (approvedWorkflow && approvedWorkflow.status === 'approved' && approvedWorkflow.approvedAt) {
+    approvedWorkflow.lastSmartAmendmentAt = new Date().toISOString();
+    approvedWorkflow.lastSmartAmendmentText = action.raw || describeScheduleAmendment(action);
+    setRotaApprovalWorkflow(approvedWorkflow);
+    window.__rotasticSmartAmendmentApplying = true;
+    setTimeout(function(){
+      Promise.resolve(rotasticBackendPersistRotaDocument('approved')).finally(function(){ window.__rotasticSmartAmendmentApplying = false; });
+    },0);
+  }
+
   renderScheduleView();
   renderSmartRotaRules();
   renderPhysicianManagement();
   renderRotaApprovalWorkflow();
+  rotasticRenderGenerationLock();
 }
 
 function cancelScheduleAmendment() {
@@ -16094,7 +16106,9 @@ function clearMoursiShiftOverride() {
   showMoursiShiftStatus('Dr Mohamed M. override cleared for ' + isoDate + '. Base rota restored for that day.', true);
 }
 
-function generateDutyScheduleFromPlanner() {
+async function generateDutyScheduleFromPlanner() {
+  await rotasticRefreshGenerationLock();
+  if (!rotasticGuardNewGeneration(true)) return false;
   const weekSelect = document.getElementById('cycleStartDate');
   const weekISO = weekSelect ? weekSelect.value : '';
 
@@ -16337,6 +16351,7 @@ function renderAll() {
 }
 
 function generateDutySchedule() {
+  if (!window.__rotasticSmartAmendmentApplying && !rotasticGuardNewGeneration(true)) return false;
   const configuredShiftLeadAM = document.getElementById('assignShiftLeadAM')?.value || Storage.get('rotastic_shift_lead_AM', '') || '';
   const configuredShiftLeadPM = document.getElementById('assignShiftLeadPM')?.value || Storage.get('rotastic_shift_lead_PM', '') || '';
   const configuredWednesdayAMOBGroup = getWednesdayAMOBGroupValue();
@@ -19252,6 +19267,77 @@ function setRotaApprovalWorkflow(workflow) {
   Storage.setJSON('rotastic_rota_approval_workflow', workflow || {});
 }
 
+let rotasticGenerationLockCache = {locked:false, unlock_at:null, week_start:null, status:null};
+
+function rotasticNextWednesday2200After(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Qatar',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+  const m={}; parts.forEach(function(x){ if(x.type!=='literal') m[x.type]=x.value; });
+  const base = new Date(Date.UTC(Number(m.year), Number(m.month)-1, Number(m.day), 19, 0, 0));
+  const dow = base.getUTCDay();
+  let days = (3 - dow + 7) % 7;
+  if (days === 0) days = 7;
+  base.setUTCDate(base.getUTCDate() + days);
+  return base.toISOString();
+}
+
+function rotasticLocalGenerationLock() {
+  const workflow = getRotaApprovalWorkflow();
+  if (!workflow || !workflow.approvedAt || workflow.status !== 'approved') return {locked:false};
+  const unlock = rotasticNextWednesday2200After(workflow.approvedAt);
+  return {
+    locked: !!(unlock && Date.now() < new Date(unlock).getTime()),
+    unlock_at: unlock,
+    week_start: workflow.snapshot?.weekStart || '',
+    status: workflow.status
+  };
+}
+
+function rotasticGenerationLockInfo() {
+  const local = rotasticLocalGenerationLock();
+  if (local.locked) return local;
+  return rotasticGenerationLockCache || {locked:false};
+}
+
+function rotasticFormatGenerationUnlock(iso) {
+  if (!iso) return 'Wednesday at 22:00 Qatar time';
+  try {
+    return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',weekday:'long',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(iso)) + ' Qatar time';
+  } catch(e) { return 'Wednesday at 22:00 Qatar time'; }
+}
+
+function rotasticRenderGenerationLock() {
+  const info = rotasticGenerationLockInfo();
+  const btn = document.querySelector('button[onclick="generateDutyScheduleFromPlanner()"]');
+  if (!btn) return;
+  btn.disabled = !!info.locked;
+  btn.classList.toggle('opacity-50', !!info.locked);
+  btn.classList.toggle('cursor-not-allowed', !!info.locked);
+  btn.title = info.locked ? ('Approved rota locked until ' + rotasticFormatGenerationUnlock(info.unlock_at) + '. Use Smart Amendment for changes.') : '';
+}
+
+async function rotasticRefreshGenerationLock() {
+  try {
+    if (rotasticBackendClient && rotasticBackendReady) {
+      const result = await rotasticBackendClient.rpc('rotastic_rota_generation_lock_status');
+      if (!result.error && result.data) rotasticGenerationLockCache = result.data;
+    }
+  } catch(e) { console.warn('ROTASTIC generation lock check:', e); }
+  rotasticRenderGenerationLock();
+  return rotasticGenerationLockInfo();
+}
+
+function rotasticGuardNewGeneration(showAlert) {
+  const info = rotasticGenerationLockInfo();
+  if (!info.locked) return true;
+  if (showAlert !== false) {
+    alert('This approved rota is locked. A new rota cannot be generated until ' + rotasticFormatGenerationUnlock(info.unlock_at) + '. Use the Smart Amendment box for changes to the current rota.');
+  }
+  return false;
+}
+
 function formatWorkflowTime(iso) {
   if (!iso) return '';
   try {
@@ -19389,6 +19475,8 @@ function renderAutoGenerationStatus() {
 }
 
 async function generateAutomaticWeeklyDraftIfDue() {
+  await rotasticRefreshGenerationLock();
+  if (!rotasticGuardNewGeneration(false)) { renderAutoGenerationStatus(); return false; }
   const due = getMostRecentWednesday2200Qatar();
   const todayISO = getQatarTodayISO();
 
@@ -23578,6 +23666,8 @@ function approveRotaAsClinicalLead() {
   workflow.releasedToAllAt = workflow.approvedAt;
   workflow.releasedToAllBy = 'Dr Mohamed M.';
   setRotaApprovalWorkflow(workflow);
+  rotasticGenerationLockCache = {locked:true, unlock_at:rotasticNextWednesday2200After(workflow.approvedAt), week_start:workflow.snapshot?.weekStart || '', status:'approved'};
+  rotasticRenderGenerationLock();
 
   isNextScheduleReleased = true;
   Storage.set('rotastic_next_schedule_released', 'true');

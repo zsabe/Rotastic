@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v230-first-splash-only';
+const CACHE = 'rotastic-v231-approved-rota-lock';
 const CORE = [
   './',
   './index.html',
