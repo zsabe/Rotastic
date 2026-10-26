@@ -1,0 +1,45 @@
+name: Inspect ROTASTIC rota controls
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, 'Inspect original rota controls') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Extract only relevant original markup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8').splitlines()
+          terms=['LIVE','ETA','Weather','Rota View','Request Swap','Export','Refresh','driveTimeBtn','topActionGrid']
+          hits=[]
+          for i,line in enumerate(s):
+            if any(t.lower() in line.lower() for t in terms):
+              a=max(0,i-8); b=min(len(s),i+9)
+              hits.append((i+1,a,b))
+          merged=[]
+          for _,a,b in sorted(hits,key=lambda x:x[1]):
+            if merged and a <= merged[-1][1]+2:
+              merged[-1]=(merged[-1][0],max(merged[-1][1],b))
+            else:
+              merged.append((a,b))
+          out=[]
+          for a,b in merged:
+            out.append(f'--- lines {a+1}-{b} ---')
+            out.extend(f'{j+1}: {s[j]}' for j in range(a,b))
+          Path('rota-control-snippet.txt').write_text('\n'.join(out),encoding='utf-8')
+          PY
+      - name: Commit inspection only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add rota-control-snippet.txt
+          git commit -m 'Inspect original rota controls'
+          git push
