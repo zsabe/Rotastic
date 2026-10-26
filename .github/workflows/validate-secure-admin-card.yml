@@ -1,0 +1,36 @@
+name: Validate secure admin card
+
+on:
+  push:
+    branches: [secure-admin-password-card]
+    paths:
+      - '.github/workflows/validate-secure-admin-card.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: secure-admin-password-card
+      - name: Check modified inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text()
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, flags=re.S|re.I)
+          out = Path('/tmp/rotastic-inline.js')
+          out.write_text('\n;\n'.join(scripts))
+          print(f'Checking {len(scripts)} inline script blocks')
+          PY
+          node --check /tmp/rotastic-inline.js
+      - name: Assert protected UI remains present
+        run: |
+          grep -q 'rota-pending-poster' index.html
+          grep -q 'scheduleMatrixContainer' index.html
+          grep -q 'swapsNewsTicker' index.html
+          grep -q 'rotasticOpeningSplash' index.html
+          grep -q 'ROTASTIC Access Codes' index.html
+          grep -q 'signInWithPassword' index.html
+          ! grep -q 'signInWithOtp({' index.html
