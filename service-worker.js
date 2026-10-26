@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v232-first-week-exemption';
+const CACHE = 'rotastic-v233-zaid-auth-session';
 const CORE = [
   './',
   './index.html',

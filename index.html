@@ -7712,6 +7712,29 @@ async function rotasticRegisterWithAdminCode() {
         permanent: true
       };
       rotasticApplyVerifiedIdentity('Dr Zaid SE.', 'zaid', ROTASTIC_ZAID_PERMANENT_EMAIL);
+
+      // Establish a real Supabase Auth session for permanent-admin RPCs.
+      // This does not change any UI; it only sends a one-time PHCC magic link
+      // when this device does not already hold Dr Zaid's authenticated session.
+      try {
+        await rotasticBackendEnsureSession();
+        const currentSession = await rotasticBackendClient?.auth?.getSession();
+        const currentEmail = String(currentSession?.data?.session?.user?.email || '').trim().toLowerCase();
+        if (currentEmail !== ROTASTIC_ZAID_PERMANENT_EMAIL) {
+          const authResult = await rotasticBackendClient.auth.signInWithOtp({
+            email: ROTASTIC_ZAID_PERMANENT_EMAIL,
+            options: {
+              emailRedirectTo: window.location.origin + window.location.pathname,
+              shouldCreateUser: true
+            }
+          });
+          if (authResult?.error) throw authResult.error;
+          rotasticRegistrationSetStatus('Check your PHCC email once to authenticate permanent Admin View.', true);
+        }
+      } catch (authError) {
+        console.warn('ROTASTIC: permanent admin Supabase sign-in could not start.', authError?.message || authError);
+      }
+
       if (codeInput) codeInput.value = '';
 
       // Best-effort backend session only; local permanent access must not depend on
