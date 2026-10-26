@@ -1,0 +1,1337 @@
+
+===== topActionGrid =====
+--- lines 6414-6461 ---
+6414: <i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
+6415: </button>
+6416: <div class="live-drive-slot">
+6417: <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
+6418: <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
+6419: <span class="drive-time-copy">
+6420: <span class="truncate" id="driveTimeBtnText">ETA --</span>
+6421: <span class="truncate" id="driveTimeBtnSub">to Abu Nakhla</span>
+6422: </span>
+6423: </a>
+6424: </div>
+6425: <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[9px] font-semibold text-slate-300 h-[24px] flex-shrink-0" id="weatherBadge">
+6426: <span id="weatherEmoji">🌤️</span>
+6427: <span id="weatherTemp">Weather</span>
+6428: <span class="hidden sm:inline text-slate-500 max-w-[55px] truncate" id="weatherCondition"></span>
+6429: </span>
+6430: </div>
+6431: </div>
+6432: <div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">
+6433: <button aria-pressed="false" class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-sky-300 transition flex items-center gap-2" data-rotastic-rota-toggle="1" id="rotaZoomBtn" title="Switch between your personal view and the full rota" type="button">
+6434: <i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
+6435: </button>
+6436: <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
+6437: <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
+6438: </button>
+6439: <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportBtn" onclick="toggleRotaExportMenu()" type="button">
+6440: <i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+6441: </button>
+6442: </div>
+6443: </div>
+6444: <div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
+6445: <div class="flex items-center justify-between gap-4">
+6446: <div class="min-w-0">
+6447: <div class="text-[9px] sm:text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Your room today</div>
+6448: <div class="text-[10px] sm:text-xs text-slate-400 mt-1" id="mainRoomHeroContext">Your current rota allocation</div>
+6449: </div>
+6450: <div class="flex items-baseline gap-2 flex-shrink-0">
+6451: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Room</span>
+6452: <span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
+6453: </div>
+6454: </div>
+6455: </div>
+6456: <div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
+6457: <div class="relative flex items-center justify-end gap-2">
+6458: <button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
+6459: <i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
+6460: <span>Export</span>
+6461: <i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+
+===== live-rota-meta-row =====
+--- lines 3970-4017 ---
+3970:       font-weight: 900;
+3971:       text-transform: uppercase;
+3972:       letter-spacing: .12em;
+3973:       color: #5eead4;
+3974:     }
+3975: 
+3976:     @media (max-width: 900px) {
+3977:       #weeklyLeaveCalendar {
+3978:         grid-template-columns: 1fr;
+3979:       }
+3980: 
+3981:       .planner-week-day-card {
+3982:         min-height: 0;
+3983:       }
+3984:     }
+3985: 
+3986: 
+3987:     /* v163 — Live Rota | location | Weather */
+3988:     .live-rota-meta-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
+3989:     .live-drive-slot{min-width:0;display:flex;justify-content:center;align-items:center;overflow:hidden}
+3990:     .live-drive-slot #driveTimeBtn{max-width:100%!important;min-width:0!important;margin:0!important}
+3991:     .live-drive-slot #driveTimeBtnText{display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+3992: 
+3993:     #scheduleMatrixContainer{min-height:350px}
+3994:     .personal-poster-card{position:relative;min-height:390px;overflow:hidden;border-radius:22px;border:1px solid color-mix(in srgb,var(--poster-accent) 38%,transparent);background:#07111e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 48px rgba(0,0,0,.18)}
+3995:     .personal-poster-art{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.92) contrast(1.02);opacity:.72}
+3996:     .personal-poster-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,10,20,.78) 0%,rgba(4,10,20,.46) 36%,rgba(4,10,20,.28) 57%,rgba(4,10,20,.87) 100%),radial-gradient(circle at 50% 24%,color-mix(in srgb,var(--poster-accent) 18%,transparent),transparent 35%)}
+3997:     .personal-poster-content{position:relative;z-index:2;min-height:390px;padding:22px 18px 18px;display:flex;flex-direction:column;align-items:center;text-align:center}
+3998:     .personal-poster-kicker{align-self:flex-start;font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:rgba(226,232,240,.72)}
+3999:     .personal-poster-icon{width:68px;height:68px;margin-top:22px;border-radius:999px;display:grid;place-items:center;font-size:31px;background:rgba(4,12,24,.64);border:1px solid color-mix(in srgb,var(--poster-accent2) 70%,transparent);box-shadow:0 0 25px color-mix(in srgb,var(--poster-accent2) 16%,transparent)}
+4000:     .personal-poster-title{margin-top:15px;font-size:clamp(26px,6vw,42px);line-height:1;font-weight:950;letter-spacing:-.035em;color:white;text-shadow:0 3px 18px rgba(0,0,0,.45)}
+4001:     .personal-poster-person{margin-top:12px;max-width:650px;font-size:clamp(14px,3.4vw,20px);line-height:1.25;font-weight:850;color:#f8fafc;text-shadow:0 2px 10px rgba(0,0,0,.55)}
+4002:     .personal-poster-message{margin-top:9px;max-width:620px;font-size:clamp(13px,3vw,18px);line-height:1.35;font-weight:850;color:var(--poster-accent2);text-shadow:0 2px 10px rgba(0,0,0,.5)}
+4003:     .personal-poster-sub{margin-top:8px;max-width:600px;font-size:11px;line-height:1.4;color:rgba(226,232,240,.82);text-shadow:0 2px 8px rgba(0,0,0,.5)}
+4004:     .personal-poster-switch{width:100%;margin-top:auto;min-height:52px;display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:10px;padding:0 15px;border-radius:14px;border:1px solid color-mix(in srgb,var(--poster-accent) 70%,transparent);background:rgba(2,18,34,.76);color:#7dd3fc;font-size:12px;font-weight:900;backdrop-filter:blur(8px)}
+4005:     @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto;gap:5px}.live-drive-slot #driveTimeBtnText{max-width:88px}.personal-poster-card,.personal-poster-content{min-height:405px}.personal-poster-content{padding:18px 14px 14px}}
+4006: 
+4007: 
+4008:     /* v164 — ETA minutes prominent; personal view never shows day tabs */
+4009:     .live-drive-slot #driveTimeBtn {
+4010:       min-width: 92px !important;
+4011:       max-width: 118px !important;
+4012:       height: 28px !important;
+4013:       padding: 0 9px !important;
+4014:       justify-content: center !important;
+4015:       font-size: 11px !important;
+4016:       line-height: 1 !important;
+4017:       font-weight: 950 !important;
+--- lines 3987-4034 ---
+3987:     /* v163 — Live Rota | location | Weather */
+3988:     .live-rota-meta-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
+3989:     .live-drive-slot{min-width:0;display:flex;justify-content:center;align-items:center;overflow:hidden}
+3990:     .live-drive-slot #driveTimeBtn{max-width:100%!important;min-width:0!important;margin:0!important}
+3991:     .live-drive-slot #driveTimeBtnText{display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+3992: 
+3993:     #scheduleMatrixContainer{min-height:350px}
+3994:     .personal-poster-card{position:relative;min-height:390px;overflow:hidden;border-radius:22px;border:1px solid color-mix(in srgb,var(--poster-accent) 38%,transparent);background:#07111e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 48px rgba(0,0,0,.18)}
+3995:     .personal-poster-art{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.92) contrast(1.02);opacity:.72}
+3996:     .personal-poster-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,10,20,.78) 0%,rgba(4,10,20,.46) 36%,rgba(4,10,20,.28) 57%,rgba(4,10,20,.87) 100%),radial-gradient(circle at 50% 24%,color-mix(in srgb,var(--poster-accent) 18%,transparent),transparent 35%)}
+3997:     .personal-poster-content{position:relative;z-index:2;min-height:390px;padding:22px 18px 18px;display:flex;flex-direction:column;align-items:center;text-align:center}
+3998:     .personal-poster-kicker{align-self:flex-start;font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:rgba(226,232,240,.72)}
+3999:     .personal-poster-icon{width:68px;height:68px;margin-top:22px;border-radius:999px;display:grid;place-items:center;font-size:31px;background:rgba(4,12,24,.64);border:1px solid color-mix(in srgb,var(--poster-accent2) 70%,transparent);box-shadow:0 0 25px color-mix(in srgb,var(--poster-accent2) 16%,transparent)}
+4000:     .personal-poster-title{margin-top:15px;font-size:clamp(26px,6vw,42px);line-height:1;font-weight:950;letter-spacing:-.035em;color:white;text-shadow:0 3px 18px rgba(0,0,0,.45)}
+4001:     .personal-poster-person{margin-top:12px;max-width:650px;font-size:clamp(14px,3.4vw,20px);line-height:1.25;font-weight:850;color:#f8fafc;text-shadow:0 2px 10px rgba(0,0,0,.55)}
+4002:     .personal-poster-message{margin-top:9px;max-width:620px;font-size:clamp(13px,3vw,18px);line-height:1.35;font-weight:850;color:var(--poster-accent2);text-shadow:0 2px 10px rgba(0,0,0,.5)}
+4003:     .personal-poster-sub{margin-top:8px;max-width:600px;font-size:11px;line-height:1.4;color:rgba(226,232,240,.82);text-shadow:0 2px 8px rgba(0,0,0,.5)}
+4004:     .personal-poster-switch{width:100%;margin-top:auto;min-height:52px;display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:10px;padding:0 15px;border-radius:14px;border:1px solid color-mix(in srgb,var(--poster-accent) 70%,transparent);background:rgba(2,18,34,.76);color:#7dd3fc;font-size:12px;font-weight:900;backdrop-filter:blur(8px)}
+4005:     @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto;gap:5px}.live-drive-slot #driveTimeBtnText{max-width:88px}.personal-poster-card,.personal-poster-content{min-height:405px}.personal-poster-content{padding:18px 14px 14px}}
+4006: 
+4007: 
+4008:     /* v164 — ETA minutes prominent; personal view never shows day tabs */
+4009:     .live-drive-slot #driveTimeBtn {
+4010:       min-width: 92px !important;
+4011:       max-width: 118px !important;
+4012:       height: 28px !important;
+4013:       padding: 0 9px !important;
+4014:       justify-content: center !important;
+4015:       font-size: 11px !important;
+4016:       line-height: 1 !important;
+4017:       font-weight: 950 !important;
+4018:     }
+4019:     .live-drive-slot #driveTimeBtnText {
+4020:       max-width: none !important;
+4021:       overflow: visible !important;
+4022:       text-overflow: clip !important;
+4023:       white-space: nowrap !important;
+4024:       font-size: 11px !important;
+4025:       font-weight: 950 !important;
+4026:       letter-spacing: .01em;
+4027:     }
+4028:     body.rotastic-myshift-mode #rotaDaySelector,
+4029:     body.rotastic-myshift-mode #rotaSecondaryTools {
+4030:       display: none !important;
+4031:     }
+4032:     body.rotastic-myshift-mode #scheduleMatrixContainer {
+4033:       display: block !important;
+4034:       min-height: 405px !important;
+--- lines 4019-4066 ---
+4019:     .live-drive-slot #driveTimeBtnText {
+4020:       max-width: none !important;
+4021:       overflow: visible !important;
+4022:       text-overflow: clip !important;
+4023:       white-space: nowrap !important;
+4024:       font-size: 11px !important;
+4025:       font-weight: 950 !important;
+4026:       letter-spacing: .01em;
+4027:     }
+4028:     body.rotastic-myshift-mode #rotaDaySelector,
+4029:     body.rotastic-myshift-mode #rotaSecondaryTools {
+4030:       display: none !important;
+4031:     }
+4032:     body.rotastic-myshift-mode #scheduleMatrixContainer {
+4033:       display: block !important;
+4034:       min-height: 405px !important;
+4035:     }
+4036:     @media (max-width: 520px) {
+4037:       .live-rota-meta-row {
+4038:         grid-template-columns: minmax(86px,auto) minmax(92px,1fr) minmax(70px,auto) !important;
+4039:         gap: 5px !important;
+4040:       }
+4041:       .live-drive-slot #driveTimeBtn {
+4042:         min-width: 88px !important;
+4043:         max-width: 104px !important;
+4044:         font-size: 10px !important;
+4045:       }
+4046:       .live-drive-slot #driveTimeBtnText { font-size: 10px !important; }
+4047:       #weatherBadge { padding-left: 5px !important; padding-right: 5px !important; }
+4048:     }
+4049: 
+4050: 
+4051:     /* v165 — critical interaction repair */
+4052:     #plannerWeekSelect {
+4053:       pointer-events: auto !important;
+4054:       touch-action: manipulation !important;
+4055:       position: relative !important;
+4056:       z-index: 60 !important;
+4057:       opacity: 1 !important;
+4058:     }
+4059:     #plannerWeekHeading, #plannerWeekHeading * { pointer-events: auto !important; }
+4060:     #tabUserSettings { position: relative; z-index: 1; }
+4061:     .personal-poster-art, .personal-poster-shade { pointer-events: none !important; }
+4062:     nav.fixed, .bottom-nav { z-index: 999 !important; pointer-events: auto !important; }
+4063: 
+4064: /* v166 responsive + navigation hardening */
+4065: html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!important;z-index:3000!important}.mobile-nav-bar>button{pointer-events:auto!important;min-width:52px;min-height:46px;touch-action:manipulation}.personal-poster-art{background-position:center center!important;opacity:.82!important}.personal-poster-shade{background:linear-gradient(180deg,rgba(4,10,20,.80) 0%,rgba(4,10,20,.34) 34%,rgba(4,10,20,.24) 63%,rgba(4,10,20,.88) 100%)!important}
+4066: @media (orientation:landscape) and (max-height:700px){main{padding-bottom:72px!important}#tabSchedule{row-gap:.65rem!important}.personal-poster-card,.personal-poster-content{min-height:285px!important}.personal-poster-content{padding:12px 18px!important}.personal-poster-icon{width:48px!important;height:48px!important;font-size:22px!important;margin-top:8px!important}.personal-poster-title{margin-top:8px!important;font-size:clamp(24px,4vw,34px)!important}.personal-poster-message{margin-top:7px!important;font-size:14px!important}.personal-poster-sub{margin-top:5px!important}.personal-poster-switch{min-height:42px!important}}
+--- lines 4049-4096 ---
+4049: 
+4050: 
+4051:     /* v165 — critical interaction repair */
+4052:     #plannerWeekSelect {
+4053:       pointer-events: auto !important;
+4054:       touch-action: manipulation !important;
+4055:       position: relative !important;
+4056:       z-index: 60 !important;
+4057:       opacity: 1 !important;
+4058:     }
+4059:     #plannerWeekHeading, #plannerWeekHeading * { pointer-events: auto !important; }
+4060:     #tabUserSettings { position: relative; z-index: 1; }
+4061:     .personal-poster-art, .personal-poster-shade { pointer-events: none !important; }
+4062:     nav.fixed, .bottom-nav { z-index: 999 !important; pointer-events: auto !important; }
+4063: 
+4064: /* v166 responsive + navigation hardening */
+4065: html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!important;z-index:3000!important}.mobile-nav-bar>button{pointer-events:auto!important;min-width:52px;min-height:46px;touch-action:manipulation}.personal-poster-art{background-position:center center!important;opacity:.82!important}.personal-poster-shade{background:linear-gradient(180deg,rgba(4,10,20,.80) 0%,rgba(4,10,20,.34) 34%,rgba(4,10,20,.24) 63%,rgba(4,10,20,.88) 100%)!important}
+4066: @media (orientation:landscape) and (max-height:700px){main{padding-bottom:72px!important}#tabSchedule{row-gap:.65rem!important}.personal-poster-card,.personal-poster-content{min-height:285px!important}.personal-poster-content{padding:12px 18px!important}.personal-poster-icon{width:48px!important;height:48px!important;font-size:22px!important;margin-top:8px!important}.personal-poster-title{margin-top:8px!important;font-size:clamp(24px,4vw,34px)!important}.personal-poster-message{margin-top:7px!important;font-size:14px!important}.personal-poster-sub{margin-top:5px!important}.personal-poster-switch{min-height:42px!important}}
+4067: @media (min-width:768px) and (max-width:1180px){#scheduleMatrixContainer,.personal-poster-card{max-width:980px;margin-left:auto;margin-right:auto}.personal-poster-card,.personal-poster-content{min-height:430px}.live-rota-meta-row{grid-template-columns:minmax(150px,1fr) minmax(150px,.8fr) minmax(120px,.7fr)!important}}
+4068: @media (min-width:1181px){.personal-poster-card,.personal-poster-content{min-height:440px}.personal-poster-content{max-width:1050px;margin:0 auto}}
+4069: 
+4070: 
+4071:     /* v167 — publish-ready interaction and layout polish */
+4072: 
+4073:     .live-rota-meta-row {
+4074:       grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+4075:       gap: 10px !important;
+4076:       align-items: stretch !important;
+4077:     }
+4078: 
+4079:     .live-rota-meta-row > div:first-child,
+4080:     .live-drive-slot,
+4081:     #weatherBadge,
+4082:     .rota-action-btn {
+4083:       min-height: 74px;
+4084:       border-radius: 18px;
+4085:     }
+4086: 
+4087:     .live-rota-meta-row > div:first-child {
+4088:       padding: 12px 14px;
+4089:       background: rgba(15, 23, 42, .68);
+4090:       border: 1px solid rgba(30, 41, 59, .96);
+4091:     }
+4092: 
+4093:     .live-drive-slot {
+4094:       display: flex;
+4095:       align-items: stretch;
+4096:       justify-content: stretch;
+--- lines 4055-4102 ---
+4055:       position: relative !important;
+4056:       z-index: 60 !important;
+4057:       opacity: 1 !important;
+4058:     }
+4059:     #plannerWeekHeading, #plannerWeekHeading * { pointer-events: auto !important; }
+4060:     #tabUserSettings { position: relative; z-index: 1; }
+4061:     .personal-poster-art, .personal-poster-shade { pointer-events: none !important; }
+4062:     nav.fixed, .bottom-nav { z-index: 999 !important; pointer-events: auto !important; }
+4063: 
+4064: /* v166 responsive + navigation hardening */
+4065: html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!important;z-index:3000!important}.mobile-nav-bar>button{pointer-events:auto!important;min-width:52px;min-height:46px;touch-action:manipulation}.personal-poster-art{background-position:center center!important;opacity:.82!important}.personal-poster-shade{background:linear-gradient(180deg,rgba(4,10,20,.80) 0%,rgba(4,10,20,.34) 34%,rgba(4,10,20,.24) 63%,rgba(4,10,20,.88) 100%)!important}
+4066: @media (orientation:landscape) and (max-height:700px){main{padding-bottom:72px!important}#tabSchedule{row-gap:.65rem!important}.personal-poster-card,.personal-poster-content{min-height:285px!important}.personal-poster-content{padding:12px 18px!important}.personal-poster-icon{width:48px!important;height:48px!important;font-size:22px!important;margin-top:8px!important}.personal-poster-title{margin-top:8px!important;font-size:clamp(24px,4vw,34px)!important}.personal-poster-message{margin-top:7px!important;font-size:14px!important}.personal-poster-sub{margin-top:5px!important}.personal-poster-switch{min-height:42px!important}}
+4067: @media (min-width:768px) and (max-width:1180px){#scheduleMatrixContainer,.personal-poster-card{max-width:980px;margin-left:auto;margin-right:auto}.personal-poster-card,.personal-poster-content{min-height:430px}.live-rota-meta-row{grid-template-columns:minmax(150px,1fr) minmax(150px,.8fr) minmax(120px,.7fr)!important}}
+4068: @media (min-width:1181px){.personal-poster-card,.personal-poster-content{min-height:440px}.personal-poster-content{max-width:1050px;margin:0 auto}}
+4069: 
+4070: 
+4071:     /* v167 — publish-ready interaction and layout polish */
+4072: 
+4073:     .live-rota-meta-row {
+4074:       grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+4075:       gap: 10px !important;
+4076:       align-items: stretch !important;
+4077:     }
+4078: 
+4079:     .live-rota-meta-row > div:first-child,
+4080:     .live-drive-slot,
+4081:     #weatherBadge,
+4082:     .rota-action-btn {
+4083:       min-height: 74px;
+4084:       border-radius: 18px;
+4085:     }
+4086: 
+4087:     .live-rota-meta-row > div:first-child {
+4088:       padding: 12px 14px;
+4089:       background: rgba(15, 23, 42, .68);
+4090:       border: 1px solid rgba(30, 41, 59, .96);
+4091:     }
+4092: 
+4093:     .live-drive-slot {
+4094:       display: flex;
+4095:       align-items: stretch;
+4096:       justify-content: stretch;
+4097:       overflow: visible;
+4098:     }
+4099: 
+4100:     .live-drive-slot #driveTimeBtn {
+4101:       width: 100% !important;
+4102:       max-width: none !important;
+--- lines 4061-4108 ---
+4061:     .personal-poster-art, .personal-poster-shade { pointer-events: none !important; }
+4062:     nav.fixed, .bottom-nav { z-index: 999 !important; pointer-events: auto !important; }
+4063: 
+4064: /* v166 responsive + navigation hardening */
+4065: html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!important;z-index:3000!important}.mobile-nav-bar>button{pointer-events:auto!important;min-width:52px;min-height:46px;touch-action:manipulation}.personal-poster-art{background-position:center center!important;opacity:.82!important}.personal-poster-shade{background:linear-gradient(180deg,rgba(4,10,20,.80) 0%,rgba(4,10,20,.34) 34%,rgba(4,10,20,.24) 63%,rgba(4,10,20,.88) 100%)!important}
+4066: @media (orientation:landscape) and (max-height:700px){main{padding-bottom:72px!important}#tabSchedule{row-gap:.65rem!important}.personal-poster-card,.personal-poster-content{min-height:285px!important}.personal-poster-content{padding:12px 18px!important}.personal-poster-icon{width:48px!important;height:48px!important;font-size:22px!important;margin-top:8px!important}.personal-poster-title{margin-top:8px!important;font-size:clamp(24px,4vw,34px)!important}.personal-poster-message{margin-top:7px!important;font-size:14px!important}.personal-poster-sub{margin-top:5px!important}.personal-poster-switch{min-height:42px!important}}
+4067: @media (min-width:768px) and (max-width:1180px){#scheduleMatrixContainer,.personal-poster-card{max-width:980px;margin-left:auto;margin-right:auto}.personal-poster-card,.personal-poster-content{min-height:430px}.live-rota-meta-row{grid-template-columns:minmax(150px,1fr) minmax(150px,.8fr) minmax(120px,.7fr)!important}}
+4068: @media (min-width:1181px){.personal-poster-card,.personal-poster-content{min-height:440px}.personal-poster-content{max-width:1050px;margin:0 auto}}
+4069: 
+4070: 
+4071:     /* v167 — publish-ready interaction and layout polish */
+4072: 
+4073:     .live-rota-meta-row {
+4074:       grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+4075:       gap: 10px !important;
+4076:       align-items: stretch !important;
+4077:     }
+4078: 
+4079:     .live-rota-meta-row > div:first-child,
+4080:     .live-drive-slot,
+4081:     #weatherBadge,
+4082:     .rota-action-btn {
+4083:       min-height: 74px;
+4084:       border-radius: 18px;
+4085:     }
+4086: 
+4087:     .live-rota-meta-row > div:first-child {
+4088:       padding: 12px 14px;
+4089:       background: rgba(15, 23, 42, .68);
+4090:       border: 1px solid rgba(30, 41, 59, .96);
+4091:     }
+4092: 
+4093:     .live-drive-slot {
+4094:       display: flex;
+4095:       align-items: stretch;
+4096:       justify-content: stretch;
+4097:       overflow: visible;
+4098:     }
+4099: 
+4100:     .live-drive-slot #driveTimeBtn {
+4101:       width: 100% !important;
+4102:       max-width: none !important;
+4103:       min-width: 0 !important;
+4104:       height: 74px !important;
+4105:       padding: 10px 12px !important;
+4106:       justify-content: center !important;
+4107:       align-items: center !important;
+4108:       gap: 10px !important;
+
+===== rotaSecondaryTools =====
+--- lines 3481-3528 ---
+3481:         padding-left: .55rem !important;
+3482:         padding-right: .55rem !important;
+3483:         line-height: 1.15;
+3484:       }
+3485: 
+3486:       body.rotastic-colleague-view .day-pill {
+3487:         min-width: 48px;
+3488:         text-align: center;
+3489:       }
+3490: 
+3491:       body.rotastic-colleague-view #driveStatusRow {
+3492:         justify-content: flex-end;
+3493:         padding-right: 2px;
+3494:       }
+3495:     }
+3496: 
+3497: 
+3498:     /* v153 — compact colleague controls above the day selector */
+3499:     #rotaSecondaryTools {
+3500:       min-height: 36px;
+3501:       margin-top: .05rem;
+3502:       margin-bottom: .35rem;
+3503:     }
+3504: 
+3505:     #rotaDaySelector {
+3506:       width: 100%;
+3507:       margin-top: .05rem;
+3508:       margin-bottom: .35rem;
+3509:     }
+3510: 
+3511:     #rotaDaySelector.hidden,
+3512:     #rotaExportToggleBtn.rotastic-no-rota-hidden {
+3513:       display: none !important;
+3514:     }
+3515: 
+3516:     body.rotastic-colleague-view #rotaSecondaryTools {
+3517:       align-items: center;
+3518:     }
+3519: 
+3520:     body.rotastic-colleague-view #driveTimeBtn {
+3521:       margin-left: auto;
+3522:       box-shadow: none !important;
+3523:     }
+3524: 
+3525:     body.rotastic-colleague-view #rotaExportActions {
+3526:       left: 0 !important;
+3527:       right: auto !important;
+3528:       top: calc(100% + 7px);
+--- lines 3498-3545 ---
+3498:     /* v153 — compact colleague controls above the day selector */
+3499:     #rotaSecondaryTools {
+3500:       min-height: 36px;
+3501:       margin-top: .05rem;
+3502:       margin-bottom: .35rem;
+3503:     }
+3504: 
+3505:     #rotaDaySelector {
+3506:       width: 100%;
+3507:       margin-top: .05rem;
+3508:       margin-bottom: .35rem;
+3509:     }
+3510: 
+3511:     #rotaDaySelector.hidden,
+3512:     #rotaExportToggleBtn.rotastic-no-rota-hidden {
+3513:       display: none !important;
+3514:     }
+3515: 
+3516:     body.rotastic-colleague-view #rotaSecondaryTools {
+3517:       align-items: center;
+3518:     }
+3519: 
+3520:     body.rotastic-colleague-view #driveTimeBtn {
+3521:       margin-left: auto;
+3522:       box-shadow: none !important;
+3523:     }
+3524: 
+3525:     body.rotastic-colleague-view #rotaExportActions {
+3526:       left: 0 !important;
+3527:       right: auto !important;
+3528:       top: calc(100% + 7px);
+3529:       min-width: 190px;
+3530:       max-width: min(240px, 78vw);
+3531:     }
+3532: 
+3533:     @media (max-width: 640px) {
+3534:       body.rotastic-colleague-view #tabSchedule {
+3535:         row-gap: .72rem;
+3536:       }
+3537: 
+3538:       body.rotastic-colleague-view #rotaSecondaryTools {
+3539:         margin-top: -.05rem;
+3540:         margin-bottom: .3rem;
+3541:       }
+3542: 
+3543:       body.rotastic-colleague-view #driveTimeBtn {
+3544:         max-width: 57% !important;
+3545:         font-size: 9px !important;
+--- lines 3520-3567 ---
+3520:     body.rotastic-colleague-view #driveTimeBtn {
+3521:       margin-left: auto;
+3522:       box-shadow: none !important;
+3523:     }
+3524: 
+3525:     body.rotastic-colleague-view #rotaExportActions {
+3526:       left: 0 !important;
+3527:       right: auto !important;
+3528:       top: calc(100% + 7px);
+3529:       min-width: 190px;
+3530:       max-width: min(240px, 78vw);
+3531:     }
+3532: 
+3533:     @media (max-width: 640px) {
+3534:       body.rotastic-colleague-view #tabSchedule {
+3535:         row-gap: .72rem;
+3536:       }
+3537: 
+3538:       body.rotastic-colleague-view #rotaSecondaryTools {
+3539:         margin-top: -.05rem;
+3540:         margin-bottom: .3rem;
+3541:       }
+3542: 
+3543:       body.rotastic-colleague-view #driveTimeBtn {
+3544:         max-width: 57% !important;
+3545:         font-size: 9px !important;
+3546:       }
+3547: 
+3548:       body.rotastic-colleague-view #rotaDaySelector {
+3549:         gap: .15rem;
+3550:         padding-bottom: .15rem;
+3551:       }
+3552: 
+3553:       body.rotastic-colleague-view #rotaDaySelector .day-pill {
+3554:         flex: 1 0 auto;
+3555:         min-width: 45px;
+3556:         padding-left: .65rem;
+3557:         padding-right: .65rem;
+3558:       }
+3559:     }
+3560: 
+3561: 
+3562:     /* v154 — personal opening rota briefing */
+3563:     #swapsNewsTicker.ticker-personal-rota-briefing {
+3564:       min-height: 168px;
+3565:       padding-top: 12px !important;
+3566:       padding-bottom: 12px !important;
+3567:     }
+--- lines 3773-3820 ---
+3773:       display: flex !important;
+3774:     }
+3775: 
+3776:     #rotaExportActions > button {
+3777:       width: 100%;
+3778:       justify-content: flex-start;
+3779:       margin: 0 !important;
+3780:       padding: 8px 10px !important;
+3781:       min-height: 38px;
+3782:     }
+3783: 
+3784:     #rotaExportToggleBtn.rotastic-no-rota-hidden {
+3785:       display: none !important;
+3786:     }
+3787: 
+3788:     /* My Shift is the calm colleague landing view. Day tabs/export/drive strip
+3789:        only appear when the user explicitly switches to the full rota. */
+3790:     body.rotastic-colleague-view.rotastic-myshift-mode #rotaDaySelector,
+3791:     body.rotastic-colleague-view.rotastic-myshift-mode #rotaSecondaryTools {
+3792:       display: none !important;
+3793:     }
+3794: 
+3795:     body.rotastic-colleague-view.rotastic-myshift-mode #rotaExportToggleBtn {
+3796:       display: none !important;
+3797:     }
+3798: 
+3799:     body.rotastic-colleague-view #scheduleMatrixContainer {
+3800:       min-height: 360px;
+3801:     }
+3802: 
+3803:     .my-shift-presence-card {
+3804:       min-height: 340px;
+3805:       display: flex;
+3806:       flex-direction: column;
+3807:       justify-content: center;
+3808:     }
+3809: 
+3810:     .my-shift-leave-hero {
+3811:       width: 88px;
+3812:       height: 88px;
+3813:       border-radius: 999px;
+3814:       display: grid;
+3815:       place-items: center;
+3816:       margin: 0 auto;
+3817:       font-size: 38px;
+3818:       background: radial-gradient(circle, rgba(45,212,191,.14), rgba(15,23,42,.72));
+3819:       border: 1px solid rgba(45,212,191,.22);
+3820:       box-shadow: 0 0 30px rgba(45,212,191,.08);
+--- lines 4011-4058 ---
+4011:       max-width: 118px !important;
+4012:       height: 28px !important;
+4013:       padding: 0 9px !important;
+4014:       justify-content: center !important;
+4015:       font-size: 11px !important;
+4016:       line-height: 1 !important;
+4017:       font-weight: 950 !important;
+4018:     }
+4019:     .live-drive-slot #driveTimeBtnText {
+4020:       max-width: none !important;
+4021:       overflow: visible !important;
+4022:       text-overflow: clip !important;
+4023:       white-space: nowrap !important;
+4024:       font-size: 11px !important;
+4025:       font-weight: 950 !important;
+4026:       letter-spacing: .01em;
+4027:     }
+4028:     body.rotastic-myshift-mode #rotaDaySelector,
+4029:     body.rotastic-myshift-mode #rotaSecondaryTools {
+4030:       display: none !important;
+4031:     }
+4032:     body.rotastic-myshift-mode #scheduleMatrixContainer {
+4033:       display: block !important;
+4034:       min-height: 405px !important;
+4035:     }
+4036:     @media (max-width: 520px) {
+4037:       .live-rota-meta-row {
+4038:         grid-template-columns: minmax(86px,auto) minmax(92px,1fr) minmax(70px,auto) !important;
+4039:         gap: 5px !important;
+4040:       }
+4041:       .live-drive-slot #driveTimeBtn {
+4042:         min-width: 88px !important;
+4043:         max-width: 104px !important;
+4044:         font-size: 10px !important;
+4045:       }
+4046:       .live-drive-slot #driveTimeBtnText { font-size: 10px !important; }
+4047:       #weatherBadge { padding-left: 5px !important; padding-right: 5px !important; }
+4048:     }
+4049: 
+4050: 
+4051:     /* v165 — critical interaction repair */
+4052:     #plannerWeekSelect {
+4053:       pointer-events: auto !important;
+4054:       touch-action: manipulation !important;
+4055:       position: relative !important;
+4056:       z-index: 60 !important;
+4057:       opacity: 1 !important;
+4058:     }
+--- lines 5546-5593 ---
+5546: }
+5547: body.rotastic-rota-view-active #rotaDaySelector .day-pill:last-child {
+5548:   flex-basis:18%!important;
+5549: }
+5550: @media (max-width:640px) {
+5551:   body.rotastic-rota-view-active #scheduleMatrixContainer { max-width:none!important; }
+5552:   body.rotastic-rota-view-active .rotastic-day-sheet-head { margin-bottom:8px!important; }
+5553:   body.rotastic-rota-view-active .rotastic-day-shifts { gap:12px!important; }
+5554:   body.rotastic-rota-view-active .rotastic-er-grid { grid-template-columns:1fr!important; }
+5555:   body.rotastic-rota-view-active .rotastic-room-grid { grid-template-columns:1fr!important; }
+5556:   body.rotastic-rota-view-active .rotastic-room-grid .doc-pill { grid-template-columns:54px minmax(0,1fr)!important; }
+5557: }
+5558: 
+5559: </style>
+5560: 
+5561: <style id="rotastic-v190-single-screen-shifts">
+5562: /* v190 — keep the previous portrait design, but make each AM/PM shift a screen-sized compact card. */
+5563: #rotaExportToggleBtn{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;padding:0!important;border:0!important;}
+5564: #rotaSecondaryTools{min-height:0!important;height:0!important;margin:0!important;padding:0!important;overflow:visible!important;}
+5565: #rotaSecondaryTools>div{height:0!important;min-height:0!important;overflow:visible!important;}
+5566: #rotaExportActions{
+5567:   position:fixed!important;
+5568:   z-index:9990!important;
+5569:   display:none!important;
+5570:   width:min(240px,82vw)!important;
+5571:   min-width:190px!important;
+5572:   margin:0!important;
+5573: }
+5574: #rotaExportActions.rotastic-export-open{display:flex!important;}
+5575: 
+5576: /* The small LIVE line stays immediately above the weekday selector. */
+5577: .rotastic-live-mini{margin-top:0!important;margin-bottom:2px!important;}
+5578: #rotaDaySelector{margin-top:0!important;}
+5579: 
+5580: /* The day header is compact: key only, no names/counts. */
+5581: .rotastic-day-sheet-head{padding:8px 10px!important;margin-bottom:6px!important;}
+5582: .rotastic-day-sheet-head h2{font-size:15px!important;}
+5583: .rotastic-twilight-legend,.rotastic-priority-legend{font-size:9px!important;white-space:nowrap!important;}
+5584: 
+5585: /* Each shift is a self-contained portrait screen. */
+5586: body.rotastic-rota-view-active .rotastic-day-shifts{gap:12px!important;}
+5587: body.rotastic-rota-view-active .rotastic-shift-panel{
+5588:   width:100%!important;
+5589:   min-height:0!important;
+5590:   height:auto!important;
+5591:   max-height:none!important;
+5592:   padding:0 9px 9px!important;
+5593:   border-radius:16px!important;
+
+===== rotaDaySelector =====
+--- lines 3487-3534 ---
+3487:         min-width: 48px;
+3488:         text-align: center;
+3489:       }
+3490: 
+3491:       body.rotastic-colleague-view #driveStatusRow {
+3492:         justify-content: flex-end;
+3493:         padding-right: 2px;
+3494:       }
+3495:     }
+3496: 
+3497: 
+3498:     /* v153 — compact colleague controls above the day selector */
+3499:     #rotaSecondaryTools {
+3500:       min-height: 36px;
+3501:       margin-top: .05rem;
+3502:       margin-bottom: .35rem;
+3503:     }
+3504: 
+3505:     #rotaDaySelector {
+3506:       width: 100%;
+3507:       margin-top: .05rem;
+3508:       margin-bottom: .35rem;
+3509:     }
+3510: 
+3511:     #rotaDaySelector.hidden,
+3512:     #rotaExportToggleBtn.rotastic-no-rota-hidden {
+3513:       display: none !important;
+3514:     }
+3515: 
+3516:     body.rotastic-colleague-view #rotaSecondaryTools {
+3517:       align-items: center;
+3518:     }
+3519: 
+3520:     body.rotastic-colleague-view #driveTimeBtn {
+3521:       margin-left: auto;
+3522:       box-shadow: none !important;
+3523:     }
+3524: 
+3525:     body.rotastic-colleague-view #rotaExportActions {
+3526:       left: 0 !important;
+3527:       right: auto !important;
+3528:       top: calc(100% + 7px);
+3529:       min-width: 190px;
+3530:       max-width: min(240px, 78vw);
+3531:     }
+3532: 
+3533:     @media (max-width: 640px) {
+3534:       body.rotastic-colleague-view #tabSchedule {
+--- lines 3493-3540 ---
+3493:         padding-right: 2px;
+3494:       }
+3495:     }
+3496: 
+3497: 
+3498:     /* v153 — compact colleague controls above the day selector */
+3499:     #rotaSecondaryTools {
+3500:       min-height: 36px;
+3501:       margin-top: .05rem;
+3502:       margin-bottom: .35rem;
+3503:     }
+3504: 
+3505:     #rotaDaySelector {
+3506:       width: 100%;
+3507:       margin-top: .05rem;
+3508:       margin-bottom: .35rem;
+3509:     }
+3510: 
+3511:     #rotaDaySelector.hidden,
+3512:     #rotaExportToggleBtn.rotastic-no-rota-hidden {
+3513:       display: none !important;
+3514:     }
+3515: 
+3516:     body.rotastic-colleague-view #rotaSecondaryTools {
+3517:       align-items: center;
+3518:     }
+3519: 
+3520:     body.rotastic-colleague-view #driveTimeBtn {
+3521:       margin-left: auto;
+3522:       box-shadow: none !important;
+3523:     }
+3524: 
+3525:     body.rotastic-colleague-view #rotaExportActions {
+3526:       left: 0 !important;
+3527:       right: auto !important;
+3528:       top: calc(100% + 7px);
+3529:       min-width: 190px;
+3530:       max-width: min(240px, 78vw);
+3531:     }
+3532: 
+3533:     @media (max-width: 640px) {
+3534:       body.rotastic-colleague-view #tabSchedule {
+3535:         row-gap: .72rem;
+3536:       }
+3537: 
+3538:       body.rotastic-colleague-view #rotaSecondaryTools {
+3539:         margin-top: -.05rem;
+3540:         margin-bottom: .3rem;
+--- lines 3530-3577 ---
+3530:       max-width: min(240px, 78vw);
+3531:     }
+3532: 
+3533:     @media (max-width: 640px) {
+3534:       body.rotastic-colleague-view #tabSchedule {
+3535:         row-gap: .72rem;
+3536:       }
+3537: 
+3538:       body.rotastic-colleague-view #rotaSecondaryTools {
+3539:         margin-top: -.05rem;
+3540:         margin-bottom: .3rem;
+3541:       }
+3542: 
+3543:       body.rotastic-colleague-view #driveTimeBtn {
+3544:         max-width: 57% !important;
+3545:         font-size: 9px !important;
+3546:       }
+3547: 
+3548:       body.rotastic-colleague-view #rotaDaySelector {
+3549:         gap: .15rem;
+3550:         padding-bottom: .15rem;
+3551:       }
+3552: 
+3553:       body.rotastic-colleague-view #rotaDaySelector .day-pill {
+3554:         flex: 1 0 auto;
+3555:         min-width: 45px;
+3556:         padding-left: .65rem;
+3557:         padding-right: .65rem;
+3558:       }
+3559:     }
+3560: 
+3561: 
+3562:     /* v154 — personal opening rota briefing */
+3563:     #swapsNewsTicker.ticker-personal-rota-briefing {
+3564:       min-height: 168px;
+3565:       padding-top: 12px !important;
+3566:       padding-bottom: 12px !important;
+3567:     }
+3568: 
+3569:     .opening-rota-briefing {
+3570:       width: 100%;
+3571:       min-width: 0;
+3572:       display: flex;
+3573:       flex-direction: column;
+3574:       gap: 10px;
+3575:       padding: 2px 4px;
+3576:     }
+3577: 
+--- lines 3535-3582 ---
+3535:         row-gap: .72rem;
+3536:       }
+3537: 
+3538:       body.rotastic-colleague-view #rotaSecondaryTools {
+3539:         margin-top: -.05rem;
+3540:         margin-bottom: .3rem;
+3541:       }
+3542: 
+3543:       body.rotastic-colleague-view #driveTimeBtn {
+3544:         max-width: 57% !important;
+3545:         font-size: 9px !important;
+3546:       }
+3547: 
+3548:       body.rotastic-colleague-view #rotaDaySelector {
+3549:         gap: .15rem;
+3550:         padding-bottom: .15rem;
+3551:       }
+3552: 
+3553:       body.rotastic-colleague-view #rotaDaySelector .day-pill {
+3554:         flex: 1 0 auto;
+3555:         min-width: 45px;
+3556:         padding-left: .65rem;
+3557:         padding-right: .65rem;
+3558:       }
+3559:     }
+3560: 
+3561: 
+3562:     /* v154 — personal opening rota briefing */
+3563:     #swapsNewsTicker.ticker-personal-rota-briefing {
+3564:       min-height: 168px;
+3565:       padding-top: 12px !important;
+3566:       padding-bottom: 12px !important;
+3567:     }
+3568: 
+3569:     .opening-rota-briefing {
+3570:       width: 100%;
+3571:       min-width: 0;
+3572:       display: flex;
+3573:       flex-direction: column;
+3574:       gap: 10px;
+3575:       padding: 2px 4px;
+3576:     }
+3577: 
+3578:     .opening-rota-briefing-top {
+3579:       display: flex;
+3580:       align-items: center;
+3581:       justify-content: space-between;
+3582:       gap: 14px;
+--- lines 3772-3819 ---
+3772:     #rotaExportActions.rotastic-export-open {
+3773:       display: flex !important;
+3774:     }
+3775: 
+3776:     #rotaExportActions > button {
+3777:       width: 100%;
+3778:       justify-content: flex-start;
+3779:       margin: 0 !important;
+3780:       padding: 8px 10px !important;
+3781:       min-height: 38px;
+3782:     }
+3783: 
+3784:     #rotaExportToggleBtn.rotastic-no-rota-hidden {
+3785:       display: none !important;
+3786:     }
+3787: 
+3788:     /* My Shift is the calm colleague landing view. Day tabs/export/drive strip
+3789:        only appear when the user explicitly switches to the full rota. */
+3790:     body.rotastic-colleague-view.rotastic-myshift-mode #rotaDaySelector,
+3791:     body.rotastic-colleague-view.rotastic-myshift-mode #rotaSecondaryTools {
+3792:       display: none !important;
+3793:     }
+3794: 
+3795:     body.rotastic-colleague-view.rotastic-myshift-mode #rotaExportToggleBtn {
+3796:       display: none !important;
+3797:     }
+3798: 
+3799:     body.rotastic-colleague-view #scheduleMatrixContainer {
+3800:       min-height: 360px;
+3801:     }
+3802: 
+3803:     .my-shift-presence-card {
+3804:       min-height: 340px;
+3805:       display: flex;
+3806:       flex-direction: column;
+3807:       justify-content: center;
+3808:     }
+3809: 
+3810:     .my-shift-leave-hero {
+3811:       width: 88px;
+3812:       height: 88px;
+3813:       border-radius: 999px;
+3814:       display: grid;
+3815:       place-items: center;
+3816:       margin: 0 auto;
+3817:       font-size: 38px;
+3818:       background: radial-gradient(circle, rgba(45,212,191,.14), rgba(15,23,42,.72));
+3819:       border: 1px solid rgba(45,212,191,.22);
+--- lines 4010-4057 ---
+4010:       min-width: 92px !important;
+4011:       max-width: 118px !important;
+4012:       height: 28px !important;
+4013:       padding: 0 9px !important;
+4014:       justify-content: center !important;
+4015:       font-size: 11px !important;
+4016:       line-height: 1 !important;
+4017:       font-weight: 950 !important;
+4018:     }
+4019:     .live-drive-slot #driveTimeBtnText {
+4020:       max-width: none !important;
+4021:       overflow: visible !important;
+4022:       text-overflow: clip !important;
+4023:       white-space: nowrap !important;
+4024:       font-size: 11px !important;
+4025:       font-weight: 950 !important;
+4026:       letter-spacing: .01em;
+4027:     }
+4028:     body.rotastic-myshift-mode #rotaDaySelector,
+4029:     body.rotastic-myshift-mode #rotaSecondaryTools {
+4030:       display: none !important;
+4031:     }
+4032:     body.rotastic-myshift-mode #scheduleMatrixContainer {
+4033:       display: block !important;
+4034:       min-height: 405px !important;
+4035:     }
+4036:     @media (max-width: 520px) {
+4037:       .live-rota-meta-row {
+4038:         grid-template-columns: minmax(86px,auto) minmax(92px,1fr) minmax(70px,auto) !important;
+4039:         gap: 5px !important;
+4040:       }
+4041:       .live-drive-slot #driveTimeBtn {
+4042:         min-width: 88px !important;
+4043:         max-width: 104px !important;
+4044:         font-size: 10px !important;
+4045:       }
+4046:       .live-drive-slot #driveTimeBtnText { font-size: 10px !important; }
+4047:       #weatherBadge { padding-left: 5px !important; padding-right: 5px !important; }
+4048:     }
+4049: 
+4050: 
+4051:     /* v165 — critical interaction repair */
+4052:     #plannerWeekSelect {
+4053:       pointer-events: auto !important;
+4054:       touch-action: manipulation !important;
+4055:       position: relative !important;
+4056:       z-index: 60 !important;
+4057:       opacity: 1 !important;
+
+===== mainRoomHeroNumber =====
+--- lines 6434-6481 ---
+6434: <i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
+6435: </button>
+6436: <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
+6437: <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
+6438: </button>
+6439: <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportBtn" onclick="toggleRotaExportMenu()" type="button">
+6440: <i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+6441: </button>
+6442: </div>
+6443: </div>
+6444: <div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
+6445: <div class="flex items-center justify-between gap-4">
+6446: <div class="min-w-0">
+6447: <div class="text-[9px] sm:text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Your room today</div>
+6448: <div class="text-[10px] sm:text-xs text-slate-400 mt-1" id="mainRoomHeroContext">Your current rota allocation</div>
+6449: </div>
+6450: <div class="flex items-baseline gap-2 flex-shrink-0">
+6451: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Room</span>
+6452: <span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
+6453: </div>
+6454: </div>
+6455: </div>
+6456: <div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
+6457: <div class="relative flex items-center justify-end gap-2">
+6458: <button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
+6459: <i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
+6460: <span>Export</span>
+6461: <i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+6462: </button>
+6463: <div class="flex items-center space-x-2" id="rotaExportActions">
+6464: <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToImageReport()" type="button">
+6465: <i class="fa-regular fa-image text-[10px]"></i>
+6466: <span>Export Image (PNG)</span>
+6467: </button>
+6468: <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToPDFReport()" type="button">
+6469: <i class="fa-solid fa-file-pdf text-[10px]"></i>
+6470: <span>Export PDF</span>
+6471: </button>
+6472: <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToXLSReport()" type="button">
+6473: <i class="fa-solid fa-file-excel text-[10px]"></i>
+6474: <span>Export XLSX</span>
+6475: </button>
+6476: </div>
+6477: </div>
+6478: </div>
+6479: <div class="rotastic-live-mini" id="rotasticLiveMini">
+6480: <span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+6481:   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+--- lines 23077-23124 ---
+23077:   if (!timing) return null;
+23078: 
+23079:   const shift = day[timing.period];
+23080:   if (!shift) return null;
+23081: 
+23082:   const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+23083:   if (!rooms.length) return null;
+23084: 
+23085:   return {
+23086:     rooms: rooms,
+23087:     period: timing.period,
+23088:     shiftLabel: timing.label,
+23089:     day: day
+23090:   };
+23091: }
+23092: 
+23093: function renderMainRoomHero() {
+23094:   const card = document.getElementById('mainRoomHero');
+23095:   const number = document.getElementById('mainRoomHeroNumber');
+23096:   const context = document.getElementById('mainRoomHeroContext');
+23097:   if (!card || !number || !context) return;
+23098: 
+23099:   const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+23100:   const info = getTodayRoomInfoForActiveDoctor();
+23101: 
+23102:   if (remaining <= 0 || !info) {
+23103:     card.classList.add('hidden');
+23104:     return;
+23105:   }
+23106: 
+23107:   number.textContent = info.rooms.join(' / ');
+23108:   context.textContent =
+23109:     info.rooms.length === 1
+23110:       ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+23111:       : info.shiftLabel + ' • multiple room allocations today';
+23112: 
+23113:   card.classList.remove('hidden');
+23114: 
+23115:   if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+23116:   rotasticRoomHeroTimer = setTimeout(function() {
+23117:     card.classList.add('hidden');
+23118:   }, remaining);
+23119: }
+23120: 
+23121: 
+23122: const ROTASTIC_SHIFT_WISHES = [
+23123:   'Wishing you a safe and smooth shift today.',
+23124:   'Hope today is calm, kind and straightforward.',
+
+===== tickerContent =====
+--- lines 3824-3871 ---
+3824:     #notificationPreferencesDetails > summary {
+3825:       list-style: none;
+3826:       cursor: pointer;
+3827:     }
+3828:     #notificationPreferencesDetails > summary::-webkit-details-marker {
+3829:       display: none;
+3830:     }
+3831:     #notificationPreferencesDetails[open] .notification-chevron {
+3832:       transform: rotate(180deg);
+3833:     }
+3834: 
+3835: 
+3836:     /* v160 ticker visibility safeguard */
+3837:     #swapsNewsTicker:not(.hidden) {
+3838:       display: flex !important;
+3839:       min-height: 56px;
+3840:     }
+3841: 
+3842:     #swapsNewsTicker #tickerContent {
+3843:       min-width: 0;
+3844:       flex: 1 1 auto;
+3845:     }
+3846: 
+3847: 
+3848:     /* v162 — Leave Planner organised by week commencing Sunday */
+3849:     #weeklyLeaveCalendar {
+3850:       display: grid;
+3851:       grid-template-columns: repeat(5, minmax(0, 1fr));
+3852:       gap: 8px;
+3853:     }
+3854: 
+3855:     .planner-week-day-card {
+3856:       position: relative;
+3857:       min-width: 0;
+3858:       min-height: 178px;
+3859:       text-align: left;
+3860:       padding: 11px;
+3861:       border-radius: 14px;
+3862:       border: 1px solid rgba(71,85,105,.34);
+3863:       background: rgba(15,23,42,.56);
+3864:       transition: transform .15s ease, border-color .15s ease, background .15s ease;
+3865:     }
+3866: 
+3867:     .planner-week-day-card.has-away {
+3868:       border-color: rgba(245,158,11,.26);
+3869:       background: linear-gradient(180deg, rgba(120,53,15,.10), rgba(15,23,42,.60));
+3870:     }
+3871: 
+--- lines 4819-4866 ---
+4819:   margin:0!important;padding:8px 14px 8px 8px!important;box-sizing:border-box!important
+4820: }
+4821: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-type-badge{
+4822:   grid-column:1!important;width:70px!important;min-width:70px!important;max-width:70px!important;margin:0!important;justify-self:start!important;align-self:center!important
+4823: }
+4824: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-badge-square{
+4825:   width:62px!important;height:62px!important;min-width:62px!important;min-height:62px!important;border-radius:12px!important;margin:0 auto!important
+4826: }
+4827: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-source-logo{
+4828:   width:50px!important;height:50px!important;object-fit:contain!important
+4829: }
+4830: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-badge-caption{
+4831:   width:70px!important;max-width:70px!important;margin-top:5px!important;font-size:7px!important;line-height:1.05!important;text-align:center!important;
+4832:   white-space:normal!important;overflow:visible!important;text-overflow:clip!important
+4833: }
+4834: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-stage{
+4835:   grid-column:2!important;width:100%!important;min-width:0!important;height:100%!important;display:flex!important;align-items:center!important;margin:0!important;padding:0!important
+4836: }
+4837: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) #tickerContent{
+4838:   width:100%!important;min-width:0!important;padding:0!important;display:flex!important;align-items:center!important
+4839: }
+4840: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-card,
+4841: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-text,
+4842: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-medical-link{
+4843:   width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;text-align:left!important;white-space:normal!important;
+4844:   overflow:visible!important;text-overflow:clip!important;-webkit-line-clamp:unset!important;max-height:none!important;word-break:normal!important;
+4845:   overflow-wrap:break-word!important;line-height:1.18!important
+4846: }
+4847: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short,
+4848: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short .ticker-message-text,
+4849: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short .ticker-medical-link{font-size:15px!important}
+4850: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium,
+4851: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium .ticker-message-text,
+4852: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium .ticker-medical-link{font-size:13px!important}
+4853: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long,
+4854: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long .ticker-message-text,
+4855: #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long .ticker-medical-link{font-size:11px!important;line-height:1.16!important}
+4856: @media(max-width:520px){
+4857:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)){
+4858:    grid-template-columns:66px minmax(0,1fr)!important;column-gap:10px!important;min-height:106px!important;height:106px!important;padding:7px 10px 7px 6px!important
+4859:  }
+4860:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-type-badge{width:66px!important;min-width:66px!important;max-width:66px!important}
+4861:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-badge-square{width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important}
+4862:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-source-logo{width:47px!important;height:47px!important}
+4863:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short,
+4864:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short .ticker-message-text,
+4865:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short .ticker-medical-link{font-size:14px!important}
+4866:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium,
+--- lines 4876-4923 ---
+4876: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)){
+4877:   grid-template-columns:70px minmax(0,1fr)!important;column-gap:12px!important;align-items:center!important;
+4878:   padding-left:10px!important;padding-right:24px!important;box-sizing:border-box!important;overflow:hidden!important
+4879: }
+4880: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-type-badge{
+4881:   position:relative!important;width:70px!important;min-width:70px!important;max-width:70px!important;height:62px!important;min-height:62px!important;
+4882:   align-self:center!important;justify-self:start!important;overflow:visible!important
+4883: }
+4884: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-badge-square{
+4885:   position:absolute!important;left:0!important;top:50%!important;transform:translateY(-50%)!important;margin:0!important
+4886: }
+4887: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-badge-caption{
+4888:   position:absolute!important;left:0!important;top:calc(100% + 5px)!important;width:62px!important;margin:0!important;text-align:center!important;pointer-events:none!important
+4889: }
+4890: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-stage{
+4891:   grid-column:2!important;align-self:center!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;
+4892:   width:100%!important;min-width:0!important;height:62px!important;padding:0 12px 0 0!important;box-sizing:border-box!important;overflow:hidden!important
+4893: }
+4894: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) #tickerContent{
+4895:   display:flex!important;align-items:center!important;width:100%!important;min-width:0!important;height:100%!important;padding:0!important;margin:0!important;
+4896:   overflow:hidden!important;box-sizing:border-box!important
+4897: }
+4898: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-card,
+4899: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-text,
+4900: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-medical-link{
+4901:   display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;text-align:left!important;white-space:normal!important;
+4902:   overflow:visible!important;text-overflow:clip!important;overflow-wrap:normal!important;word-break:normal!important;line-height:1.18!important;box-sizing:border-box!important
+4903: }
+4904: @media(max-width:520px){
+4905:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)){
+4906:   grid-template-columns:66px minmax(0,1fr)!important;column-gap:10px!important;padding-left:8px!important;padding-right:20px!important
+4907:  }
+4908:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-type-badge{
+4909:   width:66px!important;min-width:66px!important;max-width:66px!important;height:58px!important;min-height:58px!important
+4910:  }
+4911:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-badge-caption{width:58px!important}
+4912:  #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-stage{height:58px!important;padding-right:10px!important}
+4913:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short,
+4914:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short .ticker-message-text,
+4915:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-short .ticker-medical-link{font-size:13.5px!important}
+4916:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium,
+4917:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium .ticker-message-text,
+4918:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium .ticker-medical-link{font-size:11.5px!important}
+4919:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long,
+4920:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long .ticker-message-text,
+4921:  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long .ticker-medical-link{font-size:9.8px!important;line-height:1.15!important}
+4922: }
+4923: 
+--- lines 4971-5018 ---
+4971: 
+4972:     /* Lower copy a touch so its optical centre crosses the logo-square centre. */
+4973:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-stage {
+4974:       grid-column: 2 !important;
+4975:       align-self: center !important;
+4976:       display: flex !important;
+4977:       align-items: center !important;
+4978:       justify-content: flex-start !important;
+4979:       width: 100% !important;
+4980:       min-width: 0 !important;
+4981:       height: 64px !important;
+4982:       margin: 0 !important;
+4983:       padding: 4px 8px 0 0 !important;
+4984:       box-sizing: border-box !important;
+4985:       overflow: hidden !important;
+4986:       transform: translateY(3px) !important;
+4987:     }
+4988: 
+4989:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) #tickerContent,
+4990:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-drop-item {
+4991:       display: flex !important;
+4992:       align-items: center !important;
+4993:       width: 100% !important;
+4994:       min-width: 0 !important;
+4995:       max-width: 100% !important;
+4996:       height: 100% !important;
+4997:       margin: 0 !important;
+4998:       padding: 0 !important;
+4999:       overflow: hidden !important;
+5000:       box-sizing: border-box !important;
+5001:     }
+5002: 
+5003:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-card,
+5004:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-text,
+5005:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-medical-link {
+5006:       display: block !important;
+5007:       width: 100% !important;
+5008:       min-width: 0 !important;
+5009:       max-width: 100% !important;
+5010:       margin: 0 !important;
+5011:       padding: 0 !important;
+5012:       text-align: left !important;
+5013:       white-space: normal !important;
+5014:       overflow: visible !important;
+5015:       text-overflow: clip !important;
+5016:       word-break: normal !important;
+5017:       overflow-wrap: normal !important;
+5018:       line-height: 1.18 !important;
+--- lines 5058-5105 ---
+5058:         font-size: 12.5px !important;
+5059:       }
+5060:       #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium,
+5061:       #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium .ticker-message-text,
+5062:       #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-medium .ticker-medical-link {
+5063:         font-size: 11px !important;
+5064:       }
+5065:       #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long,
+5066:       #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long .ticker-message-text,
+5067:       #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-copy-long .ticker-medical-link {
+5068:         font-size: 9.5px !important;
+5069:         line-height: 1.16 !important;
+5070:       }
+5071:     }
+5072: 
+5073: 
+5074:     /* v186 — smooth ticker handoff */
+5075:     #tickerInnerRow,
+5076:     #tickerContent,
+5077:     #tickerTypeBadge {
+5078:       transition: opacity .34s ease, transform .34s ease !important;
+5079:     }
+5080:     #tickerInnerRow.rotastic-ticker-fade-out {
+5081:       opacity: 0 !important;
+5082:       transform: translateY(3px) !important;
+5083:     }
+5084:     #tickerInnerRow.rotastic-ticker-fade-in {
+5085:       opacity: 0 !important;
+5086:       transform: translateY(-3px) !important;
+5087:     }
+5088:     @media (prefers-reduced-motion: reduce) {
+5089:       #tickerInnerRow,
+5090:       #tickerContent,
+5091:       #tickerTypeBadge { transition-duration: .01ms !important; }
+5092:     }
+5093: 
+5094: 
+5095:     /* v187 — one consistent text size/geometry for every normal ticker item */
+5096:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) {
+5097:       grid-template-columns: 70px minmax(0,1fr) !important;
+5098:       column-gap: 12px !important;
+5099:       padding-left: 10px !important;
+5100:       padding-right: 28px !important;
+5101:       align-items: center !important;
+5102:       overflow: hidden !important;
+5103:       box-sizing: border-box !important;
+5104:     }
+5105: 
+--- lines 5072-5119 ---
+5072: 
+5073: 
+5074:     /* v186 — smooth ticker handoff */
+5075:     #tickerInnerRow,
+5076:     #tickerContent,
+5077:     #tickerTypeBadge {
+5078:       transition: opacity .34s ease, transform .34s ease !important;
+5079:     }
+5080:     #tickerInnerRow.rotastic-ticker-fade-out {
+5081:       opacity: 0 !important;
+5082:       transform: translateY(3px) !important;
+5083:     }
+5084:     #tickerInnerRow.rotastic-ticker-fade-in {
+5085:       opacity: 0 !important;
+5086:       transform: translateY(-3px) !important;
+5087:     }
+5088:     @media (prefers-reduced-motion: reduce) {
+5089:       #tickerInnerRow,
+5090:       #tickerContent,
+5091:       #tickerTypeBadge { transition-duration: .01ms !important; }
+5092:     }
+5093: 
+5094: 
+5095:     /* v187 — one consistent text size/geometry for every normal ticker item */
+5096:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) {
+5097:       grid-template-columns: 70px minmax(0,1fr) !important;
+5098:       column-gap: 12px !important;
+5099:       padding-left: 10px !important;
+5100:       padding-right: 28px !important;
+5101:       align-items: center !important;
+5102:       overflow: hidden !important;
+5103:       box-sizing: border-box !important;
+5104:     }
+5105: 
+5106:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-type-badge {
+5107:       width: 70px !important;
+5108:       min-width: 70px !important;
+5109:       max-width: 70px !important;
+5110:       height: 62px !important;
+5111:       min-height: 62px !important;
+5112:       align-self: center !important;
+5113:       justify-self: start !important;
+5114:       margin: 0 !important;
+5115:     }
+5116: 
+5117:     #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-stage {
+5118:       width: 100% !important;
+5119:       min-width: 0 !important;
+
+===== Refresh</span> =====
