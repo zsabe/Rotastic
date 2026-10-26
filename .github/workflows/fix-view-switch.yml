@@ -1,0 +1,93 @@
+name: Fix view mode switch
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-view-switch.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Patch view switching
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old1 = """  if (rotasticIsPermanentAdminIdentity()) {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  // Every non-permanent account must present an admin-issued code when
+  // moving from Colleague View into Admin View. A delegated grant alone
+  // never bypasses this challenge.
+  openAdminModal();"""
+          new1 = """  // Every account must present an Admin View code when moving from
+  // Colleague View back into Admin View. Permanent Dr Z / Dr Moursi PINs
+  // are verified by verifyAdminPasskey(); temporary issued codes continue
+  // through the secure backend redemption path.
+  openAdminModal();"""
+          if old1 not in s:
+              raise SystemExit('handleViewBadgeClick permanent bypass block not found')
+          s = s.replace(old1, new1, 1)
+
+          old2 = """  // Verified permanent admins never need to re-enter an Admin View code.
+  // Their identity has already been established by the backend registration.
+  const role = rotasticResolvedVerifiedRole();
+  if (role === 'zaid' || role === 'moursi') {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  document.getElementById('adminModal').classList.remove('hidden');"""
+          new2 = """  // Returning from Colleague View always requires the code challenge,
+  // including verified permanent admin accounts.
+  document.getElementById('adminModal').classList.remove('hidden');"""
+          if old2 not in s:
+              raise SystemExit('openAdminModal permanent bypass block not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s, encoding='utf-8')
+
+          q = Path('admin-comms-ui.js')
+          j = q.read_text(encoding='utf-8')
+          old_css = ".rac-view-holder{margin-top:10px;max-width:100%}"
+          new_css = ".rac-view-holder{margin-top:10px;max-width:100%;display:flex;align-items:center;gap:8px;overflow-x:auto}.rac-view-holder>button,.rac-view-holder>a,.rac-view-holder>[role=button]{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;max-width:100%!important;white-space:nowrap!important;padding-left:14px!important;padding-right:14px!important}.rac-view-holder #adminBadgeText{white-space:nowrap!important;display:inline!important}"
+          if old_css not in j:
+              raise SystemExit('view-holder CSS anchor not found')
+          j = j.replace(old_css, new_css, 1)
+          q.write_text(j, encoding='utf-8')
+          PY
+      - name: Verify
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'Every account must present an Admin View code' index.html
+          grep -q 'Returning from Colleague View always requires the code challenge' index.html
+          grep -q 'white-space:nowrap!important' admin-comms-ui.js
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html admin-comms-ui.js
+          git commit -m 'Fix Admin View return challenge and switch layout'
+          git push origin HEAD:main
