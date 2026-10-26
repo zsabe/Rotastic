@@ -62,7 +62,7 @@
       .rac-muted{font-size:.82rem;color:#94a3b8;line-height:1.45;overflow-wrap:anywhere}
       .rac-account-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
       .rac-signout{border:1px solid rgba(248,113,113,.25);background:rgba(248,113,113,.08);color:#fecaca;border-radius:11px;padding:8px 12px;font-weight:800}
-      .rac-view-holder{margin-top:10px;max-width:100%}
+      .rac-view-holder{margin-top:10px;max-width:100%;display:flex;align-items:center;gap:8px;overflow-x:auto}.rac-view-holder>button,.rac-view-holder>a,.rac-view-holder>[role=button]{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;max-width:100%!important;white-space:nowrap!important;padding-left:14px!important;padding-right:14px!important}.rac-view-holder #adminBadgeText{white-space:nowrap!important;display:inline!important}
       .rac-inbox-list{display:grid;gap:10px;margin-top:12px}
       .rac-request{box-sizing:border-box;width:100%;max-width:100%;border:1px solid rgba(148,163,184,.13);background:#0b1220;border-radius:14px;padding:12px;overflow:hidden}
       .rac-request-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}

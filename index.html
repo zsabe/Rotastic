@@ -9633,36 +9633,16 @@ function handleViewBadgeClick() {
     return;
   }
 
-  if (rotasticIsPermanentAdminIdentity()) {
-    Storage.set('rotastic_admin_token', 'permanent');
-    currentViewMode = 'admin';
-    Storage.set('rotastic_view_mode', 'admin');
-    applyViewMode();
-    renderScheduleView();
-    switchTab('schedule');
-    return;
-  }
-
-  // Every non-permanent account must present an admin-issued code when
-  // moving from Colleague View into Admin View. A delegated grant alone
-  // never bypasses this challenge.
+  // Every account must present an Admin View code when moving from
+  // Colleague View back into Admin View. Permanent admin PINs are verified
+  // by verifyAdminPasskey(); temporary issued codes continue through the
+  // secure backend redemption path.
   openAdminModal();
 }
 
 function openAdminModal() {
-  // Verified permanent admins never need to re-enter an Admin View code.
-  // Their identity has already been established by the backend registration.
-  const role = rotasticResolvedVerifiedRole();
-  if (role === 'zaid' || role === 'moursi') {
-    Storage.set('rotastic_admin_token', 'permanent');
-    currentViewMode = 'admin';
-    Storage.set('rotastic_view_mode', 'admin');
-    applyViewMode();
-    renderScheduleView();
-    switchTab('schedule');
-    return;
-  }
-
+  // Returning from Colleague View always requires the code challenge,
+  // including verified permanent admin accounts.
   document.getElementById('adminModal').classList.remove('hidden');
   document.getElementById('adminPasskeyInput').value = '';
   document.getElementById('adminModalStatus').innerText = '';
