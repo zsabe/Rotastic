@@ -1,0 +1,166 @@
+6380: </label>
+6381: <select class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400" id="inlineDocSelect" onchange="checkInlineAdminSelection()">
+6382: <option value="">-- Please choose doctor --</option>
+6383: </select>
+6384: </div>
+6385: <div id="inlinePinWrapper" style="display:none;">
+6386: <label class="block text-[10px] font-bold text-teal-300 uppercase tracking-wider mb-1">
+6387:             Verification PIN <span class="text-rose-400">*</span>
+6388: </label>
+6389: <input class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400" id="inlineAdminPin" inputmode="numeric" placeholder="Enter security PIN" type="password"/>
+6390: </div>
+6391: </div>
+6392: <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/55 border border-sky-500/20 cursor-pointer">
+6393: <input checked="" class="mt-0.5 h-4 w-4 accent-sky-500 flex-shrink-0" id="inlineEnableGps" type="checkbox"/>
+6394: <span class="min-w-0">
+6395: <span class="block text-[11px] font-extrabold text-sky-200">
+6396: <i class="fa-solid fa-location-dot mr-1.5 text-sky-300"></i>Enable GPS location
+6397:           </span>
+6398: <span class="block text-[9px] text-slate-500 mt-0.5 leading-relaxed">
+6399:             Used to estimate your drive time to Abu Nakhla Health Centre and open driving navigation.
+6400:           </span>
+6401: </span>
+6402: </label>
+6403: <button class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center space-x-2" onclick="saveInlineProfile()" type="button">
+6404: <i class="fa-solid fa-check"></i>
+6405: <span>Save &amp; Set Profile</span>
+6406: </button>
+6407: </div>
+6408: <div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
+6409: <div class="w-full space-y-1.5">
+6410: <div class="live-rota-meta-row w-full">
+6411: <button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
+6412: <i class="fa-solid fa-arrow-up-from-bracket"></i>
+6413: <span>Export</span>
+6414: <i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
+6415: </button>
+6416: <div class="live-drive-slot">
+6417: <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
+6418: <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
+6419: <span class="drive-time-copy">
+6420: <span class="truncate" id="driveTimeBtnText">ETA --</span>
+6421: <span class="truncate" id="driveTimeBtnSub">to Abu Nakhla</span>
+6422: </span>
+6423: </a>
+6424: </div>
+6425: <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[9px] font-semibold text-slate-300 h-[24px] flex-shrink-0" id="weatherBadge">
+6426: <span id="weatherEmoji">🌤️</span>
+6427: <span id="weatherTemp">Weather</span>
+6428: <span class="hidden sm:inline text-slate-500 max-w-[55px] truncate" id="weatherCondition"></span>
+6429: </span>
+6430: </div>
+6431: </div>
+6432: <div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">
+6433: <button aria-pressed="false" class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-sky-300 transition flex items-center gap-2" data-rotastic-rota-toggle="1" id="rotaZoomBtn" title="Switch between your personal view and the full rota" type="button">
+6434: <i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
+6435: </button>
+6436: <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
+6437: <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
+6438: </button>
+6439: <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportBtn" onclick="toggleRotaExportMenu()" type="button">
+6440: <i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+6441: </button>
+6442: </div>
+6443: </div>
+6444: <div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
+6445: <div class="flex items-center justify-between gap-4">
+6446: <div class="min-w-0">
+6447: <div class="text-[9px] sm:text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Your room today</div>
+6448: <div class="text-[10px] sm:text-xs text-slate-400 mt-1" id="mainRoomHeroContext">Your current rota allocation</div>
+6449: </div>
+6450: <div class="flex items-baseline gap-2 flex-shrink-0">
+6451: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Room</span>
+6452: <span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
+6453: </div>
+6454: </div>
+6455: </div>
+6456: <div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
+6457: <div class="relative flex items-center justify-end gap-2">
+6458: <button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
+6459: <i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
+6460: <span>Export</span>
+6461: <i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+6462: </button>
+6463: <div class="flex items-center space-x-2" id="rotaExportActions">
+6464: <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToImageReport()" type="button">
+6465: <i class="fa-regular fa-image text-[10px]"></i>
+6466: <span>Export Image (PNG)</span>
+6467: </button>
+6468: <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToPDFReport()" type="button">
+6469: <i class="fa-solid fa-file-pdf text-[10px]"></i>
+6470: <span>Export PDF</span>
+6471: </button>
+6472: <button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToXLSReport()" type="button">
+6473: <i class="fa-solid fa-file-excel text-[10px]"></i>
+6474: <span>Export XLSX</span>
+6475: </button>
+6476: </div>
+6477: </div>
+6478: </div>
+6479: <div class="rotastic-live-mini" id="rotasticLiveMini">
+6480: <span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+6481:   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+6482:   <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+6483: </span>
+6484: <span class="rotastic-live-mini-label">LIVE</span>
+6485: <button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
+6486: </div>
+6487: <div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
+6488: <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
+6489: <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(1)" type="button">Mon</button>
+6490: <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(2)" type="button">Tue</button>
+6491: <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(3)" type="button">Wed</button>
+6492: <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(4)" type="button">Thu</button>
+6493: <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(-1)" type="button">All Week</button>
+6494: </div>
+6495: <div class="space-y-4" id="scheduleMatrixContainer"></div>
+6496: </div>
+6497: <!-- LEAVES: legacy compatibility container; leave actions now live with the planner -->
+6498: <div class="hidden" id="tabLeaves"></div>
+6499: <!-- PLANNER -->
+6500: <div class="hidden space-y-4" id="tabLeavePlanner">
+6501: <div class="clean-card rounded-2xl p-5">
+6502: <div class="pb-4 border-b border-slate-800">
+6503: <div>
+6504: <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+6505: <i class="fa-solid fa-calendar-week text-emerald-400 mr-2"></i>Live Leave Planner
+6506:           </h2>
+6507: <div class="text-[9px] text-emerald-400/70 mt-1" id="plannerLiveUpdatedAt">Live</div>
+6508: <p class="text-xs text-slate-400 mt-0.5">
+6509:             Approved leave planner. Sick leave stays private.
+6510:           </p>
+6511: <details class="planner-export-tree mt-3 rounded-xl border border-slate-700/70 bg-slate-950/45 overflow-hidden" id="plannerExportTree">
+6512: <summary class="cursor-pointer select-none px-3 py-2.5 text-[10px] font-black uppercase tracking-wider text-teal-300 flex items-center justify-between">
+6513: <span><i class="fa-solid fa-download mr-1.5"></i>Export Planner</span><span class="text-slate-500 normal-case font-semibold">Monthly or Annual</span>
+6514: </summary>
+6515: <div class="px-3 pb-3 pt-1 border-t border-slate-800/80 space-y-2">
+6516: <div class="grid grid-cols-2 gap-2">
+6517: <label class="text-[9px] text-slate-400 font-bold">Scope
+6518: <select aria-label="Planner export scope" class="mt-1 w-full bg-slate-900 text-white text-[10px] px-3 py-2 rounded-lg border border-slate-700 outline-none" id="plannerExportScope" onchange="updatePlannerExportPeriodControls()">
+6519: <option value="month">Monthly</option>
+6520: <option value="year">Annual</option>
+6521: </select></label>
+6522: <label class="text-[9px] text-slate-400 font-bold">Year
+6523: <select aria-label="Planner export year" class="mt-1 w-full bg-slate-900 text-white text-[10px] px-3 py-2 rounded-lg border border-slate-700 outline-none" id="plannerExportYear"></select></label>
+6524: </div>
+6525: <div id="plannerExportMonthWrap">
+6526: <label class="text-[9px] text-slate-400 font-bold">Month
+6527: <select aria-label="Planner export month" class="mt-1 w-full bg-slate-900 text-white text-[10px] px-3 py-2 rounded-lg border border-slate-700 outline-none" id="plannerExportMonth"></select></label>
+6528: </div>
+6529: <div class="text-[9px] text-slate-500 leading-relaxed" id="plannerExportHint">Exports the selected month with approved leave.</div>
+6530: <div class="grid grid-cols-2 gap-2">
+6531: <button class="px-3 py-2.5 rounded-lg bg-teal-600/15 hover:bg-teal-600/25 text-teal-300 border border-teal-500/30 text-[10px] font-black transition" onclick="exportPlannerScopePNG()" type="button"><i class="fa-regular fa-image mr-1.5"></i>PNG</button>
+6532: <button class="px-3 py-2.5 rounded-lg bg-rose-600/15 hover:bg-rose-600/25 text-rose-300 border border-rose-500/30 text-[10px] font-black transition" onclick="exportPlannerScopePDF()" type="button"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button>
+6533: </div>
+6534: </div>
+6535: </details>
+6536: <div class="hidden mt-3 flex flex-wrap items-center gap-2" id="annualLeaveExportControls" style="display:none!important">
+6537: <select aria-label="Annual leave planner export year" class="bg-slate-900 text-white text-[10px] px-3 py-2 rounded-lg border border-slate-700 outline-none" id="annualLeaveExportYear"></select>
+6538: <button class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition" id="annualLeaveExportBtn" onclick="exportAnnualLeavePlannerPDF()" type="button">
+6539: <i class="fa-solid fa-file-pdf mr-1.5"></i>Export Annual Planner PDF
+6540: </button>
+6541: </div>
+6542: </div>
+6543: </div>
+6544: <div class="pt-4 space-y-3">
+6545: <div class="grid grid-cols-3 gap-2" id="leaveBalanceSummary">
