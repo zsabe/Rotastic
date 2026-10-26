@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v239-stability-ui';
+const CACHE = 'rotastic-v236-logout-switch-account';
 const CORE = [
   './',
   './index.html',
