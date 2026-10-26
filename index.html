@@ -6180,6 +6180,10 @@ button,input,select,textarea{font-size:max(16px,1em);}
   body{padding-top:env(safe-area-inset-top,0px);}
 }
 </style>
+
+<style id="rotastic-second-splash-removal">
+#rotasticOpeningSplash { display: none !important; visibility: hidden !important; pointer-events: none !important; }
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
@@ -13340,10 +13344,10 @@ function startOpeningSplash() {
   };
 
   // Fast fixed splash — it never waits for weather, news, location or network calls.
-  setTimeout(finishSplash, 4200);
+  setTimeout(finishSplash, 0);
 
   // Safety escape hatch: even if another runtime task misbehaves, never trap the user here.
-  setTimeout(finishSplash, 5000);
+  setTimeout(finishSplash, 100);
 }
 function renderTodayBriefing() {
   const greetingEl = document.getElementById('cozyGreetingText');
