@@ -1,8 +1,9 @@
-const CACHE = 'rotastic-v238-generate-cleanup-reminders';
+const CACHE = 'rotastic-v239-stability-ui';
 const CORE = [
   './',
   './index.html',
   './admin-comms-ui.js',
+  './stability-ui.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
