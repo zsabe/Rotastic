@@ -1,0 +1,27 @@
+name: Hard restore original UI
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  restore:
+    if: ${{ !contains(github.event.head_commit.message, 'Hard restore exact original UI') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore exact original UI files
+        run: |
+          git checkout 80a30db853656cb21c7a730ff7c54836ca5e43c9 -- index.html service-worker.js
+          test "$(git hash-object index.html)" = "c5617ab18264d274ea4893b8c4cbf19cf64cef3f"
+          test "$(git hash-object service-worker.js)" = "f628fdd3804186a569c8a71c0b536a3ca4ee992c"
+      - name: Commit restore
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html service-worker.js
+          git commit -m "Hard restore exact original UI"
+          git pull --rebase origin main
+          git push origin HEAD:main
