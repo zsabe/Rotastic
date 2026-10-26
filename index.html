@@ -6214,6 +6214,27 @@ button,input,select,textarea{font-size:max(16px,1em);}
 .rotastic-day-nav-meta{margin-top:3px!important;font-size:10px!important;font-weight:750!important;color:#7dd3fc!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 @media(max-width:520px){.live-rota-meta-row{grid-template-columns:minmax(72px,auto) minmax(92px,1fr) minmax(62px,auto)!important;gap:5px!important}.rotastic-live-inline #liveRotaUpdatedAt{display:none!important}.live-drive-slot #driveTimeBtn{height:24px!important;padding:0 6px!important}.live-drive-slot #driveTimeBtnText{font-size:9px!important}.live-drive-slot #driveTimeBtnSub{display:none!important}#weatherBadge{height:24px!important;font-size:9px!important}}
 </style>
+
+<style id="rotastic-live-meta-plain-fix">
+/* Requested visual correction only: ETA and Weather remain clickable, without card-like rectangles. */
+.live-rota-meta-row #driveTimeBtn{
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding-left:4px!important;
+  padding-right:4px!important;
+}
+.live-rota-meta-row #weatherBadge{
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding-left:4px!important;
+  padding-right:4px!important;
+}
+.live-rota-meta-row{background:transparent!important;border:0!important;box-shadow:none!important;}
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
