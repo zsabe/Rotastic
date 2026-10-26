@@ -3991,10 +3991,10 @@ window.ROTASTIC_PUSH_BROADCAST_ENDPOINT = window.ROTASTIC_PUSH_BROADCAST_ENDPOIN
     .live-drive-slot #driveTimeBtnText{display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
     #scheduleMatrixContainer{min-height:350px}
-    .personal-poster-card{position:relative;min-height:390px;overflow:hidden;border-radius:22px;border:1px solid color-mix(in srgb,var(--poster-accent) 38%,transparent);background:#07111e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 48px rgba(0,0,0,.18)}
+    .personal-poster-card{position:relative;min-height:450px;overflow:hidden;border-radius:22px;border:1px solid color-mix(in srgb,var(--poster-accent) 38%,transparent);background:#07111e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 48px rgba(0,0,0,.18)}
     .personal-poster-art{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.92) contrast(1.02);opacity:.72}
     .personal-poster-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,10,20,.78) 0%,rgba(4,10,20,.46) 36%,rgba(4,10,20,.28) 57%,rgba(4,10,20,.87) 100%),radial-gradient(circle at 50% 24%,color-mix(in srgb,var(--poster-accent) 18%,transparent),transparent 35%)}
-    .personal-poster-content{position:relative;z-index:2;min-height:390px;padding:22px 18px 18px;display:flex;flex-direction:column;align-items:center;text-align:center}
+    .personal-poster-content{position:relative;z-index:2;min-height:450px;padding:22px 18px 18px;display:flex;flex-direction:column;align-items:center;text-align:center}
     .personal-poster-kicker{align-self:flex-start;font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:rgba(226,232,240,.72)}
     .personal-poster-icon{width:68px;height:68px;margin-top:22px;border-radius:999px;display:grid;place-items:center;font-size:31px;background:rgba(4,12,24,.64);border:1px solid color-mix(in srgb,var(--poster-accent2) 70%,transparent);box-shadow:0 0 25px color-mix(in srgb,var(--poster-accent2) 16%,transparent)}
     .personal-poster-title{margin-top:15px;font-size:clamp(26px,6vw,42px);line-height:1;font-weight:950;letter-spacing:-.035em;color:white;text-shadow:0 3px 18px rgba(0,0,0,.45)}
@@ -4002,7 +4002,7 @@ window.ROTASTIC_PUSH_BROADCAST_ENDPOINT = window.ROTASTIC_PUSH_BROADCAST_ENDPOIN
     .personal-poster-message{margin-top:9px;max-width:620px;font-size:clamp(13px,3vw,18px);line-height:1.35;font-weight:850;color:var(--poster-accent2);text-shadow:0 2px 10px rgba(0,0,0,.5)}
     .personal-poster-sub{margin-top:8px;max-width:600px;font-size:11px;line-height:1.4;color:rgba(226,232,240,.82);text-shadow:0 2px 8px rgba(0,0,0,.5)}
     .personal-poster-switch{width:100%;margin-top:auto;min-height:52px;display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:10px;padding:0 15px;border-radius:14px;border:1px solid color-mix(in srgb,var(--poster-accent) 70%,transparent);background:rgba(2,18,34,.76);color:#7dd3fc;font-size:12px;font-weight:900;backdrop-filter:blur(8px)}
-    @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto;gap:5px}.live-drive-slot #driveTimeBtnText{max-width:88px}.personal-poster-card,.personal-poster-content{min-height:405px}.personal-poster-content{padding:18px 14px 14px}}
+    @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto;gap:5px}.live-drive-slot #driveTimeBtnText{max-width:88px}.personal-poster-card,.personal-poster-content{min-height:465px}.personal-poster-content{padding:18px 14px 14px}}
 
 
     /* v164 — ETA minutes prominent; personal view never shows day tabs */
@@ -4064,49 +4064,47 @@ window.ROTASTIC_PUSH_BROADCAST_ENDPOINT = window.ROTASTIC_PUSH_BROADCAST_ENDPOIN
 /* v166 responsive + navigation hardening */
 html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!important;z-index:3000!important}.mobile-nav-bar>button{pointer-events:auto!important;min-width:52px;min-height:46px;touch-action:manipulation}.personal-poster-art{background-position:center center!important;opacity:.82!important}.personal-poster-shade{background:linear-gradient(180deg,rgba(4,10,20,.80) 0%,rgba(4,10,20,.34) 34%,rgba(4,10,20,.24) 63%,rgba(4,10,20,.88) 100%)!important}
 @media (orientation:landscape) and (max-height:700px){main{padding-bottom:72px!important}#tabSchedule{row-gap:.65rem!important}.personal-poster-card,.personal-poster-content{min-height:285px!important}.personal-poster-content{padding:12px 18px!important}.personal-poster-icon{width:48px!important;height:48px!important;font-size:22px!important;margin-top:8px!important}.personal-poster-title{margin-top:8px!important;font-size:clamp(24px,4vw,34px)!important}.personal-poster-message{margin-top:7px!important;font-size:14px!important}.personal-poster-sub{margin-top:5px!important}.personal-poster-switch{min-height:42px!important}}
-@media (min-width:768px) and (max-width:1180px){#scheduleMatrixContainer,.personal-poster-card{max-width:980px;margin-left:auto;margin-right:auto}.personal-poster-card,.personal-poster-content{min-height:430px}.live-rota-meta-row{grid-template-columns:minmax(150px,1fr) minmax(150px,.8fr) minmax(120px,.7fr)!important}}
-@media (min-width:1181px){.personal-poster-card,.personal-poster-content{min-height:440px}.personal-poster-content{max-width:1050px;margin:0 auto}}
+@media (min-width:768px) and (max-width:1180px){#scheduleMatrixContainer,.personal-poster-card{max-width:980px;margin-left:auto;margin-right:auto}.personal-poster-card,.personal-poster-content{min-height:470px}.live-rota-meta-row{grid-template-columns:minmax(150px,1fr) minmax(150px,.8fr) minmax(120px,.7fr)!important}}
+@media (min-width:1181px){.personal-poster-card,.personal-poster-content{min-height:480px}.personal-poster-content{max-width:1050px;margin:0 auto}}
 
 
     /* v167 — publish-ready interaction and layout polish */
 
     .live-rota-meta-row {
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-      gap: 10px !important;
-      align-items: stretch !important;
+      grid-template-columns: auto minmax(92px, 1fr) auto !important;
+      gap: 6px !important;
+      align-items: center !important;
     }
 
-    .live-rota-meta-row > div:first-child,
-    .live-drive-slot,
-    #weatherBadge,
     .rota-action-btn {
       min-height: 74px;
       border-radius: 18px;
     }
 
-    .live-rota-meta-row > div:first-child {
-      padding: 12px 14px;
-      background: rgba(15, 23, 42, .68);
-      border: 1px solid rgba(30, 41, 59, .96);
+    .live-rota-meta-row .rotastic-live-mini {
+      min-height: 24px;
+      padding: 0 7px;
+      border-radius: 7px;
+      align-self: center;
     }
 
     .live-drive-slot {
       display: flex;
-      align-items: stretch;
-      justify-content: stretch;
-      overflow: visible;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
 
     .live-drive-slot #driveTimeBtn {
-      width: 100% !important;
-      max-width: none !important;
-      min-width: 0 !important;
-      height: 74px !important;
-      padding: 10px 12px !important;
+      width: auto !important;
+      max-width: 118px !important;
+      min-width: 88px !important;
+      height: 28px !important;
+      padding: 0 9px !important;
       justify-content: center !important;
       align-items: center !important;
-      gap: 10px !important;
-      border-radius: 18px !important;
+      gap: 6px !important;
+      border-radius: 7px !important;
     }
 
     .drive-time-copy {
@@ -6394,11 +6392,14 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
 <div class="w-full space-y-1.5">
 <div class="live-rota-meta-row w-full">
-<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
-<i class="fa-solid fa-arrow-up-from-bracket"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
-</button>
+<div class="rotastic-live-mini" id="rotasticLiveMini">
+<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+</span>
+<span class="rotastic-live-mini-label">LIVE</span>
+<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
+</div>
 <div class="live-drive-slot">
 <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
 <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
@@ -6422,8 +6423,8 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
 <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
 </button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
-<i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
+<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportCard" onclick="toggleRotaExportMenu()" type="button">
+<i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] opacity-70"></i>
 </button>
 </div>
 </div>
@@ -6461,14 +6462,6 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </button>
 </div>
 </div>
-</div>
-<div class="rotastic-live-mini" id="rotasticLiveMini">
-<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
-  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
-  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-</span>
-<span class="rotastic-live-mini-label">LIVE</span>
-<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
 </div>
 <div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
 <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
