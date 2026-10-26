@@ -16,28 +16,26 @@ meta_pattern = re.compile(
     r'</div>\s*</div>',
     re.S,
 )
-m = meta_pattern.search(s)
-if not m:
-    raise SystemExit('Original Export/ETA/Weather row not found exactly once')
+matches = list(meta_pattern.finditer(s))
+if len(matches) != 1:
+    raise SystemExit(f'Expected exactly one original Export/ETA/Weather row, found {len(matches)}')
+m = matches[0]
 eta_anchor = m.group(1)
 weather_span = m.group(2)
 s = s[:m.start()] + s[m.end():]
 
-# Make weather itself clickable while preserving its existing children/IDs.
-weather_button = weather_span.replace('<span ', '<button onclick="updateAbuNakhlaWeather()" title="Refresh Abu Nakhla weather" type="button" ', 1)
-# Replace the final closing span belonging to weatherBadge only.
+# Keep Weather's existing content, but make it explicitly clickable.
+weather_button = weather_span.replace(
+    '<span ',
+    '<button onclick="updateAbuNakhlaWeather()" title="Refresh Abu Nakhla weather" type="button" ',
+    1,
+)
 last = weather_button.rfind('</span>')
 if last < 0:
     raise SystemExit('Weather badge closing tag not found')
 weather_button = weather_button[:last] + '</button>' + weather_button[last + len('</span>'):]
 
-# 2) Replace only the large Refresh action with Export, preserving the existing 3-column action grid.
-refresh_pattern = re.compile(
-    r'<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-\[11px\] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota\(\)" type="button">\s*'
-    r'<i class="fa-solid fa-rotate text-\[12px\]"></i><span>Refresh</span>\s*'</n    r'</button>',
-    re.S,
-)
-# The regex above is intentionally assembled below to avoid changing unrelated Refresh controls.
+# 2) Replace only the large Refresh action with Export, preserving the same 3-column action grid.
 refresh_literal = '''<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
 <i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
 </button>'''
@@ -71,7 +69,7 @@ new_live = '''<div class="rotastic-live-mini" id="rotasticLiveMini">
 </div>'''
 s = s.replace(live_literal, new_live, 1)
 
-# 4) Override only ETA/Weather when they are inside the LIVE strip, neutralizing older large-card CSS.
+# 4) Neutralize older large-card CSS only when ETA/Weather are inside the LIVE strip.
 css_anchor = '.rotastic-live-mini button{min-height:18px!important;padding:0!important;background:none!important;border:0!important;color:#64748b!important;font-size:8px!important;line-height:1!important}'
 if s.count(css_anchor) != 1:
     raise SystemExit(f'Expected one LIVE CSS anchor, found {s.count(css_anchor)}')
@@ -90,7 +88,7 @@ s = s.replace(css_anchor, compact_css, 1)
 if s == original:
     raise SystemExit('No changes made')
 
-# Narrow invariants: requested controls + core design anchors remain.
+# Narrow invariants: requested controls + protected design anchors remain.
 checks = {
     'LIVE strip': 'id="rotasticLiveMini"',
     'ETA': 'id="driveTimeBtn"',
