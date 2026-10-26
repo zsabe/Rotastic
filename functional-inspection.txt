@@ -1,0 +1,1549 @@
+
+===== function handleViewBadgeClick() =====
+--- lines 9506-9593 ---
+9506: function rotasticUpdateBottomNavState(tab) {
+9507:   const normalized = tab === 'settings' ? 'usersettings' : tab;
+9508:   document.querySelectorAll('[data-rotastic-tab]').forEach(function(button) {
+9509:     const active = button.dataset.rotasticTab === normalized;
+9510:     button.classList.toggle('text-teal-400', active);
+9511:     button.classList.toggle('text-slate-400', !active);
+9512:     button.setAttribute('aria-current', active ? 'page' : 'false');
+9513:   });
+9514: }
+9515: function bindRotasticPrimaryNavigation() {
+9516:   document.querySelectorAll('[data-rotastic-tab]').forEach(function(button) {
+9517:     if (button.dataset.primaryNavBound === '1') return;
+9518:     button.dataset.primaryNavBound = '1';
+9519:     button.addEventListener('click', function(event) { event.preventDefault(); event.stopPropagation(); switchTab(button.dataset.rotasticTab); }, true);
+9520:   });
+9521: }
+9522: document.addEventListener('DOMContentLoaded', function() { bindRotasticPrimaryNavigation(); setTimeout(bindRotasticPrimaryNavigation,400); setTimeout(bindRotasticPrimaryNavigation,1400); });
+9523: 
+9524: function handleViewBadgeClick() {
+9525:   if (isAdminViewActive()) {
+9526:     currentViewMode = 'colleague';
+9527:     Storage.set('rotastic_view_mode', 'colleague');
+9528:     try { Storage.remove('rotastic_admin_token'); Storage.remove('rotastic_admin_code_id'); } catch (e) {}
+9529:     try { if (rotasticBackendClient && rotasticBackendUser) rotasticBackendClient.rpc('rotastic_end_admin_session'); } catch (e) {}
+9530:     applyViewMode(); renderScheduleView(); switchTab('schedule'); return;
+9531:   }
+9532:   openAdminModal();
+9533: }
+9534: 
+9535: function openAdminModal() {
+9536:   const modal = document.getElementById('adminModal');
+9537:   if (!modal) return;
+9538:   modal.classList.remove('hidden');
+9539:   const input = document.getElementById('adminPasskeyInput');
+9540:   const status = document.getElementById('adminModalStatus');
+9541:   if (input) { input.value = ''; setTimeout(function(){ try { input.focus(); } catch(e){} },50); }
+9542:   if (status) status.innerText = '';
+9543: }
+9544: 
+9545: function closeAdminModal() {
+9546:   document.getElementById('adminModal').classList.add('hidden');
+9547: }
+9548: 
+9549: async function verifyAdminPasskey() {
+9550:   var input = document.getElementById('adminPasskeyInput').value.trim().toUpperCase();
+9551:   var statusEl = document.getElementById('adminModalStatus');
+9552: 
+9553:   // Safety path for a stale/cached screen: a verified Zaid/Moursi account can
+9554:   // unlock Admin View with its existing personal PIN. Normally they enter
+9555:   // Admin View directly and never see this modal.
+9556:   const role = rotasticResolvedVerifiedRole();
+9557:   const permanentPinOk = false;
+9558:   if (permanentPinOk) {
+9559:     Storage.set('rotastic_admin_token', 'permanent');
+9560:     currentViewMode = 'admin';
+9561:     Storage.set('rotastic_view_mode', 'admin');
+9562:     applyViewMode();
+9563:     renderScheduleView();
+9564:     statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked.</span>';
+9565:     setTimeout(function() {
+9566:       closeAdminModal();
+9567:       switchTab('schedule');
+9568:     }, 200);
+9569:     return;
+9570:   }
+9571: 
+9572:   try {
+9573:     await rotasticBackendEnsureSession();
+9574:     if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified sign-in is required.');
+9575:     const redeemed = await rotasticBackendClient.rpc('rotastic_redeem_admin_access_code', { p_code:input });
+9576:     if (redeemed.error) throw redeemed.error;
+9577:     const row = Array.isArray(redeemed.data) ? redeemed.data[0] : redeemed.data;
+9578:     if (!row || !row.ok || !row.expires_at || !row.code_id) {
+9579:       statusEl.innerHTML = '<span class="text-rose-400">Invalid, expired, revoked, or unauthorised Admin View code.</span>';
+9580:       return;
+9581:     }
+9582:     const expiry = new Date(row.expires_at).getTime();
+9583:     Storage.set('rotastic_admin_token', String(expiry));
+9584:     Storage.set('rotastic_admin_code_id', String(row.code_id));
+9585:     currentViewMode = 'admin';
+9586:     Storage.set('rotastic_view_mode', 'admin');
+9587:     applyViewMode();
+9588:     renderScheduleView();
+9589:     statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked until ' + formatWorkflowTime(row.expires_at) + '.</span>';
+9590:     setTimeout(function() { closeAdminModal(); switchTab('schedule'); }, 300);
+9591:   } catch (e) {
+9592:     statusEl.innerHTML = '<span class="text-rose-400">' + String(e?.message || 'Could not verify Admin View code.') + '</span>';
+9593:   }
+
+===== function openAdminModal() =====
+--- lines 9517-9604 ---
+9517:     if (button.dataset.primaryNavBound === '1') return;
+9518:     button.dataset.primaryNavBound = '1';
+9519:     button.addEventListener('click', function(event) { event.preventDefault(); event.stopPropagation(); switchTab(button.dataset.rotasticTab); }, true);
+9520:   });
+9521: }
+9522: document.addEventListener('DOMContentLoaded', function() { bindRotasticPrimaryNavigation(); setTimeout(bindRotasticPrimaryNavigation,400); setTimeout(bindRotasticPrimaryNavigation,1400); });
+9523: 
+9524: function handleViewBadgeClick() {
+9525:   if (isAdminViewActive()) {
+9526:     currentViewMode = 'colleague';
+9527:     Storage.set('rotastic_view_mode', 'colleague');
+9528:     try { Storage.remove('rotastic_admin_token'); Storage.remove('rotastic_admin_code_id'); } catch (e) {}
+9529:     try { if (rotasticBackendClient && rotasticBackendUser) rotasticBackendClient.rpc('rotastic_end_admin_session'); } catch (e) {}
+9530:     applyViewMode(); renderScheduleView(); switchTab('schedule'); return;
+9531:   }
+9532:   openAdminModal();
+9533: }
+9534: 
+9535: function openAdminModal() {
+9536:   const modal = document.getElementById('adminModal');
+9537:   if (!modal) return;
+9538:   modal.classList.remove('hidden');
+9539:   const input = document.getElementById('adminPasskeyInput');
+9540:   const status = document.getElementById('adminModalStatus');
+9541:   if (input) { input.value = ''; setTimeout(function(){ try { input.focus(); } catch(e){} },50); }
+9542:   if (status) status.innerText = '';
+9543: }
+9544: 
+9545: function closeAdminModal() {
+9546:   document.getElementById('adminModal').classList.add('hidden');
+9547: }
+9548: 
+9549: async function verifyAdminPasskey() {
+9550:   var input = document.getElementById('adminPasskeyInput').value.trim().toUpperCase();
+9551:   var statusEl = document.getElementById('adminModalStatus');
+9552: 
+9553:   // Safety path for a stale/cached screen: a verified Zaid/Moursi account can
+9554:   // unlock Admin View with its existing personal PIN. Normally they enter
+9555:   // Admin View directly and never see this modal.
+9556:   const role = rotasticResolvedVerifiedRole();
+9557:   const permanentPinOk = false;
+9558:   if (permanentPinOk) {
+9559:     Storage.set('rotastic_admin_token', 'permanent');
+9560:     currentViewMode = 'admin';
+9561:     Storage.set('rotastic_view_mode', 'admin');
+9562:     applyViewMode();
+9563:     renderScheduleView();
+9564:     statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked.</span>';
+9565:     setTimeout(function() {
+9566:       closeAdminModal();
+9567:       switchTab('schedule');
+9568:     }, 200);
+9569:     return;
+9570:   }
+9571: 
+9572:   try {
+9573:     await rotasticBackendEnsureSession();
+9574:     if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified sign-in is required.');
+9575:     const redeemed = await rotasticBackendClient.rpc('rotastic_redeem_admin_access_code', { p_code:input });
+9576:     if (redeemed.error) throw redeemed.error;
+9577:     const row = Array.isArray(redeemed.data) ? redeemed.data[0] : redeemed.data;
+9578:     if (!row || !row.ok || !row.expires_at || !row.code_id) {
+9579:       statusEl.innerHTML = '<span class="text-rose-400">Invalid, expired, revoked, or unauthorised Admin View code.</span>';
+9580:       return;
+9581:     }
+9582:     const expiry = new Date(row.expires_at).getTime();
+9583:     Storage.set('rotastic_admin_token', String(expiry));
+9584:     Storage.set('rotastic_admin_code_id', String(row.code_id));
+9585:     currentViewMode = 'admin';
+9586:     Storage.set('rotastic_view_mode', 'admin');
+9587:     applyViewMode();
+9588:     renderScheduleView();
+9589:     statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked until ' + formatWorkflowTime(row.expires_at) + '.</span>';
+9590:     setTimeout(function() { closeAdminModal(); switchTab('schedule'); }, 300);
+9591:   } catch (e) {
+9592:     statusEl.innerHTML = '<span class="text-rose-400">' + String(e?.message || 'Could not verify Admin View code.') + '</span>';
+9593:   }
+9594: 
+9595: }
+9596: 
+9597: function checkInlineAdminSelection() {
+9598:   const val = document.getElementById('inlineDocSelect').value;
+9599:   const wrapper = document.getElementById('inlinePinWrapper');
+9600:   const pinInput = document.getElementById('inlineAdminPin');
+9601: 
+9602:   const requiresPin =
+9603:     val === 'Dr Zaid SE.' ||
+9604:     val === 'Dr Mohamed M.' ||
+
+===== async function verifyAdminPasskey() =====
+--- lines 9531-9618 ---
+9531:   }
+9532:   openAdminModal();
+9533: }
+9534: 
+9535: function openAdminModal() {
+9536:   const modal = document.getElementById('adminModal');
+9537:   if (!modal) return;
+9538:   modal.classList.remove('hidden');
+9539:   const input = document.getElementById('adminPasskeyInput');
+9540:   const status = document.getElementById('adminModalStatus');
+9541:   if (input) { input.value = ''; setTimeout(function(){ try { input.focus(); } catch(e){} },50); }
+9542:   if (status) status.innerText = '';
+9543: }
+9544: 
+9545: function closeAdminModal() {
+9546:   document.getElementById('adminModal').classList.add('hidden');
+9547: }
+9548: 
+9549: async function verifyAdminPasskey() {
+9550:   var input = document.getElementById('adminPasskeyInput').value.trim().toUpperCase();
+9551:   var statusEl = document.getElementById('adminModalStatus');
+9552: 
+9553:   // Safety path for a stale/cached screen: a verified Zaid/Moursi account can
+9554:   // unlock Admin View with its existing personal PIN. Normally they enter
+9555:   // Admin View directly and never see this modal.
+9556:   const role = rotasticResolvedVerifiedRole();
+9557:   const permanentPinOk = false;
+9558:   if (permanentPinOk) {
+9559:     Storage.set('rotastic_admin_token', 'permanent');
+9560:     currentViewMode = 'admin';
+9561:     Storage.set('rotastic_view_mode', 'admin');
+9562:     applyViewMode();
+9563:     renderScheduleView();
+9564:     statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked.</span>';
+9565:     setTimeout(function() {
+9566:       closeAdminModal();
+9567:       switchTab('schedule');
+9568:     }, 200);
+9569:     return;
+9570:   }
+9571: 
+9572:   try {
+9573:     await rotasticBackendEnsureSession();
+9574:     if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified sign-in is required.');
+9575:     const redeemed = await rotasticBackendClient.rpc('rotastic_redeem_admin_access_code', { p_code:input });
+9576:     if (redeemed.error) throw redeemed.error;
+9577:     const row = Array.isArray(redeemed.data) ? redeemed.data[0] : redeemed.data;
+9578:     if (!row || !row.ok || !row.expires_at || !row.code_id) {
+9579:       statusEl.innerHTML = '<span class="text-rose-400">Invalid, expired, revoked, or unauthorised Admin View code.</span>';
+9580:       return;
+9581:     }
+9582:     const expiry = new Date(row.expires_at).getTime();
+9583:     Storage.set('rotastic_admin_token', String(expiry));
+9584:     Storage.set('rotastic_admin_code_id', String(row.code_id));
+9585:     currentViewMode = 'admin';
+9586:     Storage.set('rotastic_view_mode', 'admin');
+9587:     applyViewMode();
+9588:     renderScheduleView();
+9589:     statusEl.innerHTML = '<span class="text-emerald-400">Admin View unlocked until ' + formatWorkflowTime(row.expires_at) + '.</span>';
+9590:     setTimeout(function() { closeAdminModal(); switchTab('schedule'); }, 300);
+9591:   } catch (e) {
+9592:     statusEl.innerHTML = '<span class="text-rose-400">' + String(e?.message || 'Could not verify Admin View code.') + '</span>';
+9593:   }
+9594: 
+9595: }
+9596: 
+9597: function checkInlineAdminSelection() {
+9598:   const val = document.getElementById('inlineDocSelect').value;
+9599:   const wrapper = document.getElementById('inlinePinWrapper');
+9600:   const pinInput = document.getElementById('inlineAdminPin');
+9601: 
+9602:   const requiresPin =
+9603:     val === 'Dr Zaid SE.' ||
+9604:     val === 'Dr Mohamed M.' ||
+9605:     false;
+9606: 
+9607:   wrapper.style.display = requiresPin ? 'block' : 'none';
+9608: 
+9609:   if (!requiresPin && pinInput) {
+9610:     pinInput.value = '';
+9611:   }
+9612: }
+9613: 
+9614: function saveInlineProfile() {
+9615:   const selectedDoc = document.getElementById('inlineDocSelect').value;
+9616:   const pinVal = document.getElementById('inlineAdminPin').value.trim();
+9617: 
+9618:   if (!selectedDoc) {
+
+===== <!-- SETTINGS --> =====
+--- lines 6645-6732 ---
+6645: </div>
+6646: <div class="mt-5 pt-4 border-t border-slate-800">
+6647: <div class="flex items-center justify-between gap-3 mb-3">
+6648: <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center">
+6649: <i class="fa-solid fa-list-check text-teal-400 mr-2"></i>
+6650:             Approved leave dates for <span class="ml-1 text-teal-300" id="plannerRosterWeek">October 2026</span>
+6651: </h3>
+6652: </div>
+6653: <div class="space-y-2" id="plannerWeekLeaveRoster"></div>
+6654: </div>
+6655: <div class="mt-5 pt-4 border-t border-slate-800">
+6656: <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center" id="plannerRecentLeaveHeading">
+6657: <i class="fa-solid fa-clock-rotate-left text-slate-400 mr-2"></i>Your recent leave requests
+6658:         </h3>
+6659: <div class="space-y-2 text-xs text-slate-400" id="recentLeaveSubmissions"></div>
+6660: </div>
+6661: </div>
+6662: </div>
+6663: <!-- SETTINGS -->
+6664: <div class="hidden space-y-4" id="tabUserSettings">
+6665: <div class="clean-card rounded-2xl p-5 max-w-xl mx-auto space-y-6">
+6666: <div>
+6667: <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-1 flex items-center">
+6668: <i class="fa-solid fa-gear text-teal-400 mr-2"></i>Settings
+6669:         </h2>
+6670: <div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/50 p-3" id="rotasticSettingsAccountBox">
+6671: <div class="text-[11px] text-slate-300">You are viewing as doctor <strong class="text-white" id="rotasticViewingDoctor">—</strong></div>
+6672: <div class="mt-3 flex items-center gap-2">
+6673: <button class="flex-1 min-w-0 whitespace-nowrap rounded-xl border border-teal-500/25 bg-teal-500/10 px-3 py-2.5 text-[11px] font-extrabold text-teal-200" id="settingsViewSwitchBtn" onclick="handleViewBadgeClick()" type="button"><i class="fa-solid fa-repeat mr-1.5"></i><span id="settingsViewSwitchText">Switch view</span></button>
+6674: <button class="flex-1 min-w-0 whitespace-nowrap rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-[11px] font-extrabold text-rose-200" id="rotasticLogoutBtn" onclick="rotasticLogoutAndSwitchAccount()" type="button"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>Log out / Switch account</button>
+6675: </div>
+6676: <div class="mt-2 text-[9px] text-slate-500">Returning from Colleague View to Admin View requires a valid temporary Admin access code.</div>
+6677: </div>
+6678: <p class="text-xs text-slate-400">App preferences.</p>
+6679: <p class="hidden" id="profileChangeAccessNote"></p>
+6680: </div>
+6681: <select aria-hidden="true" class="hidden" id="userPrefDocSelect" tabindex="-1"></select>
+6682: <div class="p-3.5 rounded-xl bg-slate-900/55 border border-slate-800">
+6683: <div class="flex items-center justify-between gap-3 mb-2">
+6684: <div>
+6685: <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">
+6686: <i class="fa-solid fa-universal-access text-teal-400 mr-1.5"></i>Text size
+6687:             </div>
+6688: <div class="text-[10px] text-slate-500 mt-0.5">Adjust reading size.</div>
+6689: </div>
+6690: </div>
+6691: <select class="w-full bg-slate-950 text-white p-2.5 rounded-xl border border-slate-700 outline-none" id="rotasticTextSizeSelect" onchange="setRotasticTextSize(this.value)">
+6692: <option value="normal">Standard</option>
+6693: <option value="large">Larger</option>
+6694: <option value="xlarge">Extra large</option>
+6695: </select>
+6696: </div>
+6697: <details class="rounded-xl bg-slate-900/55 border border-slate-800" id="notificationPreferencesDetails">
+6698: <summary class="p-3.5 flex items-center justify-between gap-3">
+6699: <div class="min-w-0">
+6700: <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">
+6701: <i class="fa-solid fa-bell text-cyan-400 mr-1.5"></i>Notifications
+6702:             </div>
+6703: <div class="text-[10px] text-slate-500 mt-0.5" id="notificationPreferenceSummary">
+6704:               Notifications enabled.
+6705:             </div>
+6706: </div>
+6707: <div class="flex items-center gap-2 flex-shrink-0">
+6708: <span class="text-[9px] text-cyan-300 font-bold">Choose</span>
+6709: <i class="notification-chevron fa-solid fa-chevron-down text-[9px] text-slate-500 transition-transform"></i>
+6710: </div>
+6711: </summary>
+6712: <div class="px-3.5 pb-3.5 border-t border-slate-800/70 pt-3">
+6713: <div class="flex items-center justify-between gap-3 mb-2">
+6714: <div class="text-[9px] text-slate-500">
+6715:               Untick notifications you do not want.
+6716:             </div>
+6717: <button class="text-[9px] px-2 py-1 rounded-lg border border-slate-700 text-slate-400 hover:text-white flex-shrink-0" onclick="resetNotificationPreferences()" type="button">
+6718:               Enable all
+6719:             </button>
+6720: </div>
+6721: <div class="space-y-1.5" id="notificationPreferenceList"></div>
+6722: <button class="mt-3 w-full rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[10px] font-extrabold text-cyan-200 hover:bg-cyan-500/15" onclick="rotasticEnableNotificationsFromUserGesture()" type="button">
+6723: <i class="fa-solid fa-bell mr-1.5"></i>Enable device notifications
+6724: </button>
+6725: <div class="mt-2 text-[9px] text-slate-500" id="rotasticDeviceNotificationStatus">Tap Enable device notifications to allow alerts on this device.</div>
+6726: <div class="mt-2 text-[9px] text-slate-600 leading-relaxed">
+6727:             Shift alerts appear only when relevant to you.
+6728:           </div>
+6729: </div>
+6730: </details>
+6731: <button class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition uppercase tracking-wider text-xs" id="saveProfilePreferencesBtn" onclick="saveUserPreferences()" type="button">
+6732:         Save Preferences
+
+===== id="adminBadgeWrapper" =====
+--- lines 6313-6400 ---
+6313: <i class="fa-regular fa-calendar-days mr-1.5"></i>Rota
+6314:       </button>
+6315: <button class="admin-tab px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnGenerator" onclick="switchTab('generator')" style="display:none;" type="button">
+6316: <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-teal-400"></i>Generate
+6317:       </button>
+6318: <button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnLeavePlanner" onclick="switchTab('leaveplanner')" type="button">
+6319: <i class="fa-solid fa-calendar-week mr-1.5 text-emerald-400"></i>Planner
+6320:       </button>
+6321: <button class="admin-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition" id="deskTabBtnAnnouncements" onclick="switchTab('announcements')" style="display:none;" type="button">
+6322: <i class="fa-solid fa-bullhorn mr-1.5 text-amber-400"></i>Announcements
+6323:       </button>
+6324: <button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnMetrics" onclick="switchTab('metrics')" type="button">
+6325: <i class="fa-solid fa-chart-pie mr-1.5 text-slate-400"></i>Metrics
+6326:       </button>
+6327: <button class="px-3.5 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition" id="deskTabBtnUserSettings" onclick="switchTab('usersettings')" type="button">
+6328: <i class="fa-solid fa-gear mr-1.5"></i>Settings
+6329:       </button>
+6330: </nav>
+6331: <div class="flex items-center space-x-2" id="adminBadgeWrapper">
+6332: <button aria-label="Notifications" class="relative w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center justify-center transition" id="notificationBellBtn" onclick="openRotasticNotificationCenter()" type="button">
+6333: <i class="fa-regular fa-bell text-lg"></i>
+6334: <span class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black leading-[18px] text-center" id="notificationUnreadBadge">0</span>
+6335: </button>
+6336: </div>
+6337: </div>
+6338: </header>
+6339: <div class="hidden ticker-shell px-3 text-xs" id="swapsNewsTicker">
+6340: <div class="max-w-6xl mx-auto flex items-stretch gap-2 py-1.5" id="tickerInnerRow">
+6341: <div class="ticker-type-badge flex-shrink-0" id="tickerTypeBadge">
+6342: <div class="ticker-badge-square" id="tickerBadgeSquare">
+6343: <img alt="" class="ticker-source-logo hidden" id="tickerSourceLogo" referrerpolicy="no-referrer"/>
+6344: <i class="fa-solid fa-wave-square" id="tickerTypeIcon"></i>
+6345: <span class="ticker-fallback-title hidden" id="tickerFallbackTitle">NEWS</span>
+6346: </div>
+6347: <span class="ticker-badge-caption" id="tickerTypeText">ANNOUNCEMENTS</span>
+6348: </div>
+6349: <div class="news-stage flex-1">
+6350: <div class="news-drop-item font-semibold" id="tickerContent"></div>
+6351: </div>
+6352: <div class="hidden sm:flex items-center gap-1 px-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider flex-shrink-0">
+6353: <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Live
+6354:     </div>
+6355: </div>
+6356: </div>
+6357: <script>
+6358: (function () {
+6359:   function forceEscapeSplash() {
+6360:     var splash = document.getElementById('rotasticOpeningSplash');
+6361:     if (!splash) return;
+6362: 
+6363:     window.__rotasticSplashDismissed = true;
+6364:     window.__rotasticSplashStarted = false;
+6365:     splash.classList.add('rotastic-splash-hide');
+6366:     splash.style.opacity = '0';
+6367:     splash.style.visibility = 'hidden';
+6368:     splash.style.pointerEvents = 'none';
+6369: 
+6370:     setTimeout(function () {
+6371:       splash.style.display = 'none';
+6372:       if (splash.parentNode) splash.parentNode.removeChild(splash);
+6373:     }, 260);
+6374:   }
+6375: 
+6376:   // Independent of all ROTASTIC startup logic: never allow an APK/WebView
+6377:   // runtime error elsewhere to trap the user on the splash screen.
+6378:   window.__rotasticSplashEscapeTimer = setTimeout(forceEscapeSplash, 5200);
+6379: 
+6380:   window.addEventListener('error', function () {
+6381:     // Give the splash its normal presentation first, then escape promptly.
+6382:     setTimeout(forceEscapeSplash, 900);
+6383:   });
+6384: 
+6385:   window.addEventListener('unhandledrejection', function () {
+6386:     setTimeout(forceEscapeSplash, 900);
+6387:   });
+6388: })();
+6389: </script>
+6390: <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-4">
+6391: <div class="hidden p-4 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-xs flex items-center justify-between shadow-xl" id="userApprovalToast">
+6392: <div class="flex items-center space-x-3">
+6393: <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center flex-shrink-0 text-base">✅</div>
+6394: <div>
+6395: <span class="text-emerald-300 font-extrabold uppercase text-[10px] tracking-wider block">Notification Update</span>
+6396: <span class="text-slate-100 font-semibold" id="userApprovalToastMessage"></span>
+6397: </div>
+6398: </div>
+6399: <button class="text-slate-400 hover:text-white" onclick="dismissUserApprovalToast()" type="button">
+6400: <i class="fa-solid fa-xmark"></i>
+
+===== id="tabFeedback" =====
+
+===== id="deskTabBtnFeedback" =====
+
+===== Delegated Admin View =====
+
+===== Smart Rules Assistant =====
+
+===== Clinical Lead — Add / Change Shift =====
+
+===== scheduleAmendmentAssistantCard =====
+--- lines 4542-4629 ---
+4542:       display:block !important;
+4543:       width:100% !important;
+4544:       max-width:100% !important;
+4545:       overflow:hidden !important;
+4546:       text-overflow:ellipsis !important;
+4547:       white-space:nowrap !important;
+4548:       font-size:8px !important;
+4549:       line-height:1.1 !important;
+4550:       text-align:center !important;
+4551:     }
+4552:     @media (max-width:520px) {
+4553:       .live-drive-slot #driveTimeBtn > i { display:none !important; }
+4554:       #driveTimeBtnText { font-size:13px !important; }
+4555:       #driveTimeBtnSub { font-size:7.5px !important; }
+4556:     }
+4557: 
+4558: 
+4559:     /* v171 — deterministic rota switch and schedule amendment assistant */
+4560:     #scheduleAmendmentAssistantCard textarea {
+4561:       min-height: 86px;
+4562:     }
+4563: 
+4564:     #scheduleAmendmentPreview {
+4565:       box-shadow: inset 0 0 0 1px rgba(34,211,238,.04);
+4566:     }
+4567: 
+4568:     .rotastic-signature-caveat {
+4569:       font-size: clamp(27px, 4.7vw, 39px) !important;
+4570:     }
+4571: 
+4572: 
+4573:     /* v172 — greeting alignment: move icon + copy slightly left and protect right edge */
+4574:     #swapsNewsTicker.ticker-greeting-mode #tickerInnerRow:not(.ticker-fullwidth-mode) {
+4575:       transform: translate(-5px, 3px) !important;
+4576:       width: calc(100% - 2px) !important;
+4577:       max-width: calc(100% - 2px) !important;
+4578:       padding-right: 8px !important;
+4579:     }
+4580: 
+4581:     #swapsNewsTicker.ticker-greeting-mode .news-drop-item,
+4582:     #swapsNewsTicker.ticker-greeting-mode .ticker-opening-hero {
+4583:       padding-right: 16px !important;
+4584:     }
+4585: 
+4586:     @media (max-width: 420px) {
+4587:       #swapsNewsTicker.ticker-greeting-mode #tickerInnerRow:not(.ticker-fullwidth-mode) {
+4588:         transform: translate(-4px, 3px) !important;
+4589:         width: 100% !important;
+4590:         max-width: 100% !important;
+4591:       }
+4592:       #swapsNewsTicker.ticker-greeting-mode .news-drop-item,
+4593:       #swapsNewsTicker.ticker-greeting-mode .ticker-opening-hero {
+4594:         padding-left: 4px !important;
+4595:         padding-right: 18px !important;
+4596:       }
+4597:     }
+4598: 
+4599: 
+4600: /* v174 ticker alignment */
+4601: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)){display:grid!important;grid-template-columns:66px minmax(0,1fr)!important;column-gap:10px!important;padding-left:10px!important;padding-right:18px!important}
+4602: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-type-badge{grid-column:1!important;margin:0!important;justify-self:start!important}
+4603: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .news-stage{grid-column:2!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important}
+4604: #tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)) .ticker-message-card{width:100%!important;margin:0!important;padding:6px 10px 6px 0!important;text-align:left!important}
+4605: @media(max-width:520px){#tickerInnerRow:not(.ticker-fullwidth-mode):not(:has(#tickerTypeBadge.ticker-sick)):not(:has(#tickerTypeBadge.ticker-welcome)){grid-template-columns:62px minmax(0,1fr)!important;column-gap:8px!important;padding-left:8px!important;padding-right:14px!important}}
+4606: 
+4607: 
+4608:     /* v175 — explicit Rota View / pending poster visibility */
+4609:     body.rotastic-rota-view-active #scheduleMatrixContainer {
+4610:       display: block !important;
+4611:       visibility: visible !important;
+4612:       opacity: 1 !important;
+4613:       min-height: 300px !important;
+4614:     }
+4615: 
+4616:     body.rotastic-rota-view-active .rota-pending-poster {
+4617:       display: block !important;
+4618:       visibility: visible !important;
+4619:       opacity: 1 !important;
+4620:       min-height: 300px;
+4621:       width: 100%;
+4622:     }
+4623: 
+4624:     .rota-pending-poster-inner {
+4625:       min-height: 300px;
+4626:       padding: 34px 18px;
+4627:       display: flex;
+4628:       flex-direction: column;
+4629:       align-items: center;
+--- lines 6849-6936 ---
+6849: <div class="flex items-end">
+6850: <button class="w-full px-3.5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition" onclick="generateDutyScheduleFromPlanner()" type="button">
+6851: <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generate Schedule
+6852:           </button>
+6853: </div>
+6854: </div>
+6855: <div class="mt-4 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 flex items-start gap-2.5">
+6856: <i class="fa-solid fa-clock-rotate-left text-sky-300 mt-0.5"></i>
+6857: <div class="min-w-0">
+6858: <div class="text-[10px] font-black uppercase tracking-wider text-sky-300">Automatic weekly draft</div>
+6859: <div class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+6860:             Weekly draft prepared Wednesday at 22:00 Qatar time.
+6861:           </div>
+6862: <div class="text-[9px] text-slate-500 mt-1" id="autoGenerationStatus"></div>
+6863: </div>
+6864: </div>
+6865: </div>
+6866: <!-- AI-SUPPORTED SCHEDULE AMENDMENTS: ZAID / MOURSI ONLY -->
+6867: <div class="hidden clean-card rounded-2xl p-5 border-cyan-500/25" id="scheduleAmendmentAssistantCard">
+6868: <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-800">
+6869: <div>
+6870: <h3 class="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center">
+6871: <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Schedule Amendment Assistant
+6872:           </h3>
+6873: <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+6874:             Write one or many instructions in normal language. ROTASTIC will understand multiple names, days, shifts, rooms and leave instructions, then show one clear confirmation before applying.
+6875:           </p>
+6876: </div>
+6877: <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-bold text-cyan-300 whitespace-nowrap">Admin only</span>
+6878: </div>
+6879: <div class="pt-4">
+6880: <div class="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 items-end">
+6881: <div>
+6882: <label class="block text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1">Amendment scope</label>
+6883: <select class="w-full bg-slate-900 text-white text-xs p-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-400" id="scheduleAmendmentScope">
+6884: <option value="rota">This rota only</option>
+6885: <option value="week">This week only</option>
+6886: <option value="permanent">Long-term / permanent</option>
+6887: </select>
+6888: </div>
+6889: <div>
+6890: <label class="block text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1">Describe the amendment</label>
+6891: <textarea class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-cyan-400 resize-y" id="scheduleAmendmentInput" placeholder="Example: Dr Husam to Room 12, or Dr Selman never does Twilight" rows="3"></textarea>
+6892: </div>
+6893: </div>
+6894: <div class="mt-2 flex flex-wrap gap-2">
+6895: <button class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition" onclick="analyseScheduleAmendment()" type="button">
+6896: <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Interpret Amendment
+6897:           </button>
+6898: <button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl transition" id="scheduleVoiceBtn" onclick="toggleScheduleAmendmentVoice()" type="button">
+6899: <i class="fa-solid fa-microphone mr-1.5"></i>Voice Input
+6900:           </button>
+6901: </div>
+6902: <div class="hidden mt-2 text-[10px] text-cyan-300" id="scheduleAmendmentVoiceStatus"></div>
+6903: <div class="hidden mt-3 p-3 rounded-xl border border-cyan-500/25 bg-cyan-950/15" id="scheduleAmendmentPreview">
+6904: <div class="text-[9px] uppercase tracking-wider font-black text-cyan-300">Please confirm what ROTASTIC understood</div>
+6905: <div class="text-xs text-slate-100 font-semibold mt-2 leading-relaxed" id="scheduleAmendmentSummary"></div>
+6906: <div class="text-[10px] text-slate-400 mt-1 leading-relaxed" id="scheduleAmendmentDetails"></div>
+6907: <div class="mt-3 flex flex-wrap gap-2">
+6908: <button class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition" onclick="confirmScheduleAmendment()" type="button">
+6909: <i class="fa-solid fa-check mr-1.5"></i>Confirm &amp; Apply
+6910:             </button>
+6911: <button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition" onclick="cancelScheduleAmendment()" type="button">
+6912:               Cancel
+6913:             </button>
+6914: </div>
+6915: </div>
+6916: <div class="hidden mt-3 p-3 rounded-xl text-[11px]" id="scheduleAmendmentStatus"></div>
+6917: </div>
+6918: </div>
+6919: <!-- 2. AUTOMATIC ROTA RULES -->
+6920: 
+6921: <!-- 3. ROTA REVIEW & APPROVAL -->
+6922: <div class="clean-card rounded-2xl p-5 border-amber-500/30" id="rotaApprovalWorkflowCard">
+6923: <div class="flex flex-col md:flex-row md:items-start justify-between pb-3 border-b border-slate-800 gap-3">
+6924: <div>
+6925: <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center">
+6926: <i class="fa-solid fa-paper-plane mr-2"></i>Rota Review &amp; Approval
+6927:           </h3>
+6928: <p class="text-[11px] text-slate-400 mt-1" id="rotaApprovalWorkflowSubtitle">
+6929:             Send the generated rota for Clinical Lead approval.
+6930:           </p>
+6931: </div>
+6932: <div class="hidden flex flex-wrap gap-2" id="zaidSendRotaControls">
+6933: <button class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition" id="sendRotaToMoursiBtn" onclick="sendRotaToMoursiForApproval()" type="button">
+6934: <i class="fa-solid fa-mobile-screen-button mr-1.5"></i>Send to Clinical Lead
+6935:           </button>
+6936: </div>
+--- lines 13769-13856 ---
+13769:   initializeAutoRotaRuleSettings();
+13770:   showAutoRotaStatus('Automatic rota rules saved. Dr Abdul Ghafoor remains in Group 2.', true); return true;
+13771: }
+13772: function resetAutoRotaRuleSettings(){ Storage.setJSON('rotastic_auto_rules', ROTASTIC_RULE_DEFAULTS); initializeAutoRotaRuleSettings(); showAutoRotaStatus('Rules reset to the supplied rota defaults.', true); }
+13773: 
+13774: 
+13775: 
+13776: let rotasticPendingScheduleAmendment = null;
+13777: let rotasticScheduleSpeechRecognition = null;
+13778: 
+13779: function canUseScheduleAmendmentAssistant() {
+13780:   return isAdminViewActive() && (
+13781:     activeUserDocName === 'Dr Zaid SE.' ||
+13782:     activeUserDocName === 'Dr Mohamed M.'
+13783:   );
+13784: }
+13785: 
+13786: function renderScheduleAmendmentAssistantAccess() {
+13787:   const card = document.getElementById('scheduleAmendmentAssistantCard');
+13788:   if (!card) return;
+13789:   card.classList.toggle('hidden', !canUseScheduleAmendmentAssistant());
+13790: }
+13791: 
+13792: function findScheduleDayByText(raw) {
+13793:   const text = String(raw || '').toLowerCase();
+13794:   const names = ['sunday','monday','tuesday','wednesday','thursday'];
+13795:   const idx = names.findIndex(function(day){ return text.indexOf(day) !== -1; });
+13796:   if (idx !== -1) return {index:idx, dayName:names[idx]};
+13797: 
+13798:   if (/\btoday\b/i.test(text)) {
+13799:     const qatarIdx = getQatarRotaDayIndex();
+13800:     return qatarIdx >= 0 && qatarIdx <= 4 ? {index:qatarIdx, dayName:names[qatarIdx]} : null;
+13801:   }
+13802:   return null;
+13803: }
+13804: 
+13805: function findSchedulePeriodByText(raw) {
+13806:   const text = String(raw || '').toLowerCase();
+13807:   if (/\b(pm|afternoon|evening)\b/i.test(text)) return 'pm';
+13808:   if (/\b(am|morning)\b/i.test(text)) return 'am';
+13809:   return '';
+13810: }
+13811: 
+13812: 
+13813: function getScheduleAmendmentScope() {
+13814:   const el = document.getElementById('scheduleAmendmentScope');
+13815:   const value = String(el?.value || 'rota');
+13816:   return ['rota','week','permanent'].includes(value) ? value : 'rota';
+13817: }
+13818: 
+13819: function rotasticScopeLabel(scope) {
+13820:   if (scope === 'week') return 'This week only';
+13821:   if (scope === 'permanent') return 'Long-term / permanent';
+13822:   return 'This rota only';
+13823: }
+13824: 
+13825: function getPersistentScheduleAmendments() {
+13826:   const rows = Storage.getJSON('rotastic_persistent_schedule_amendments', []);
+13827:   return Array.isArray(rows) ? rows : [];
+13828: }
+13829: 
+13830: function savePersistentScheduleAmendments(rows) {
+13831:   Storage.setJSON('rotastic_persistent_schedule_amendments', Array.isArray(rows) ? rows.slice(0,100) : []);
+13832: }
+13833: 
+13834: function rotasticPermanentTemplateFromText(raw) {
+13835:   const text = String(raw || '').trim();
+13836:   const doctors = smartRuleFindDoctors(text);
+13837:   if (doctors.length !== 1) {
+13838:     return {ok:false, message:'A permanent rota rule should identify one physician at a time.'};
+13839:   }
+13840:   const doctor = canonicalRotaName(doctors[0]);
+13841:   if (rotasticIsAbsencePhrase(text) || /\b(on\s+leave|absent|away|not\s+coming)\b/i.test(text)) {
+13842:     return {ok:false, message:'Leave is date-based and cannot be saved as a permanent rule. Use This rota only or This week only.'};
+13843:   }
+13844: 
+13845:   const dayInfo = findScheduleDayByText(text);
+13846:   const period = findSchedulePeriodByText(text);
+13847:   const base = {
+13848:     doctor:doctor,
+13849:     dayName:dayInfo ? dayInfo.dayName : '',
+13850:     period:period,
+13851:     raw:text
+13852:   };
+13853: 
+13854:   const room = text.match(/\broom\s*(?:number\s*)?(\d{1,2})\b/i);
+13855:   if (room) return {ok:true, template:Object.assign(base,{type:'room',room:parseInt(room[1],10)})};
+13856:   const twilight = text.match(/\btwilight\s*(?:doctor\s*)?([12])?\b/i);
+
+===== generateDutyScheduleFromPlanner() =====
+--- lines 6832-6919 ---
+6832: <datalist id="wednesdayAMOBGroupOptions"></datalist>
+6833: <p class="text-[9px] text-slate-500 mt-1" id="wednesdayAMOBGroupHint">Required change-over anchor.</p>
+6834: </div>
+6835: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6836: <label class="block text-[10px] font-semibold text-amber-400 uppercase mb-1">Assign AM Shift Lead</label>
+6837: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="assignShiftLeadAM" onchange="onAdminAssignShiftLead('AM')"></select>
+6838: </div>
+6839: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6840: <label class="block text-[10px] font-semibold text-indigo-400 uppercase mb-1">Assign PM Shift Lead</label>
+6841: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="assignShiftLeadPM" onchange="onAdminAssignShiftLead('PM')"></select>
+6842: </div>
+6843: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6844: <label class="block text-[10px] font-semibold text-teal-400 uppercase mb-1">Generate period</label>
+6845: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="rotasticGenerationRange">
+6846: <option value="1">1 week</option><option value="4">1 month (4 weeks)</option><option value="13">3 months (13 weeks)</option>
+6847: </select>
+6848: </div>
+6849: <div class="flex items-end">
+6850: <button class="w-full px-3.5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition" onclick="generateDutyScheduleFromPlanner()" type="button">
+6851: <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generate Schedule
+6852:           </button>
+6853: </div>
+6854: </div>
+6855: <div class="mt-4 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 flex items-start gap-2.5">
+6856: <i class="fa-solid fa-clock-rotate-left text-sky-300 mt-0.5"></i>
+6857: <div class="min-w-0">
+6858: <div class="text-[10px] font-black uppercase tracking-wider text-sky-300">Automatic weekly draft</div>
+6859: <div class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+6860:             Weekly draft prepared Wednesday at 22:00 Qatar time.
+6861:           </div>
+6862: <div class="text-[9px] text-slate-500 mt-1" id="autoGenerationStatus"></div>
+6863: </div>
+6864: </div>
+6865: </div>
+6866: <!-- AI-SUPPORTED SCHEDULE AMENDMENTS: ZAID / MOURSI ONLY -->
+6867: <div class="hidden clean-card rounded-2xl p-5 border-cyan-500/25" id="scheduleAmendmentAssistantCard">
+6868: <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-800">
+6869: <div>
+6870: <h3 class="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center">
+6871: <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Schedule Amendment Assistant
+6872:           </h3>
+6873: <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+6874:             Write one or many instructions in normal language. ROTASTIC will understand multiple names, days, shifts, rooms and leave instructions, then show one clear confirmation before applying.
+6875:           </p>
+6876: </div>
+6877: <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-bold text-cyan-300 whitespace-nowrap">Admin only</span>
+6878: </div>
+6879: <div class="pt-4">
+6880: <div class="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 items-end">
+6881: <div>
+6882: <label class="block text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1">Amendment scope</label>
+6883: <select class="w-full bg-slate-900 text-white text-xs p-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-400" id="scheduleAmendmentScope">
+6884: <option value="rota">This rota only</option>
+6885: <option value="week">This week only</option>
+6886: <option value="permanent">Long-term / permanent</option>
+6887: </select>
+6888: </div>
+6889: <div>
+6890: <label class="block text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1">Describe the amendment</label>
+6891: <textarea class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-cyan-400 resize-y" id="scheduleAmendmentInput" placeholder="Example: Dr Husam to Room 12, or Dr Selman never does Twilight" rows="3"></textarea>
+6892: </div>
+6893: </div>
+6894: <div class="mt-2 flex flex-wrap gap-2">
+6895: <button class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition" onclick="analyseScheduleAmendment()" type="button">
+6896: <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Interpret Amendment
+6897:           </button>
+6898: <button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl transition" id="scheduleVoiceBtn" onclick="toggleScheduleAmendmentVoice()" type="button">
+6899: <i class="fa-solid fa-microphone mr-1.5"></i>Voice Input
+6900:           </button>
+6901: </div>
+6902: <div class="hidden mt-2 text-[10px] text-cyan-300" id="scheduleAmendmentVoiceStatus"></div>
+6903: <div class="hidden mt-3 p-3 rounded-xl border border-cyan-500/25 bg-cyan-950/15" id="scheduleAmendmentPreview">
+6904: <div class="text-[9px] uppercase tracking-wider font-black text-cyan-300">Please confirm what ROTASTIC understood</div>
+6905: <div class="text-xs text-slate-100 font-semibold mt-2 leading-relaxed" id="scheduleAmendmentSummary"></div>
+6906: <div class="text-[10px] text-slate-400 mt-1 leading-relaxed" id="scheduleAmendmentDetails"></div>
+6907: <div class="mt-3 flex flex-wrap gap-2">
+6908: <button class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition" onclick="confirmScheduleAmendment()" type="button">
+6909: <i class="fa-solid fa-check mr-1.5"></i>Confirm &amp; Apply
+6910:             </button>
+6911: <button class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition" onclick="cancelScheduleAmendment()" type="button">
+6912:               Cancel
+6913:             </button>
+6914: </div>
+6915: </div>
+6916: <div class="hidden mt-3 p-3 rounded-xl text-[11px]" id="scheduleAmendmentStatus"></div>
+6917: </div>
+6918: </div>
+6919: <!-- 2. AUTOMATIC ROTA RULES -->
+--- lines 16228-16315 ---
+16228:   return true;
+16229: }
+16230: 
+16231: function clearMoursiShiftOverride() {
+16232:   const daySelect = document.getElementById('moursiShiftDay');
+16233:   const isoDate = daySelect ? daySelect.value : '';
+16234:   if (!isoDate) {
+16235:     showMoursiShiftStatus('Choose a rota date first.', false);
+16236:     if (daySelect) openNativeDatePicker(daySelect);
+16237:     return false;
+16238:   }
+16239:   const overrides = Storage.getJSON('rotastic_moursi_shift_overrides', {});
+16240:   delete overrides[isoDate];
+16241:   Storage.setJSON('rotastic_moursi_shift_overrides', overrides);
+16242:   generateDutySchedule();
+16243:   showMoursiShiftStatus('Dr Mohamed M. override cleared for ' + isoDate + '. Base rota restored for that day.', true);
+16244: }
+16245: 
+16246: async function generateDutyScheduleFromPlanner() {
+16247:   await rotasticRefreshGenerationLock();
+16248:   if (!rotasticGuardNewGeneration(true)) return false;
+16249:   const weekSelect = document.getElementById('cycleStartDate');
+16250:   const weekISO = weekSelect ? weekSelect.value : '';
+16251: 
+16252:   if (!weekISO) {
+16253:     alert('Please choose the week commencing Sunday.');
+16254:     if (weekSelect) weekSelect.focus();
+16255:     return false;
+16256:   }
+16257: 
+16258:   Storage.set('rotastic_selected_week_commencing', weekISO);
+16259: 
+16260:   const input = document.getElementById('wednesdayAMOBGroup');
+16261:   const group = getWednesdayAMOBGroupValue();
+16262: 
+16263:   if (!group) {
+16264:     if (input) {
+16265:       input.focus();
+16266:       input.classList.add('ring-2','ring-rose-500/70','rounded');
+16267:       setTimeout(function() { input.classList.remove('ring-2','ring-rose-500/70','rounded'); }, 1800);
+16268:     }
+16269:     alert('Please select or enter which group is on AM on Wednesday before generating the schedule.');
+16270:     return false;
+16271:   }
+16272: 
+16273:   Storage.set('rotastic_wednesday_am_ob_group', group);
+16274:   Storage.set('rotastic_wednesday_am_group', group);
+16275:   generateDutySchedule();
+16276:   switchTab('schedule');
+16277:   return true;
+16278: }
+16279: 
+16280: 
+16281: // Final safety pass for Twilight. This runs after all other rota mutations so the
+16282: // schedule actually shown to the user always obeys the coordinator's rule.
+16283: function rotasticIsPlannedLeaveForTwilight(name, day) {
+16284:   const doctor = canonicalRotaName(name);
+16285:   if (!doctor || !day) return true;
+16286: 
+16287:   const record = DOCTORS.find(function(item){ return item.name === doctor; });
+16288:   if (record && Array.isArray(record.leaves) && record.leaves.indexOf(day.isoDate) !== -1) return true;
+16289: 
+16290:   if (Array.isArray(day.leaves) && day.leaves.some(function(label){
+16291:     return rotasticLeaveLabelMatchesDoctor(label, doctor);
+16292:   })) return true;
+16293: 
+16294:   // Signed rota planning is based on known/planned leave. Sick leave is not used
+16295:   // to recalculate the original 9–4 / 2–8 split after publication.
+16296:   return Storage.getJSON('rotastic_leave_submissions', []).some(function(item){
+16297:     if (!item || String(item.type || '').toLowerCase() === 'sick') return false;
+16298:     if (String(item.status || '') !== 'Approved by Clinical Lead') return false;
+16299:     if (canonicalRotaName(item.doc) !== doctor || !item.startDate) return false;
+16300:     const end = item.endDate || item.startDate;
+16301:     return day.isoDate >= item.startDate && day.isoDate <= end;
+16302:   });
+16303: }
+16304: 
+16305: function rotasticGetShiftGroupDoctors(day, period, plannedOnly) {
+16306:   if (!day) return [];
+16307:   const dayIndex = Math.max(0, currentSchedule.indexOf(day));
+16308:   const selected = getWednesdayAMOBGroupValue() || 'Group 1';
+16309:   const groupNo = getGroupForPeriod(dayIndex, period === 'am' ? 'AM' : 'PM', selected);
+16310:   const rules = getAutoRotaRules();
+16311:   const source = groupNo === 1 ? (rules.group1 || []) : (rules.group2 || []);
+16312:   const seen = new Set();
+16313: 
+16314:   return source.map(canonicalRotaName).filter(function(doctor){
+16315:     if (!doctor || seen.has(doctor)) return false;
+--- lines 19435-19522 ---
+19435:   };
+19436: }
+19437: 
+19438: function rotasticGenerationLockInfo() {
+19439:   const local = rotasticLocalGenerationLock();
+19440:   if (local.locked) return local;
+19441:   return rotasticGenerationLockCache || {locked:false};
+19442: }
+19443: 
+19444: function rotasticFormatGenerationUnlock(iso) {
+19445:   if (!iso) return 'Wednesday at 22:00 Qatar time';
+19446:   try {
+19447:     return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',weekday:'long',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(iso)) + ' Qatar time';
+19448:   } catch(e) { return 'Wednesday at 22:00 Qatar time'; }
+19449: }
+19450: 
+19451: function rotasticRenderGenerationLock() {
+19452:   const info = rotasticGenerationLockInfo();
+19453:   const btn = document.querySelector('button[onclick="generateDutyScheduleFromPlanner()"]');
+19454:   if (!btn) return;
+19455:   btn.disabled = !!info.locked;
+19456:   btn.classList.toggle('opacity-50', !!info.locked);
+19457:   btn.classList.toggle('cursor-not-allowed', !!info.locked);
+19458:   btn.title = info.locked ? ('Approved rota locked until ' + rotasticFormatGenerationUnlock(info.unlock_at) + '. Use Smart Amendment for changes.') : '';
+19459: }
+19460: 
+19461: async function rotasticRefreshGenerationLock() {
+19462:   try {
+19463:     if (rotasticBackendClient && rotasticBackendReady) {
+19464:       const result = await rotasticBackendClient.rpc('rotastic_rota_generation_lock_status');
+19465:       if (!result.error && result.data) rotasticGenerationLockCache = result.data;
+19466:     }
+19467:   } catch(e) { console.warn('ROTASTIC generation lock check:', e); }
+19468:   rotasticRenderGenerationLock();
+19469:   return rotasticGenerationLockInfo();
+19470: }
+19471: 
+19472: function rotasticGuardNewGeneration(showAlert) {
+19473:   const info = rotasticGenerationLockInfo();
+19474:   if (!info.locked) return true;
+19475:   if (showAlert !== false) {
+19476:     alert('This approved rota is locked. A new rota cannot be generated until ' + rotasticFormatGenerationUnlock(info.unlock_at) + '. Use the Smart Amendment box for changes to the current rota.');
+19477:   }
+19478:   return false;
+19479: }
+19480: 
+19481: function formatWorkflowTime(iso) {
+19482:   if (!iso) return '';
+19483:   try {
+19484:     return new Intl.DateTimeFormat('en-GB', {
+19485:       timeZone:'Asia/Qatar',
+19486:       day:'2-digit',
+19487:       month:'short',
+19488:       hour:'2-digit',
+19489:       minute:'2-digit',
+19490:       hour12:false
+19491:     }).format(new Date(iso));
+19492:   } catch(e) {
+19493:     return iso;
+19494:   }
+19495: }
+19496: 
+19497: async function sendTargetedPush(recipient, title, message, kind, extra) {
+19498:   const notificationKind = kind || 'rota-review';
+19499: 
+19500:   if (!notificationRecipientAllowed(recipient, notificationKind, extra || {})) {
+19501:     return {ok:false, mode:'suppressed-for-role'};
+19502:   }
+19503: 
+19504:   queueInAppNotification(recipient, message, notificationKind, extra || {});
+19505: 
+19506:   if (ROTASTIC_PUSH_BROADCAST_ENDPOINT) {
+19507:     try {
+19508:       const response = await rotasticPushBackendFetch({
+19509:         method:'POST',
+19510:         headers:{'Content-Type':'application/json'},
+19511:         body:JSON.stringify(Object.assign({
+19512:           type:notificationKind,
+19513:           recipient:recipient,
+19514:           title:title,
+19515:           body:message,
+19516:           centre:'Abu Nakhla Health Centre',
+19517:           createdAt:new Date().toISOString()
+19518:         }, extra || {}))
+19519:       });
+19520:       if (response.ok) return {ok:true, mode:'backend'};
+19521:     } catch(error) {
+19522:       console.warn('ROTASTIC targeted push failed:', error);
+
+===== id="tabGenerator" =====
+--- lines 6794-6881 ---
+6794: <div class="text-[10px] text-slate-500" id="accessCodeModeHint">First-time setup codes are valid for 24 hours.</div>
+6795: </div>
+6796: <div class="hidden mt-3 p-3 rounded-xl bg-violet-950/30 border border-violet-500/30" id="newTempAdminCodeBox">
+6797: <div class="text-[10px] uppercase tracking-wider font-bold text-violet-300" id="newTempAdminCodeLabel">New access code</div>
+6798: <div class="text-xl font-black tracking-[0.18em] text-white mt-1 select-all" id="newTempAdminCodeValue"></div>
+6799: <div class="text-[10px] text-slate-400 mt-1" id="newTempAdminCodeExpiry"></div>
+6800: <button class="hidden mt-3 w-full px-3 py-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-300 text-xs font-black" id="sendAccessCodeOutlookBtn" onclick="sendLastAccessCodeViaOutlook()" type="button">
+6801: <i class="fa-regular fa-envelope mr-1.5"></i>Send via Outlook
+6802: </button>
+6803: </div>
+6804: <div class="mt-4">
+6805: <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">Active / recent Admin View codes</div>
+6806: <div class="space-y-2" id="tempAdminCodeList"></div>
+6807: </div>
+6808: </div>
+6809: 
+6810: </div>
+6811: <!-- GENERATOR -->
+6812: <div class="hidden space-y-5" id="tabGenerator">
+6813: <!-- 1. GENERATE SCHEDULE — ALWAYS FIRST -->
+6814: <div class="clean-card rounded-2xl p-5 border-teal-500/30">
+6815: <div class="pb-3 border-b border-slate-800">
+6816: <h3 class="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center">
+6817: <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Generate Schedule
+6818:         </h3>
+6819: <p class="text-[11px] text-slate-400 mt-1">Choose the week and Wednesday AM group, then generate.</p>
+6820: </div>
+6821: <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+6822: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6823: <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Week commencing Sunday</label>
+6824: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none rounded-lg py-1" id="cycleStartDate" onchange="onWeekCommencingSundayChange()">
+6825: <option value="">Choose week commencing…</option>
+6826: </select>
+6827: <p class="text-[9px] text-slate-500 mt-1">Only Sundays that have not passed are shown.</p>
+6828: </div>
+6829: <div class="bg-slate-900/60 p-3 rounded-xl border border-rose-500/35" id="wednesdayAMOBGroupCard">
+6830: <label class="block text-[10px] font-semibold text-rose-300 uppercase mb-1">Wednesday AM Group <span class="text-rose-400">*</span></label>
+6831: <input autocomplete="off" class="w-full bg-transparent text-white font-medium text-xs outline-none placeholder:text-slate-600" id="wednesdayAMOBGroup" list="wednesdayAMOBGroupOptions" oninput="onWednesdayAMOBGroupInput()" placeholder="Which group is on AM on Wednesday?" type="text"/>
+6832: <datalist id="wednesdayAMOBGroupOptions"></datalist>
+6833: <p class="text-[9px] text-slate-500 mt-1" id="wednesdayAMOBGroupHint">Required change-over anchor.</p>
+6834: </div>
+6835: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6836: <label class="block text-[10px] font-semibold text-amber-400 uppercase mb-1">Assign AM Shift Lead</label>
+6837: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="assignShiftLeadAM" onchange="onAdminAssignShiftLead('AM')"></select>
+6838: </div>
+6839: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6840: <label class="block text-[10px] font-semibold text-indigo-400 uppercase mb-1">Assign PM Shift Lead</label>
+6841: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="assignShiftLeadPM" onchange="onAdminAssignShiftLead('PM')"></select>
+6842: </div>
+6843: <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+6844: <label class="block text-[10px] font-semibold text-teal-400 uppercase mb-1">Generate period</label>
+6845: <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="rotasticGenerationRange">
+6846: <option value="1">1 week</option><option value="4">1 month (4 weeks)</option><option value="13">3 months (13 weeks)</option>
+6847: </select>
+6848: </div>
+6849: <div class="flex items-end">
+6850: <button class="w-full px-3.5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition" onclick="generateDutyScheduleFromPlanner()" type="button">
+6851: <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generate Schedule
+6852:           </button>
+6853: </div>
+6854: </div>
+6855: <div class="mt-4 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 flex items-start gap-2.5">
+6856: <i class="fa-solid fa-clock-rotate-left text-sky-300 mt-0.5"></i>
+6857: <div class="min-w-0">
+6858: <div class="text-[10px] font-black uppercase tracking-wider text-sky-300">Automatic weekly draft</div>
+6859: <div class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+6860:             Weekly draft prepared Wednesday at 22:00 Qatar time.
+6861:           </div>
+6862: <div class="text-[9px] text-slate-500 mt-1" id="autoGenerationStatus"></div>
+6863: </div>
+6864: </div>
+6865: </div>
+6866: <!-- AI-SUPPORTED SCHEDULE AMENDMENTS: ZAID / MOURSI ONLY -->
+6867: <div class="hidden clean-card rounded-2xl p-5 border-cyan-500/25" id="scheduleAmendmentAssistantCard">
+6868: <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-800">
+6869: <div>
+6870: <h3 class="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center">
+6871: <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Schedule Amendment Assistant
+6872:           </h3>
+6873: <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+6874:             Write one or many instructions in normal language. ROTASTIC will understand multiple names, days, shifts, rooms and leave instructions, then show one clear confirmation before applying.
+6875:           </p>
+6876: </div>
+6877: <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-bold text-cyan-300 whitespace-nowrap">Admin only</span>
+6878: </div>
+6879: <div class="pt-4">
+6880: <div class="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 items-end">
+6881: <div>
+
+===== id="tabMetrics" =====
+--- lines 7041-7128 ---
+7041: <button class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition" onclick="broadcastAdminAnnouncement()" type="button">
+7042: <i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast Now
+7043:           </button>
+7044: <button class="sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition" onclick="clearCurrentAnnouncement()" type="button">
+7045: <i class="fa-solid fa-eraser mr-1.5"></i>Clear Current
+7046:           </button>
+7047: </div>
+7048: <div class="hidden p-3 rounded-xl text-xs" id="announcementAdminStatus"></div>
+7049: </div>
+7050: </div>
+7051: <div class="clean-card rounded-2xl p-5">
+7052: <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 flex items-center">
+7053: <i class="fa-solid fa-clock-rotate-left text-teal-400 mr-2"></i>Recent Announcements
+7054:       </h3>
+7055: <div class="space-y-2" id="announcementHistoryList"></div>
+7056: </div>
+7057: </div>
+7058: <!-- METRICS -->
+7059: <div class="hidden space-y-4" id="tabMetrics">
+7060: <div class="clean-card rounded-2xl p-4 sm:p-5">
+7061: <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+7062: <div>
+7063: <h2 class="text-sm font-extrabold uppercase tracking-wider text-white">PHCC Family Medicine Metrics</h2>
+7064: <p class="text-[11px] text-slate-400 mt-0.5">Rota workload, coverage, leave and balance at a glance.</p>
+7065: </div>
+7066: <button class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-fuchsia-300 transition flex items-center justify-center gap-2" onclick="exportAdminMetricsInfographic()" type="button">
+7067: <i class="fa-solid fa-chart-line"></i>
+7068: <span>Export Metrics Infographic</span>
+7069: </button>
+7070: </div>
+7071: </div>
+7072: <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+7073: <div class="clean-card rounded-2xl p-4">
+7074: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Physicians Scheduled</span>
+7075: <div class="text-2xl font-extrabold text-white mt-1" id="metricActiveDoctors">0</div>
+7076: </div>
+7077: <div class="clean-card rounded-2xl p-4">
+7078: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Total Shift Attendances</span>
+7079: <div class="text-2xl font-extrabold text-teal-300 mt-1" id="metricTotalShifts">0</div>
+7080: </div>
+7081: <div class="clean-card rounded-2xl p-4">
+7082: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">AM Attendances</span>
+7083: <div class="text-2xl font-extrabold text-amber-300 mt-1" id="metricAMShifts">0</div>
+7084: </div>
+7085: <div class="clean-card rounded-2xl p-4">
+7086: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">PM Attendances</span>
+7087: <div class="text-2xl font-extrabold text-indigo-300 mt-1" id="metricPMShifts">0</div>
+7088: </div>
+7089: </div>
+7090: <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+7091: <div class="clean-card rounded-2xl p-4">
+7092: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Average Shifts / Doctor</span>
+7093: <div class="text-2xl font-extrabold text-cyan-300 mt-1" id="metricAvgShifts">0</div>
+7094: </div>
+7095: <div class="clean-card rounded-2xl p-4">
+7096: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Workload Spread</span>
+7097: <div class="text-2xl font-extrabold text-fuchsia-300 mt-1" id="metricShiftSpread">0</div>
+7098: </div>
+7099: <div class="clean-card rounded-2xl p-4">
+7100: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Emergency Duties</span>
+7101: <div class="text-2xl font-extrabold text-rose-300 mt-1" id="metricEmergencyDuties">0</div>
+7102: </div>
+7103: <div class="clean-card rounded-2xl p-4">
+7104: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Clinic Assignments</span>
+7105: <div class="text-2xl font-extrabold text-emerald-300 mt-1" id="metricClinicAssignments">0</div>
+7106: </div>
+7107: <div class="clean-card rounded-2xl p-4">
+7108: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Code Blue Roles</span>
+7109: <div class="text-2xl font-extrabold text-sky-300 mt-1" id="metricCodeBlueRoles">0</div>
+7110: </div>
+7111: <div class="clean-card rounded-2xl p-4">
+7112: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Twilight Duties</span>
+7113: <div class="text-2xl font-extrabold text-violet-300 mt-1" id="metricTwilightDuties">0</div>
+7114: </div>
+7115: <div class="clean-card rounded-2xl p-4">
+7116: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Group 1 Shifts</span>
+7117: <div class="text-2xl font-extrabold text-violet-300 mt-1" id="metricGroup1Shifts">0</div>
+7118: </div>
+7119: <div class="clean-card rounded-2xl p-4">
+7120: <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Group 2 Shifts</span>
+7121: <div class="text-2xl font-extrabold text-amber-300 mt-1" id="metricGroup2Shifts">0</div>
+7122: </div>
+7123: </div>
+7124: <div class="clean-card rounded-2xl p-4 sm:p-5">
+7125: <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+7126: <div>
+7127: <h2 class="text-sm font-bold text-white uppercase tracking-wider">Leave Balance KPIs</h2>
+7128: <p class="text-[10px] text-slate-500 mt-0.5">Saved physician leave balances. Refreshes automatically while admin Metrics is open.</p>
+
+===== Developed by Dr. Zaid Sabe Eleish =====
+--- lines 12159-12246 ---
+12159:       </div>
+12160:     </div>
+12161:   </div>
+12162: 
+12163:   <div class="panel" style="margin-top:18px">
+12164:     <div class="section-title">Full workload matrix</div>
+12165:     <table>
+12166:       <thead>
+12167:         <tr>
+12168:           <th>Doctor</th><th>Shifts</th><th>Male ER</th><th>Female ER</th><th>Paeds ER</th><th>WBC</th><th>ANC/NCD</th><th>Twilight</th><th>Room Clinics</th>
+12169:         </tr>
+12170:       </thead>
+12171:       <tbody>${allDocsHtml}</tbody>
+12172:     </table>
+12173:   </div>
+12174: 
+12175:   <div class="footer">
+12176:     <div>Designed for PHCC Family Medicine rota review</div>
+12177:     <div>Developed by Dr. Zaid Sabe Eleish</div>
+12178:   </div>
+12179: </div>
+12180: 
+12181: 
+12182: 
+12183: 
+12184: 
+12185: 
+12186: <div class="hidden fixed inset-0 z-[10080] bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto" id="rotasticNotificationCenterOverlay" onclick="if(event.target===this) closeRotasticNotificationCenter()">
+12187: <div class="max-w-xl mx-auto mt-16 clean-card rounded-2xl p-4 sm:p-5">
+12188: <div class="flex items-center justify-between gap-3 mb-4"><div><div class="text-[10px] uppercase tracking-[0.18em] text-cyan-300 font-black">Today</div><h3 class="text-lg font-black text-white">Notifications</h3></div><button class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 text-slate-300" onclick="closeRotasticNotificationCenter()" type="button"><i class="fa-solid fa-xmark"></i></button></div>
+12189: <div class="space-y-2" id="rotasticNotificationTodayList"></div>
+12190: </div></div>
+12191: \n<script id="rotastic-requested-direct-functions">
+12192: (function(){
+12193: 'use strict';
+12194: const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+12195: const canon=n=>{try{return typeof canonicalRotaName==='function'?canonicalRotaName(n):String(n||'').trim()}catch(e){return String(n||'').trim()}};
+12196: const qatarDayKey=v=>{try{const d=v instanceof Date?v:new Date(v||Date.now()),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Qatar',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),m={};parts.forEach(x=>{if(x.type!=='literal')m[x.type]=x.value});return m.year+'-'+m.month+'-'+m.day}catch(e){return ''}};
+12197: 
+12198: window.rotasticAvailableDoctorCountForDay=function(day){
+12199:  const docs=(typeof DOCTORS!=='undefined'&&Array.isArray(DOCTORS))?DOCTORS:(Array.isArray(window.DOCTORS)?window.DOCTORS:[]); const iso=String(day?.isoDate||''); const leaves=Storage.getJSON('rotastic_leave_submissions',[])||[];
+12200:  return docs.filter(d=>{const name=String(d?.name||'').trim();if(!name)return false;try{if(typeof rotasticDoctorIsOnDisplayedLeave==='function'&&rotasticDoctorIsOnDisplayedLeave(name,day))return false}catch(e){}return !leaves.some(x=>x&&/approved/i.test(String(x.status||''))&&canon(x.doc)===canon(name)&&iso&&x.startDate&&iso>=x.startDate&&iso<=(x.endDate||x.startDate));}).length;
+12201: };
+12202: 
+12203: async function refreshSecureDirectory(){
+12204:  const map=Storage.getJSON('rotastic_physician_email_directory',{})||{}; if(typeof rotasticBackendClient==='undefined'||!rotasticBackendClient)return map;
+12205:  try{if(typeof rotasticBackendEnsureSession==='function')await rotasticBackendEnsureSession();const r=await rotasticBackendClient.rpc('rotastic_list_authorized_physicians');if(r.error)throw r.error;const full=(typeof ROTASTIC_FULL_DOCTOR_NAMES!=='undefined'&&ROTASTIC_FULL_DOCTOR_NAMES)?ROTASTIC_FULL_DOCTOR_NAMES:(window.ROTASTIC_FULL_DOCTOR_NAMES||{});(r.data||[]).forEach(row=>{const name=String(row?.physician_name||'').trim(),email=String(row?.email||'').trim().toLowerCase();if(!name||!/@phcc\.gov\.qa$/i.test(email))return;map[name]=email;Object.keys(full).forEach(short=>{if(String(full[short]||'').trim().toLowerCase()===name.toLowerCase())map[short]=email;});});Storage.setJSON('rotastic_physician_email_directory',map);}catch(e){console.warn('ROTASTIC secure physician directory:',e?.message||e)}return map;
+12206: }
+12207: window.rotasticRefreshPhysicianEmailDirectory=refreshSecureDirectory;
+12208: function emailFor(name){const map=Storage.getJSON('rotastic_physician_email_directory',{})||{};return String(map[name]||'').trim().toLowerCase()}
+12209: 
+12210: window.createSelectedAccessCode=async function(){
+12211:  if(!(typeof canManageAdminAccess==='function'&&canManageAdminAccess())){alert('Access codes can only be created from an unlocked permanent Admin View.');return false;}
+12212:  const kind=document.getElementById('accessCodeType')?.value||'first_time',physician=String(document.getElementById('accessCodeDoctorSelect')?.value||'').trim();if(!physician){alert('Select a physician first.');return false;}
+12213:  try{if(typeof rotasticBackendEnsureSession==='function')await rotasticBackendEnsureSession();if(typeof rotasticBackendClient==='undefined'||!rotasticBackendClient||typeof rotasticBackendUser==='undefined'||!rotasticBackendUser)throw new Error('Verified Admin sign-in is required.');await refreshSecureDirectory();const email=emailFor(physician);if(!/@phcc\.gov\.qa$/i.test(email))throw new Error('No PHCC email is stored for '+physician+'.');
+12214:    if(kind==='first_time'){const r=await rotasticBackendClient.rpc('rotastic_issue_registration_code_v2',{p_email:email,p_physician_name:physician,p_valid_minutes:1440});if(r.error)throw r.error;const row=Array.isArray(r.data)?r.data[0]:r.data,code=String(row?.registration_code||'');if(!/^\d{6}$/.test(code))throw new Error('Setup-code service did not return a valid code.');showIssuedAccessCode('first_time',physician,email,code,row?.expires_at);return true;}
+12215:    const minutes=Math.max(5,parseInt(document.getElementById('tempAdminDurationMinutes')?.value||'480',10)||480),r=await rotasticBackendClient.rpc('rotastic_issue_admin_access_code',{p_minutes:minutes,p_target_physician:physician});if(r.error)throw r.error;const row=Array.isArray(r.data)?r.data[0]:r.data,code=String(row?.admin_code||'');if(!code)throw new Error('Admin access service did not return a code.');showIssuedAccessCode('admin',physician,email,code,row?.expires_at);if(typeof renderTempAdminCodeManager==='function')await renderTempAdminCodeManager();return true;
+12216:  }catch(e){alert(String(e?.message||'Could not create this access code.'));return false;}
+12217: };
+12218: 
+12219: window.rotasticLogoutAndSwitchAccount=async function(){
+12220:  const btn=document.getElementById('rotasticLogoutBtn');if(btn)btn.disabled=true;try{if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient?.auth)await rotasticBackendClient.auth.signOut({scope:'local'});}catch(e){console.warn('ROTASTIC sign-out:',e?.message||e)}
+12221:  ['rotastic_user_doc_name','rotastic_setup_completed','rotastic_verified_email','rotastic_verified_role','rotastic_admin_token','rotastic_admin_code_id','rotastic_view_mode'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}try{Storage.remove(k)}catch(e){}});try{sessionStorage.clear()}catch(e){}location.reload();
+12222: };
+12223: 
+12224: function refreshSettingsIdentity(){const name=String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||Storage.get('rotastic_user_doc_name','')||'').trim();const n=document.getElementById('rotasticViewingDoctor');if(n)n.textContent=name||'Not signed in';const t=document.getElementById('settingsViewSwitchText');if(t)t.textContent=(typeof isAdminViewActive==='function'&&isAdminViewActive())?'Switch to Colleague View':'Switch to Admin View';}
+12225: 
+12226: function mine(n){const me=String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||Storage.get('rotastic_user_doc_name','')||'').trim(),r=String(n?.recipient||n?.recipient_name||'').trim();return !!me&&(r===me||r==='*'||/^all(?:\s|$)/i.test(r)||r.split(' + ').map(x=>x.trim()).includes(me));}
+12227: function todayNotifications(){const day=qatarDayKey(new Date());return (Storage.getJSON('rotastic_notification_queue',[])||[]).filter(n=>mine(n)&&qatarDayKey(n.createdAt||n.created_at||Date.now())===day).sort((a,b)=>new Date(b.createdAt||b.created_at||0)-new Date(a.createdAt||a.created_at||0));}
+12228: function updateBell(){const count=todayNotifications().filter(n=>!n.read&&!n.readAt&&!n.read_at).length,b=document.getElementById('notificationUnreadBadge');if(!b)return;b.textContent=count>99?'99+':String(count);b.classList.toggle('hidden',count===0);}
+12229: window.closeRotasticNotificationCenter=()=>document.getElementById('rotasticNotificationCenterOverlay')?.classList.add('hidden');
+12230: window.openRotasticNotificationCenter=async function(){try{if(typeof rotasticBackendClient!=='undefined'&&rotasticBackendClient&&typeof rotasticBackendUser!=='undefined'&&rotasticBackendUser)await rotasticBackendClient.rpc('rotastic_cleanup_my_notifications')}catch(e){}const items=todayNotifications(),list=document.getElementById('rotasticNotificationTodayList');if(list)list.innerHTML=items.length?items.map(n=>'<div class="rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div class="flex justify-between gap-3"><div class="text-xs font-black text-white">'+esc(n.title||'ROTASTIC')+'</div><div class="text-[9px] text-slate-500 whitespace-nowrap">'+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',hour:'2-digit',minute:'2-digit'}).format(new Date(n.createdAt||n.created_at||Date.now()))+'</div></div><div class="text-[11px] text-slate-300 mt-1">'+esc(n.message||'')+'</div></div>').join(''):'<div class="text-sm text-slate-500 text-center py-8">No notifications today.</div>';document.getElementById('rotasticNotificationCenterOverlay')?.classList.remove('hidden');const q=Storage.getJSON('rotastic_notification_queue',[])||[];items.forEach(n=>{n.read=true;if(n.backendId&&typeof rotasticBackendMarkNotificationRead==='function')rotasticBackendMarkNotificationRead(n.backendId)});Storage.setJSON('rotastic_notification_queue',q);updateBell();};
+12231: 
+12232: async function renderMoursiInbox(){const card=document.getElementById('moursiApprovalInboxCard');if(!card)return;const role=typeof rotasticResolvedVerifiedRole==='function'?rotasticResolvedVerifiedRole():'';const isM=/moursi|morsi/i.test(String((typeof activeUserDocName!=='undefined'&&activeUserDocName)||''))||role==='moursi';card.classList.toggle('hidden',!isM);if(!isM)return;const list=document.getElementById('moursiApprovalInboxList');try{const r=await rotasticBackendClient.rpc('rotastic_moursi_approval_inbox');if(r.error)throw r.error;const rows=Array.isArray(r.data)?r.data:[];list.innerHTML=rows.length?rows.map(x=>{const informed=x.action_mode==='inform';return '<div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-xs font-black text-white">'+esc(x.title||x.request_kind)+'</div><div class="text-[10px] text-cyan-300 font-bold mt-0.5">'+esc(x.physician_name||'')+'</div><div class="text-[11px] text-slate-300 mt-1 leading-relaxed">'+esc(x.detail||'')+'</div></div></div><div class="grid '+(informed?'grid-cols-1':'grid-cols-2')+' gap-2 mt-3">'+(informed?'<button class="py-2 rounded-lg bg-cyan-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'informed\')">Informed</button>':'<button class="py-2 rounded-lg bg-emerald-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'approve\')">Approve</button><button class="py-2 rounded-lg bg-rose-600 text-white text-[10px] font-black" onclick="actMoursiApproval(\''+esc(x.request_kind)+'\',\''+esc(x.request_id)+'\',\'decline\')">Decline</button>')+'</div></div>'}).join(''):'<div class="text-xs text-slate-500 text-center py-5">No pending approvals.</div>';}catch(e){list.textContent=String(e?.message||'Could not load approvals.')}}
+12233: window.actMoursiApproval=async function(kind,id,action){let note='';if(action==='decline')note=prompt('Reason / amendment requested (optional):','')||'';try{const r=await rotasticBackendClient.rpc('rotastic_moursi_request_action',{p_kind:kind,p_id:id,p_action:action==='informed'?'informed':action,p_note:note});if(r.error)throw r.error;await renderMoursiInbox();if(typeof rotasticBackendHydrateNotifications==='function')await rotasticBackendHydrateNotifications();}catch(e){alert(String(e?.message||'Could not update this request.'))}};
+12234: 
+12235: function renderRotaDayHeader(){const host=document.getElementById('scheduleMatrixContainer');if(!host||typeof currentSchedule==='undefined'||!Array.isArray(currentSchedule)||!currentSchedule.length)return;const full=typeof getCurrentRotaDisplayMode==='function'?getCurrentRotaDisplayMode()==='rota':true;let h=document.getElementById('rotasticRotaDayHeader');if(!full){h?.remove();return;}const idx=typeof activeDayIndex==='number'&&activeDayIndex>=0?activeDayIndex:0,day=currentSchedule[idx]||currentSchedule[0];if(!h){h=document.createElement('div');h.id='rotasticRotaDayHeader';host.parentElement.insertBefore(h,host)}let room='';try{const info=typeof getTodayRoomInfoForActiveDoctor==='function'?getTodayRoomInfoForActiveDoctor():null;room=info?.room||info?.roomNumber||''}catch(e){}h.innerHTML='<button type="button" onclick="filterDay('+(idx-1+currentSchedule.length)%currentSchedule.length+')"><i class="fa-solid fa-chevron-left"></i></button><div class="rdh-center"><div class="rdh-day">'+esc(day.day||'Day')+'</div><div class="rdh-meta">'+esc(day.dateLabel||day.isoDate||'')+(room?' · <span class="rdh-room">Room '+esc(room)+'</span>':'')+'</div></div><button type="button" onclick="filterDay('+(idx+1)%currentSchedule.length+')"><i class="fa-solid fa-chevron-right"></i></button>'; }
+12236: 
+12237: const GOOD_VIBES=['Beautiful work today — thank you for giving your best. 🌟','Shift complete. Your hard work mattered today — thank you. 🙌','Well done today. Time to recharge — you earned it. 🌙','Thank you for the care, patience and energy you brought today. 💙','Another shift done with purpose. Great work. ✨','You made a difference today. Thank you for your hard work. 🌿','Strong work today — now give yourself some well-earned rest. 💫','Thank you for showing up and giving your best today. 👏','Shift finished — excellent effort and teamwork today. 🤝','Great job today. Your patients and team appreciate you. 😊','You got through another busy shift — well done and thank you. 🌈','Thank you for bringing calm, skill and care to the shift today. 🩺','That is today’s shift done — brilliant work. ⭐','Well played today. Rest, reset and come back refreshed. 🌼','Thank you for the energy you gave the team today. 💪','A good shift completed by a good doctor — thank you. 🌟','Your contribution counted today. Thank you and enjoy your downtime. ☕','Shift complete. Be proud of the work you did today. 💙','Thank you for another day of dependable, compassionate work. 🙏','Done for today — great effort, great care, now enjoy the rest of your day. 🎉'];
+12238: function vibe(name,date,period){let h=0;String(name+'|'+date+'|'+period).split('').forEach(c=>h=(h*31+c.charCodeAt(0))>>>0);return GOOD_VIBES[h%GOOD_VIBES.length]}
+12239: async function scheduleShiftNotifications(schedule){if(typeof rotasticBackendClient==='undefined'||!rotasticBackendClient||typeof rotasticBackendUser==='undefined'||!rotasticBackendUser||!Array.isArray(schedule))return;const items=[],dates=[];schedule.filter(d=>d?.isoDate).forEach(day=>{dates.push(day.isoDate);['am','pm'].forEach(period=>{const sh=day[period]||{};let doctors=[];try{doctors=rotasticCollectShiftDoctors(day,period)||[]}catch(e){}const seen=new Set();doctors.forEach(name=>{name=String(name||'').trim();const ck=canon(name).toLowerCase();if(!name||seen.has(ck))return;seen.add(ck);try{if(typeof rotasticDoctorIsOnDisplayedLeave==='function'&&rotasticDoctorIsOnDisplayedLeave(name,day))return}catch(e){}const timed=typeof doctorMatches==='function'&&(doctorMatches(sh.timed1Doc,name)||doctorMatches(sh.timed2Doc,name)),start=timed?(period==='am'?540:840):(period==='am'?420:960),end=timed?(period==='am'?960:1200):(period==='am'?840:1320);[[start-60,'shift-reminder','Shift starts in 1 hour','Your ROTASTIC '+(period==='am'?'AM':'PM')+' shift starts in about 1 hour.'],[end,'shift-finish','Shift complete — thank you 💙',vibe(name,day.isoDate,period)]].forEach(([mins,type,title,msg])=>{const hh=String(Math.floor(mins/60)).padStart(2,'0'),mm=String(mins%60).padStart(2,'0'),when=day.isoDate+'T'+hh+':'+mm+':00+03:00';if(new Date(when).getTime()<=Date.now())return;items.push({recipient_name:name,title,message:msg,notification_type:type,scheduled_for:when,dedupe_key:type+'|'+day.isoDate+'|'+period+'|'+ck+'|'+mins,metadata:{schedule_date:day.isoDate,period,shift_minutes:mins}});});});});});for(let i=0;i<items.length||i===0;i+=400){const r=await rotasticBackendClient.rpc('rotastic_schedule_shift_reminders',{p_items:items.slice(i,i+400),p_dates:i===0?[...new Set(dates)]:[]});if(r.error)throw r.error;if(!items.length)break;}}
+12240: 
+12241: function myMetricRow(){try{return (typeof buildDutyStats==='function'?buildDutyStats():[]).find(r=>canon(r.doctor)===canon(activeUserDocName))||null}catch(e){return null}}
+12242: function renderPersonalMetrics(){const tab=document.getElementById('tabMetrics');if(!tab)return;const admin=typeof isAdminViewActive==='function'&&isAdminViewActive();let p=document.getElementById('rotasticMyMetricsPanel');if(admin){if(p)p.remove();[...tab.children].forEach(x=>x.classList.remove('rotastic-my-metrics-admin-hide'));return;}[...tab.children].forEach(x=>{if(x.id!=='rotasticMyMetricsPanel')x.classList.add('rotastic-my-metrics-admin-hide')});if(!p){p=document.createElement('div');p.id='rotasticMyMetricsPanel';p.className='space-y-4';tab.insertBefore(p,tab.firstChild)}const r=myMetricRow(),vals=r?[['Total shifts',r.shifts||0],['AM shifts',r.amShifts||0],['PM shifts',r.pmShifts||0],['Emergency',(r.maleER||0)+(r.femaleER||0)+(r.paedsER||0)],['Clinic duties',(r.wbc||0)+(r.ancNcd||0)+(r.roomClinics||0)],['Code Blue',(r.codeBlueLead||0)+(r.codeBlueResponder||0)],['Twilight',(r.twilightAM||0)+(r.twilightPM||0)]]:[],max=Math.max(1,...vals.map(v=>Number(v[1])||0));p.innerHTML='<div class="clean-card rounded-2xl p-5" id="rotasticMyMetricsReport"><div class="flex items-start justify-between gap-3"><div><div class="text-[10px] uppercase tracking-wider text-teal-300 font-black">My metrics</div><h2 class="text-lg font-black text-white mt-1">'+esc(activeUserDocName||'')+'</h2></div><button class="px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-[10px] font-black text-slate-200" onclick="exportMyMetricsPdf()" type="button"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button></div>'+(r?'<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">'+vals.slice(0,4).map(v=>'<div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3"><div class="text-[9px] uppercase text-slate-500 font-bold">'+v[0]+'</div><div class="text-2xl font-black text-white mt-1">'+v[1]+'</div></div>').join('')+'</div><div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/40 p-3">'+vals.map(v=>'<div class="mb-2"><div class="flex justify-between text-[10px] text-slate-300 mb-1"><span>'+v[0]+'</span><strong>'+v[1]+'</strong></div><div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full bg-teal-500" style="width:'+Math.max(2,(Number(v[1])||0)/max*100)+'%"></div></div></div>').join('')+'</div>':'<div class="text-sm text-slate-500 py-8">No rota metrics are available for you in the current schedule.</div>')+'</div>';}
+12243: window.exportMyMetricsPdf=function(){const el=document.getElementById('rotasticMyMetricsReport');if(window.html2pdf&&el)html2pdf().set({margin:8,filename:'ROTASTIC-'+String(activeUserDocName||'doctor').replace(/\s+/g,'-')+'-metrics.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save();else window.print();};
+12244: 
+12245: function parseAdminShiftAdd(raw){if(!/\b(add|put|assign|place)\b/i.test(raw))return null;let doctor='';if(/\b(moursi|morsi|mohamed\s+m)\b/i.test(raw))doctor='Dr Mohamed M.';else if(/\bzaid\b/i.test(raw))doctor='Dr Zaid SE.';if(!doctor)return null;let period=/\b(am|morning)\b/i.test(raw)?'am':/\b(pm|evening|afternoon)\b/i.test(raw)?'pm':'';if(!period)return null;let idx=-1;(currentSchedule||[]).some((d,i)=>{if([d.day,d.isoDate,d.dateLabel].filter(Boolean).some(v=>raw.toLowerCase().includes(String(v).toLowerCase()))){idx=i;return true}return false});if(idx<0)return null;const actor=String(activeUserDocName||'');if(/moursi|morsi|mohamed m/i.test(actor)&&doctor!=='Dr Mohamed M.')return{denied:true,message:'Dr Moursi can add himself. Dr Zaid can add himself or Dr Moursi.'};return{type:'rotasticAdminShiftAdd',doctor,dayIndex:idx,period,summary:'Add '+doctor+' to '+String(currentSchedule[idx].day||currentSchedule[idx].isoDate)+' '+period.toUpperCase()+' shift'};}
+12246: 
+
+===== function renderMetricsView() =====
+--- lines 17591-17678 ---
+17591: 
+17592: function startLeaveBalanceMetricsRefresh() {
+17593:   if (leaveBalanceMetricsRefreshTimer) clearInterval(leaveBalanceMetricsRefreshTimer);
+17594: 
+17595:   leaveBalanceMetricsRefreshTimer = setInterval(function() {
+17596:     if (typeof rotasticActiveTab !== 'undefined' && rotasticActiveTab === 'metrics' && isAdminViewActive()) {
+17597:       renderLeaveBalanceMetrics();
+17598:     }
+17599:   }, 60000);
+17600: }
+17601: 
+17602: window.addEventListener('storage', function(event) {
+17603:   if (event.key === 'rotastic_leave_balances_v2') {
+17604:     renderLeaveBalanceSummary();
+17605:     if (isAdminViewActive()) renderLeaveBalanceMetrics();
+17606:   }
+17607: });
+17608: 
+17609: function renderMetricsView() {
+17610:   if (!isAdminViewActive()) return;
+17611: 
+17612:   const stats = buildDutyStats();
+17613:   const active = stats.filter(r => r.shifts > 0);
+17614: 
+17615:   document.getElementById('metricActiveDoctors').innerText = active.length;
+17616:   document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s + r.shifts, 0);
+17617:   document.getElementById('metricAMShifts').innerText = active.reduce((s,r) => s + r.amShifts, 0);
+17618:   document.getElementById('metricPMShifts').innerText = active.reduce((s,r) => s + r.pmShifts, 0);
+17619: 
+17620:   const totalShifts = active.reduce((sum,r) => sum + r.shifts, 0);
+17621:   const shiftValues = active.map(r => r.shifts);
+17622:   const avgShifts = active.length ? totalShifts / active.length : 0;
+17623:   const spread = shiftValues.length ? Math.max(...shiftValues) - Math.min(...shiftValues) : 0;
+17624:   const emergencyDuties = active.reduce((sum,r) => sum + r.maleER + r.femaleER + r.paedsER, 0);
+17625:   const clinicAssignments = active.reduce((sum,r) => sum + r.wbc + r.ancNcd + r.roomClinics, 0);
+17626:   const codeBlueRoles = active.reduce((sum,r) => sum + r.codeBlueLead + r.codeBlueResponder, 0);
+17627:   const twilightDuties = active.reduce((sum,r) => sum + r.twilightAM + r.twilightPM, 0);
+17628:   const metricRules = getAutoRotaRules();
+17629:   const g1 = new Set((metricRules.group1 || []).map(canonicalRotaName));
+17630:   const g2 = new Set((metricRules.group2 || []).map(canonicalRotaName));
+17631:   const g1Shifts = active.reduce((sum,r) => sum + (g1.has(canonicalRotaName(r.doctor)) ? r.shifts : 0), 0);
+17632:   const g2Shifts = active.reduce((sum,r) => sum + (g2.has(canonicalRotaName(r.doctor)) ? r.shifts : 0), 0);
+17633: 
+17634:   const metricMap = {
+17635:     metricAvgShifts: avgShifts.toFixed(1),
+17636:     metricShiftSpread: spread,
+17637:     metricEmergencyDuties: emergencyDuties,
+17638:     metricClinicAssignments: clinicAssignments,
+17639:     metricCodeBlueRoles: codeBlueRoles,
+17640:     metricTwilightDuties: twilightDuties,
+17641:     metricGroup1Shifts: g1Shifts,
+17642:     metricGroup2Shifts: g2Shifts
+17643:   };
+17644:   Object.keys(metricMap).forEach(id => { const el=document.getElementById(id); if(el) el.innerText=metricMap[id]; });
+17645: 
+17646:   renderMetricsTable(stats);
+17647:   populateMetricsDoctorFilter(stats);
+17648:   renderMetricsCharts();
+17649:   renderIndividualDoctorMetrics();
+17650:   renderLeaveBalanceMetrics();
+17651: }
+17652: 
+17653: function renderMetricsTable(stats) {
+17654:   const body = document.getElementById('metricsTableBody');
+17655: 
+17656:   body.innerHTML = stats.map(row => `
+17657:     <tr class="hover:bg-slate-900/70 transition">
+17658:       <td class="p-2.5 whitespace-nowrap">
+17659:         <button onclick="inspectDoctorFromTable('${row.doctor.replace(/'/g,"\\'")}')" class="font-bold text-white hover:text-teal-300 transition text-left">${rotasticDisplayDoctorName(row.doctor)}</button>
+17660:       </td>
+17661:       <td class="p-2.5 text-center font-extrabold text-teal-300">${row.shifts}</td>
+17662:       <td class="p-2.5 text-center text-amber-300">${row.amShifts}</td>
+17663:       <td class="p-2.5 text-center text-indigo-300">${row.pmShifts}</td>
+17664:       <td class="p-2.5 text-center">${row.maleER}</td>
+17665:       <td class="p-2.5 text-center">${row.femaleER}</td>
+17666:       <td class="p-2.5 text-center">${row.paedsER}</td>
+17667:       <td class="p-2.5 text-center">${row.wbc}</td>
+17668:       <td class="p-2.5 text-center">${row.ancNcd}</td>
+17669:       <td class="p-2.5 text-center">${row.codeBlueLead}</td>
+17670:       <td class="p-2.5 text-center">${row.codeBlueResponder}</td>
+17671:       <td class="p-2.5 text-center">${row.twilightAM + row.twilightPM}</td>
+17672:       <td class="p-2.5 text-center">${row.roomClinics}</td>
+17673:     </tr>
+17674:   `).join('');
+17675: }
+17676: 
+17677: function populateMetricsDoctorFilter(stats) {
+17678:   const select = document.getElementById('metricsDoctorFilter');
+
+===== function createSelectedAccessCode() =====
+--- lines 8987-9074 ---
+8987: function sendLastAccessCodeViaOutlook() {
+8988:   const info = rotasticLastIssuedAccessCode;
+8989:   if (!info || !info.code || !info.email) {
+8990:     alert('Generate a code for a physician with a saved PHCC email first.');
+8991:     return;
+8992:   }
+8993:   const firstTime = info.kind === 'first_time';
+8994:   const subject = firstTime ? 'Rotastic activation code' : 'ROTASTIC Admin View access code';
+8995:   const body = firstTime
+8996:     ? ('Dear ' + info.physicianName + ',\n\nYour ROTASTIC first-time setup code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter your PHCC email and this code to complete setup.\n\nRegards,\nDr Zaid')
+8997:     : ('Dear ' + info.physicianName + ',\n\nYour temporary ROTASTIC Admin View code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter this code under Temporary Administration Access.\n\nRegards,\nDr Zaid');
+8998:   const outlookUrl = 'https://outlook.office.com/mail/deeplink/compose?to=' + encodeURIComponent(info.email) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+8999:   const outlookWindow = window.open(outlookUrl, '_blank', 'noopener');
+9000:   if (!outlookWindow) {
+9001:     window.location.href = 'mailto:' + encodeURIComponent(info.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+9002:   }
+9003: }
+9004: 
+9005: async function createSelectedAccessCode() {
+9006:   if (!canManageAdminAccess()) {
+9007:     alert('Access codes can only be created from an unlocked permanent Admin View.');
+9008:     return;
+9009:   }
+9010:   const kind = document.getElementById('accessCodeType')?.value || 'first_time';
+9011:   const physicianName = String(document.getElementById('accessCodeDoctorSelect')?.value || '').trim();
+9012:   if (!physicianName) {
+9013:     alert('Select a physician first.');
+9014:     return;
+9015:   }
+9016:   const email = rotasticAccessCodeEmailForDoctor(physicianName);
+9017:   if (!email || !/@phcc\.gov\.qa$/i.test(email)) {
+9018:     alert('No PHCC email is saved for ' + physicianName + '.');
+9019:     return;
+9020:   }
+9021:   try {
+9022:     await rotasticBackendEnsureSession();
+9023:     if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified Admin sign-in is required.');
+9024:     if (kind === 'first_time') {
+9025:       const result = await rotasticBackendClient.functions.invoke('rotastic-registration-admin', {
+9026:         body: { action:'generate', email:email, physician_name:physicianName, valid_minutes:1440 }
+9027:       });
+9028:       if (result.error) throw result.error;
+9029:       const row = result.data || {};
+9030:       const code = String(row.registration_code || '');
+9031:       if (!/^\d{6}$/.test(code)) throw new Error(row.error || 'The registration service did not return a valid setup code.');
+9032:       showIssuedAccessCode('first_time', physicianName, email, code, row.expires_at);
+9033:     } else {
+9034:       const minutes = parseInt(document.getElementById('tempAdminDurationMinutes')?.value || '480', 10);
+9035:       const result = await rotasticBackendClient.rpc('rotastic_issue_admin_access_code', {
+9036:         p_minutes: Math.max(5, minutes || 480),
+9037:         p_target_physician: physicianName
+9038:       });
+9039:       if (result.error) throw result.error;
+9040:       const row = Array.isArray(result.data) ? result.data[0] : result.data;
+9041:       const code = String(row?.admin_code || '');
+9042:       if (!/^\d{8}$/.test(code)) throw new Error('The Admin access service did not return a valid code.');
+9043:       showIssuedAccessCode('admin', physicianName, email, code, row.expires_at);
+9044:       await renderTempAdminCodeManager();
+9045:     }
+9046:   } catch (e) {
+9047:     alert(e?.message || 'Could not create this access code.');
+9048:   }
+9049: }
+9050: 
+9051: async function createTemporaryAdminCode() {
+9052:   const mode = document.getElementById('accessCodeType');
+9053:   if (mode) mode.value = 'admin';
+9054:   onAccessCodeTypeChange();
+9055:   return createSelectedAccessCode();
+9056: }
+9057: 
+9058: async function revokeTemporaryAdminCode(id) {
+9059:   if (!canManageAdminAccess()) {
+9060:     alert('Temporary Admin access can only be revoked from an unlocked permanent Admin View.');
+9061:     return;
+9062:   }
+9063:   try {
+9064:     await rotasticBackendEnsureSession();
+9065:     const result = await rotasticBackendClient.rpc('rotastic_revoke_admin_access_code', { p_code_id:id });
+9066:     if (result.error) throw result.error;
+9067:     await renderTempAdminCodeManager();
+9068:   } catch (e) {
+9069:     alert(e?.message || 'Could not revoke this Admin View code.');
+9070:   }
+9071: }
+9072: 
+9073: function validateTemporaryAdminCode(value) {
+9074:   // Legacy browser-side validation is intentionally disabled. Admin access
+
+===== function populateAccessCodeDoctorSelect() =====
+--- lines 8923-9010 ---
+8923:   }).join('');
+8924: }
+8925: 
+8926: // Admin View access codes are generated and validated exclusively by the backend.
+8927: 
+8928: // Stable local storage helpers for temporary Admin access codes.
+8929: // These are deliberately small and dependency-free so Settings cannot fail if backend sync is unavailable.
+8930: function getTemporaryAdminCodes() {
+8931:   const rows = Storage.getJSON('rotastic_temporary_admin_codes', []);
+8932:   return Array.isArray(rows) ? rows.filter(Boolean) : [];
+8933: }
+8934: 
+8935: function saveTemporaryAdminCodes(rows) {
+8936:   Storage.setJSON('rotastic_temporary_admin_codes', Array.isArray(rows) ? rows : []);
+8937: }
+8938: 
+8939: let rotasticLastIssuedAccessCode = null;
+8940: 
+8941: function populateAccessCodeDoctorSelect() {
+8942:   const select = document.getElementById('accessCodeDoctorSelect');
+8943:   if (!select || typeof getDoctorsAlphabetically !== 'function') return;
+8944:   const current = select.value;
+8945:   select.innerHTML = '<option value="">Select physician</option>' + getDoctorsAlphabetically()
+8946:     .filter(function(d){ return d && d.name; })
+8947:     .map(function(d){ return '<option value="' + String(d.name).replace(/"/g,'&quot;') + '">' + d.name + '</option>'; })
+8948:     .join('');
+8949:   if (current) select.value = current;
+8950: }
+8951: 
+8952: function onAccessCodeTypeChange() {
+8953:   const type = document.getElementById('accessCodeType')?.value || 'first_time';
+8954:   const duration = document.getElementById('tempAdminDurationMinutes');
+8955:   const hint = document.getElementById('accessCodeModeHint');
+8956:   if (duration) {
+8957:     duration.disabled = type === 'first_time';
+8958:     if (type === 'first_time') duration.value = '1440';
+8959:   }
+8960:   if (hint) hint.textContent = type === 'first_time'
+8961:     ? 'First-time setup codes are valid for 24 hours.'
+8962:     : 'Choose how long this physician can unlock Admin View.';
+8963: }
+8964: 
+8965: function rotasticAccessCodeEmailForDoctor(docName) {
+8966:   try {
+8967:     if (typeof getKnownPhysicianEmail === 'function') return String(getKnownPhysicianEmail(docName) || '').trim().toLowerCase();
+8968:   } catch(e) {}
+8969:   return '';
+8970: }
+8971: 
+8972: function showIssuedAccessCode(kind, physicianName, email, code, expiresAt) {
+8973:   rotasticLastIssuedAccessCode = { kind, physicianName, email, code, expiresAt };
+8974:   const box = document.getElementById('newTempAdminCodeBox');
+8975:   const label = document.getElementById('newTempAdminCodeLabel');
+8976:   const val = document.getElementById('newTempAdminCodeValue');
+8977:   const expiry = document.getElementById('newTempAdminCodeExpiry');
+8978:   const outlook = document.getElementById('sendAccessCodeOutlookBtn');
+8979:   if (box) box.classList.remove('hidden');
+8980:   if (label) label.textContent = kind === 'first_time' ? 'New first-time setup code' : 'New Admin View code';
+8981:   if (val) val.innerText = code;
+8982:   if (expiry) expiry.innerText = 'For ' + physicianName + ' · Expires ' + formatWorkflowTime(expiresAt);
+8983:   if (outlook) outlook.classList.toggle('hidden', !email);
+8984:   try { navigator.clipboard.writeText(code); } catch(e) {}
+8985: }
+8986: 
+8987: function sendLastAccessCodeViaOutlook() {
+8988:   const info = rotasticLastIssuedAccessCode;
+8989:   if (!info || !info.code || !info.email) {
+8990:     alert('Generate a code for a physician with a saved PHCC email first.');
+8991:     return;
+8992:   }
+8993:   const firstTime = info.kind === 'first_time';
+8994:   const subject = firstTime ? 'Rotastic activation code' : 'ROTASTIC Admin View access code';
+8995:   const body = firstTime
+8996:     ? ('Dear ' + info.physicianName + ',\n\nYour ROTASTIC first-time setup code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter your PHCC email and this code to complete setup.\n\nRegards,\nDr Zaid')
+8997:     : ('Dear ' + info.physicianName + ',\n\nYour temporary ROTASTIC Admin View code is: ' + info.code + '\n\nThis code expires ' + formatWorkflowTime(info.expiresAt) + '.\n\nOpen ROTASTIC and enter this code under Temporary Administration Access.\n\nRegards,\nDr Zaid');
+8998:   const outlookUrl = 'https://outlook.office.com/mail/deeplink/compose?to=' + encodeURIComponent(info.email) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+8999:   const outlookWindow = window.open(outlookUrl, '_blank', 'noopener');
+9000:   if (!outlookWindow) {
+9001:     window.location.href = 'mailto:' + encodeURIComponent(info.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+9002:   }
+9003: }
+9004: 
+9005: async function createSelectedAccessCode() {
+9006:   if (!canManageAdminAccess()) {
+9007:     alert('Access codes can only be created from an unlocked permanent Admin View.');
+9008:     return;
+9009:   }
+9010:   const kind = document.getElementById('accessCodeType')?.value || 'first_time';
