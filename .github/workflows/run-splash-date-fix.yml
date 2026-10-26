@@ -1,0 +1,36 @@
+name: Run ROTASTIC splash date fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/run-splash-date-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 scripts/fix-splash-date.py
+      - run: git diff --check
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('service-worker.js')
+          s=p.read_text()
+          s2,n=re.subn(r"rotastic-v\d+[^'\"]*", 'rotastic-v251-splash-date', s, count=1)
+          if n: p.write_text(s2)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js
+          git rm -f .github/workflows/run-splash-date-fix.yml .github/workflows/fix-splash-qatar-date.yml .github/workflows/inspect-splash-date.yml .github/workflows/inspect-splash-date-small.yml scripts/fix-splash-date.py splash-date-inspection.txt splash-date-small.txt || true
+          git add -A
+          git commit -m 'Fix Qatar splash date without changing ROTASTIC design'
+          git push
