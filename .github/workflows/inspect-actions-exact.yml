@@ -1,0 +1,32 @@
+name: Inspect actions exact
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  inspect:
+    if: ${{ !contains(github.event.head_commit.message, 'Write exact action markup') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract exact action markup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          out=[]
+          for needle, radius in [('topActionGrid',5000),('Refresh',3500),('live-rota-meta-row',5000)]:
+              idx=s.find(needle)
+              out.append(f'===== {needle} at {idx} =====\n')
+              if idx>=0: out.append(s[max(0,idx-radius):min(len(s),idx+radius)]+'\n')
+          Path('exact-action-markup.txt').write_text(''.join(out),encoding='utf-8')
+          PY
+      - name: Commit inspection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add exact-action-markup.txt
+          git commit -m "Write exact action markup"
+          git pull --rebase origin main
+          git push origin HEAD:main
