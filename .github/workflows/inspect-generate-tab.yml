@@ -1,4 +1,4 @@
-name: Inspect generate tab
+name: Apply Generate cleanup loader
 
 on:
   push:
@@ -6,33 +6,49 @@ on:
       - '.github/workflows/inspect-generate-tab.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  patch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show target functions
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Patch app entry and cache
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          lines=Path('index.html').read_text(encoding='utf-8').splitlines()
-          names=['analyseScheduleAmendment','addSmartRotaRule','applyMoursiShiftOverride','renderPhysicianManagement','generateDutyScheduleFromPlanner','rotasticRefreshGenerationLock','getCurrentUserShiftWindow']
-          for name in names:
-            hits=[i for i,l in enumerate(lines) if name.lower() in l.lower()]
-            for i in hits[:5]:
-              a=max(0,i-8); b=min(len(lines),i+90)
-              print(f'--- {name} lines {a+1}-{b} ---')
-              for n in range(a,b):
-                line=re.sub(r'(?i)(sb_secret_[A-Za-z0-9_\-]+)', '[secret-redacted]', lines[n])
-                print(f'{n+1}: {line}')
-          for term in ['day total','available doctors','availableDoctors','shift reminder','one hour','60 * 60','60*60','auto_generation_last_wednesday','22:00']:
-            for i,l in enumerate(lines):
-              if term.lower() in l.lower():
-                a=max(0,i-8); b=min(len(lines),i+35)
-                print(f'--- term {term} lines {a+1}-{b} ---')
-                for n in range(a,b): print(f'{n+1}: {lines[n]}')
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Day total ${dayLeaveCount}','Day total ${rotasticAvailableDoctorCountForDay(s)}')
+          s=s.replace('Fathjelalim','Fathielalim')
+          tag='<script id="rotastic-generate-cleanup" src="./generate-cleanup.js?v=20261026-1" defer></script>'
+          if 'id="rotastic-generate-cleanup"' not in s:
+              i=s.lower().rfind('</body>')
+              if i<0: raise SystemExit('closing body not found')
+              s=s[:i]+tag+'\n'+s[i:]
+          p.write_text(s,encoding='utf-8')
+          sw=Path('service-worker.js')
+          w=sw.read_text(encoding='utf-8')
+          w=re.sub(r"const CACHE\s*=\s*'[^']+';", "const CACHE = 'rotastic-v237-generate-cleanup';", w, count=1)
+          sw.write_text(w,encoding='utf-8')
           PY
+      - name: Verify
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'rotastic-generate-cleanup' index.html
+          grep -q 'rotasticAvailableDoctorCountForDay' index.html
+          grep -q 'rotastic-v237-generate-cleanup' service-worker.js
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js
+          git commit -m 'Load Generate cleanup and fix rota day totals'
+          git push origin HEAD:main
