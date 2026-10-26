@@ -16247,69 +16247,33 @@ async function generateDutyScheduleFromPlanner() {
   await rotasticRefreshGenerationLock();
   if (!rotasticGuardNewGeneration(true)) return false;
   const weekSelect = document.getElementById('cycleStartDate');
-  const groupInput = document.getElementById('wednesdayAMOBGroup');
-  const rangeSelect = document.getElementById('rotasticGenerationRange');
-  const firstWeekISO = weekSelect ? weekSelect.value : '';
-  const baseGroup = getWednesdayAMOBGroupValue();
-  const weeks = Math.max(1, parseInt(rangeSelect ? rangeSelect.value : '1', 10) || 1);
+  const weekISO = weekSelect ? weekSelect.value : '';
 
-  if (!firstWeekISO) {
+  if (!weekISO) {
     alert('Please choose the week commencing Sunday.');
     if (weekSelect) weekSelect.focus();
     return false;
   }
-  if (!baseGroup) {
-    if (groupInput) {
-      groupInput.focus();
-      groupInput.classList.add('ring-2','ring-rose-500/70','rounded');
-      setTimeout(function(){ groupInput.classList.remove('ring-2','ring-rose-500/70','rounded'); },1800);
+
+  Storage.set('rotastic_selected_week_commencing', weekISO);
+
+  const input = document.getElementById('wednesdayAMOBGroup');
+  const group = getWednesdayAMOBGroupValue();
+
+  if (!group) {
+    if (input) {
+      input.focus();
+      input.classList.add('ring-2','ring-rose-500/70','rounded');
+      setTimeout(function() { input.classList.remove('ring-2','ring-rose-500/70','rounded'); }, 1800);
     }
     alert('Please select or enter which group is on AM on Wednesday before generating the schedule.');
     return false;
   }
 
-  function addDaysISO(iso, days) {
-    const d = new Date(iso + 'T12:00:00Z');
-    d.setUTCDate(d.getUTCDate() + days);
-    return d.toISOString().slice(0,10);
-  }
-
-  const generatedSeries = [];
-  for (let i = 0; i < weeks; i++) {
-    const weekISO = addDaysISO(firstWeekISO, i * 7);
-    let group = baseGroup;
-    try {
-      if (i > 0 && typeof getRecommendedWednesdayAMGroupForWeek === 'function') {
-        group = getRecommendedWednesdayAMGroupForWeek(weekISO) || group;
-      }
-    } catch (e) {}
-
-    if (weekSelect) weekSelect.value = weekISO;
-    if (groupInput) groupInput.value = group;
-    Storage.set('rotastic_selected_week_commencing', weekISO);
-    Storage.set('rotastic_wednesday_am_ob_group', group);
-    Storage.set('rotastic_wednesday_am_group', group);
-    generateDutySchedule();
-    generatedSeries.push({
-      weekStart: weekISO,
-      wednesdayAMGroup: group,
-      schedule: JSON.parse(JSON.stringify(currentSchedule || []))
-    });
-  }
-
-  Storage.setJSON('rotastic_generated_schedule_series', generatedSeries);
-  if (generatedSeries.length) {
-    const first = generatedSeries[0];
-    currentSchedule = JSON.parse(JSON.stringify(first.schedule || []));
-    if (weekSelect) weekSelect.value = first.weekStart;
-    if (groupInput) groupInput.value = first.wednesdayAMGroup || baseGroup;
-    Storage.set('rotastic_selected_week_commencing', first.weekStart);
-    Storage.set('rotastic_wednesday_am_ob_group', first.wednesdayAMGroup || baseGroup);
-    Storage.set('rotastic_wednesday_am_group', first.wednesdayAMGroup || baseGroup);
-  }
-
+  Storage.set('rotastic_wednesday_am_ob_group', group);
+  Storage.set('rotastic_wednesday_am_group', group);
+  generateDutySchedule();
   switchTab('schedule');
-  renderScheduleView();
   return true;
 }
 
@@ -17643,11 +17607,7 @@ window.addEventListener('storage', function(event) {
 });
 
 function renderMetricsView() {
-  if (!isAdminViewActive()) {
-    if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();
-    return;
-  }
-  if (typeof renderPersonalMetrics === 'function') renderPersonalMetrics();
+  if (!isAdminViewActive()) return;
 
   const stats = buildDutyStats();
   const active = stats.filter(r => r.shifts > 0);
@@ -19655,15 +19615,6 @@ function renderAutoGenerationStatus() {
 }
 
 async function generateAutomaticWeeklyDraftIfDue() {
-  try {
-    const qatarToday = typeof getQatarTodayISO === 'function' ? getQatarTodayISO() : '';
-    if (qatarToday === '2026-10-28') {
-      const status = document.getElementById('autoGenerationStatus');
-      if (status) status.textContent = 'Manual exception: no automatic rota generation on Wednesday 28 Oct 2026. Normal weekly generation resumes next Wednesday.';
-      return false;
-    }
-  } catch (e) {}
-
   await rotasticRefreshGenerationLock();
   if (!rotasticGuardNewGeneration(false)) { renderAutoGenerationStatus(); return false; }
   const due = getMostRecentWednesday2200Qatar();
