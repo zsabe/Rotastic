@@ -9633,16 +9633,36 @@ function handleViewBadgeClick() {
     return;
   }
 
-  // Every account must present an Admin View code when moving from
-  // Colleague View back into Admin View. Permanent admin PINs are verified
-  // by verifyAdminPasskey(); temporary issued codes continue through the
-  // secure backend redemption path.
+  if (rotasticIsPermanentAdminIdentity()) {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
+  // Every non-permanent account must present an admin-issued code when
+  // moving from Colleague View into Admin View. A delegated grant alone
+  // never bypasses this challenge.
   openAdminModal();
 }
 
 function openAdminModal() {
-  // Returning from Colleague View always requires the code challenge,
-  // including verified permanent admin accounts.
+  // Verified permanent admins never need to re-enter an Admin View code.
+  // Their identity has already been established by the backend registration.
+  const role = rotasticResolvedVerifiedRole();
+  if (role === 'zaid' || role === 'moursi') {
+    Storage.set('rotastic_admin_token', 'permanent');
+    currentViewMode = 'admin';
+    Storage.set('rotastic_view_mode', 'admin');
+    applyViewMode();
+    renderScheduleView();
+    switchTab('schedule');
+    return;
+  }
+
   document.getElementById('adminModal').classList.remove('hidden');
   document.getElementById('adminPasskeyInput').value = '';
   document.getElementById('adminModalStatus').innerText = '';
@@ -12286,7 +12306,11 @@ function exportAdminMetricsInfographic() {
     <div>Developed by Dr. Zaid Sabe Eleish</div>
   </div>
 </div>
-<script src="logout-ui.js"></script>
+
+
+
+
+
 </body>
 </html>`;
   try {
@@ -17275,7 +17299,7 @@ function renderShiftCard(s, period, roomPill) {
         <div class="rotastic-shift-notice">
           <span class="uppercase tracking-wider font-black text-slate-600">Total on duty</span><strong class="text-slate-200">${dutyCount}</strong>
           <span class="uppercase tracking-wider font-black text-slate-600">On Leave</span><strong class="text-rose-300">${shiftLeaveCount}</strong>
-          <small class="rotastic-shift-day-total">Day total ${rotasticAvailableDoctorCountForDay(s)}</small>
+          <small class="rotastic-shift-day-total">Day total ${dayLeaveCount}</small>
         </div>
       </div>
 
@@ -17339,7 +17363,7 @@ const ROTASTIC_FULL_DOCTOR_NAMES = {
   'Dr Maya S.':'Dr Maya Sukkari',
   'Dr Laila A.':'Dr Laila Ahmed Said Ayoub',
   'Dr Saba T.':'Dr Saba Tahir',
-  'Dr Tayseer A.':'Dr Tayseer Fathielalim Abdelhalim Ayed',
+  'Dr Tayseer A.':'Dr Tayseer Fathjelalim Abdelhalim Ayed',
   'Dr Zaid SE.':'Dr Zaid Husameddin Yousef Sabe Eleish'
 };
 
