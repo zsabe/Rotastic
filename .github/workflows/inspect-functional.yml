@@ -1,0 +1,59 @@
+name: Inspect functional targets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-functional.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract functional targets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text()
+          lines=text.splitlines()
+          needles=[
+            'function handleViewBadgeClick()',
+            'function openAdminModal()',
+            'async function verifyAdminPasskey()',
+            '<!-- SETTINGS -->',
+            'id="adminBadgeWrapper"',
+            'id="tabFeedback"',
+            'id="deskTabBtnFeedback"',
+            'Delegated Admin View',
+            'Smart Rules Assistant',
+            'Clinical Lead — Add / Change Shift',
+            'scheduleAmendmentAssistantCard',
+            'generateDutyScheduleFromPlanner()',
+            'id="tabGenerator"',
+            'id="tabMetrics"',
+            'Developed by Dr. Zaid Sabe Eleish',
+            'function renderMetricsView()',
+            'function createSelectedAccessCode()',
+            'function populateAccessCodeDoctorSelect()',
+          ]
+          out=[]
+          for needle in needles:
+            hits=[i for i,l in enumerate(lines) if needle in l]
+            out.append('\n===== '+needle+' =====')
+            for i in hits[:4]:
+              a=max(0,i-18); b=min(len(lines),i+70)
+              out.append(f'--- lines {a+1}-{b} ---')
+              out.extend(f'{j+1}: {lines[j]}' for j in range(a,b))
+          Path('functional-inspection.txt').write_text('\n'.join(out))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add functional-inspection.txt
+          git commit -m 'Add temporary functional inspection' || exit 0
+          git push
