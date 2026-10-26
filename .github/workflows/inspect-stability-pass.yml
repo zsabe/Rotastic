@@ -16,42 +16,32 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
-      - name: Extract compact targets
+      - name: Extract focused handlers
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           s=Path('index.html').read_text(encoding='utf-8')
           lines=s.splitlines()
-          def body(name):
+          def body(name, span=130):
             pats=[f'function {name}',f'async function {name}',f'const {name} =',f'let {name} =',f'var {name} =']
             hits=[s.find(p) for p in pats if s.find(p)>=0]
             i=min(hits) if hits else -1
             if i<0:return f'-- {name}: not found --\n'
-            line=s[:i].count('\n')
-            a=max(0,line-8); b=min(len(lines),line+150)
+            line=s[:i].count('\n'); a=max(0,line-8); b=min(len(lines),line+span)
             return '\n'.join(f'{n+1}: {lines[n]}' for n in range(a,b))+'\n'
-          auth=['rotasticRegisterWithAdminCode','rotasticApplyVerifiedIdentity','rotasticInitializeRegistration','rotasticBackendEnsureSession']
-          access=['createSelectedAccessCode','populateAccessCodeDoctorSelect','getKnownPhysicianEmail','rotasticAccessCodeEmailForDoctor','sendLastAccessCodeViaOutlook']
-          Path('tmp-auth.txt').write_text('\n\n'.join(body(x) for x in auth),encoding='utf-8')
-          Path('tmp-access.txt').write_text('\n\n'.join(body(x) for x in access),encoding='utf-8')
-          funcs=[]
-          for m in re.finditer(r'(?:async\s+)?function\s+([A-Za-z0-9_$]+)\s*\(',s):
-            n=m.group(1)
-            if any(k in n.lower() for k in ['notif','announce','feedback','view','metric','account','pdf','admin']): funcs.append(n)
-          funcs=list(dict.fromkeys(funcs))[:160]
-          Path('tmp-function-names.txt').write_text('\n'.join(funcs),encoding='utf-8')
-          terms=['tabFeedback','Feedback','Announcement','notificationBadge','notifications','Logged in as','Not signed in','Colleague View','Admin View','metrics','jsPDF','PDF']
-          out=[]
-          for i,l in enumerate(lines):
-            if any(t.lower() in l.lower() for t in terms):
-              clean=re.sub(r"ROTASTIC_ZAID_PERMANENT_CODE\s*=\s*['\"][^'\"]+['\"]", "ROTASTIC_ZAID_PERMANENT_CODE='[redacted]'", l)
-              out.append(f'{i+1}: {clean}')
-          Path('tmp-ui-lines.txt').write_text('\n'.join(out[:1200]),encoding='utf-8')
+          groups={
+            'tmp-view.txt':['isCurrentUserAdmin','isAdminViewActive','canManageAdminAccess','applyViewMode','handleViewBadgeClick','openAdminModal','closeAdminModal','verifyAdminPasskey','rotasticSafeApplyViewMode','forcePersonalViewLanding'],
+            'tmp-notifs.txt':['rotasticBackendHydrateNotifications','rotasticBackendMarkNotificationRead','showNotificationsForCurrentUser','queueInAppNotification','notifyRecipient','rotasticUpdateNotificationPermissionUI','sendBrowserNotification'],
+            'tmp-announcements.txt':['canViewAnnouncements','canBroadcastAnnouncements','renderAnnouncementAdminView','broadcastAdminAnnouncement','buildAnnouncementCarouselItems','playAnnouncementCarousel'],
+            'tmp-metrics.txt':['buildMetricsSummary','renderMetricsView','renderMetricsTable','populateMetricsDoctorFilter','renderMetricsCharts','renderIndividualDoctorMetrics','exportAdminMetricsInfographic','printMetricsInfographic'],
+            'tmp-auth.txt':['rotasticRegisterWithAdminCode','rotasticApplyVerifiedIdentity','rotasticInitializeVerifiedRegistration','rotasticBackendEnsureSession'],
+            'tmp-access.txt':['createSelectedAccessCode','populateAccessCodeDoctorSelect','getKnownPhysicianEmail','rotasticAccessCodeEmailForDoctor','sendLastAccessCodeViaOutlook']
+          }
+          for path,names in groups.items(): Path(path).write_text('\n\n'.join(body(x) for x in names),encoding='utf-8')
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tmp-auth.txt tmp-access.txt tmp-function-names.txt tmp-ui-lines.txt
-          git commit -m 'Refresh temporary stability inspection context'
+          git add tmp-view.txt tmp-notifs.txt tmp-announcements.txt tmp-metrics.txt tmp-auth.txt tmp-access.txt
+          git commit -m 'Refresh focused stability inspection context'
           git push origin HEAD:main
