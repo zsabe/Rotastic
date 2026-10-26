@@ -12312,111 +12312,6 @@ function exportAdminMetricsInfographic() {
 
 
 
-<!-- rotastic-live-inline-tools-patch: only ETA/Weather/Refresh placement -->
-<style id="rotastic-live-inline-tools-patch-style">
-  #rotastic-live-inline-tools-patch-host {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-left: 7px;
-    vertical-align: middle;
-    flex-wrap: nowrap;
-  }
-  #rotastic-live-inline-tools-patch-host .rotastic-live-mini-tool {
-    width: auto !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 3px 7px !important;
-    font-size: 11px !important;
-    line-height: 1.15 !important;
-    border-radius: 8px !important;
-    flex: 0 0 auto !important;
-  }
-</style>
-<script id="rotastic-live-inline-tools-patch">
-(function () {
-  'use strict';
-
-  function textOf(el) {
-    return (el && el.textContent ? el.textContent : '').replace(/\s+/g, ' ').trim();
-  }
-
-  function exactControl(label) {
-    var selectors = 'button, a, [role="button"], .quick-action, .action-card, .action-btn, .tool-card, .menu-card';
-    var nodes = document.querySelectorAll(selectors);
-    for (var i = 0; i < nodes.length; i++) {
-      if (textOf(nodes[i]).toLowerCase() === label.toLowerCase()) return nodes[i];
-    }
-    return null;
-  }
-
-  function exactLeaf(label) {
-    var all = document.querySelectorAll('span, div, strong, b, small, p');
-    var wanted = label.toLowerCase();
-    for (var i = 0; i < all.length; i++) {
-      if (textOf(all[i]).toLowerCase() !== wanted) continue;
-      var children = all[i].children;
-      var childSame = false;
-      for (var j = 0; j < children.length; j++) {
-        if (textOf(children[j]).toLowerCase() === wanted) { childSame = true; break; }
-      }
-      if (!childSame) return all[i];
-    }
-    return null;
-  }
-
-  function hideEmptySource(sourceParent) {
-    if (!sourceParent || sourceParent.id === 'rotastic-live-inline-tools-patch-host') return;
-    var remaining = textOf(sourceParent);
-    if (!remaining || remaining.toLowerCase() === 'eta' || remaining.toLowerCase() === 'weather') {
-      sourceParent.style.display = 'none';
-      sourceParent.setAttribute('data-rotastic-live-tool-source', 'hidden');
-    }
-  }
-
-  function placeMiniTool(label, host) {
-    var control = exactControl(label);
-    if (!control || host.contains(control)) return;
-    var oldParent = control.parentElement;
-    control.classList.add('rotastic-live-mini-tool');
-    host.appendChild(control);
-    hideEmptySource(oldParent);
-  }
-
-  function apply() {
-    var live = exactLeaf('LIVE') || exactLeaf('Live');
-    if (!live || !live.parentElement) return;
-
-    var host = document.getElementById('rotastic-live-inline-tools-patch-host');
-    if (!host) {
-      host = document.createElement('span');
-      host.id = 'rotastic-live-inline-tools-patch-host';
-      live.insertAdjacentElement('afterend', host);
-    }
-
-    placeMiniTool('ETA', host);
-    placeMiniTool('Weather', host);
-
-    var refresh = exactControl('Refresh');
-    if (refresh) refresh.style.display = 'none';
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', apply, { once: true });
-  } else {
-    apply();
-  }
-
-  var attempts = 0;
-  var timer = setInterval(function () {
-    apply();
-    attempts += 1;
-    if (attempts >= 30) clearInterval(timer);
-  }, 400);
-})();
-</script>
 
 </body>
 </html>`;
@@ -26150,6 +26045,113 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
 </style>
 <script id="rotastic-v200-fit-rebuilt-room-names">
 (function(){function fit(){document.querySelectorAll('.rotastic-room-card-name').forEach(function(el){el.style.fontSize='';var size=parseFloat(getComputedStyle(el).fontSize)||11,min=7.5,g=0;while(el.scrollWidth>el.clientWidth+1&&size>min&&g<30){size-=.25;el.style.fontSize=size+'px';g++;}});}var mo=new MutationObserver(function(){requestAnimationFrame(fit);});function start(){var root=document.getElementById('scheduleMatrixContainer')||document.body;mo.observe(root,{childList:true,subtree:true});fit();}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();window.addEventListener('resize',function(){requestAnimationFrame(fit);});})();
+</script>
+
+
+<!-- rotastic-live-inline-tools-patch: only ETA/Weather/Refresh placement -->
+<style id="rotastic-live-inline-tools-patch-style">
+  #rotastic-live-inline-tools-patch-host {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 7px;
+    vertical-align: middle;
+    flex-wrap: nowrap;
+  }
+  #rotastic-live-inline-tools-patch-host .rotastic-live-mini-tool {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 3px 7px !important;
+    font-size: 11px !important;
+    line-height: 1.15 !important;
+    border-radius: 8px !important;
+    flex: 0 0 auto !important;
+  }
+</style>
+<script id="rotastic-live-inline-tools-patch">
+(function () {
+  'use strict';
+
+  function textOf(el) {
+    return (el && el.textContent ? el.textContent : '').replace(/\s+/g, ' ').trim();
+  }
+
+  function exactControl(label) {
+    var selectors = 'button, a, [role="button"], .quick-action, .action-card, .action-btn, .tool-card, .menu-card';
+    var nodes = document.querySelectorAll(selectors);
+    for (var i = 0; i < nodes.length; i++) {
+      if (textOf(nodes[i]).toLowerCase() === label.toLowerCase()) return nodes[i];
+    }
+    return null;
+  }
+
+  function exactLeaf(label) {
+    var all = document.querySelectorAll('span, div, strong, b, small, p');
+    var wanted = label.toLowerCase();
+    for (var i = 0; i < all.length; i++) {
+      if (textOf(all[i]).toLowerCase() !== wanted) continue;
+      var children = all[i].children;
+      var childSame = false;
+      for (var j = 0; j < children.length; j++) {
+        if (textOf(children[j]).toLowerCase() === wanted) { childSame = true; break; }
+      }
+      if (!childSame) return all[i];
+    }
+    return null;
+  }
+
+  function hideEmptySource(sourceParent) {
+    if (!sourceParent || sourceParent.id === 'rotastic-live-inline-tools-patch-host') return;
+    var remaining = textOf(sourceParent);
+    if (!remaining || remaining.toLowerCase() === 'eta' || remaining.toLowerCase() === 'weather') {
+      sourceParent.style.display = 'none';
+      sourceParent.setAttribute('data-rotastic-live-tool-source', 'hidden');
+    }
+  }
+
+  function placeMiniTool(label, host) {
+    var control = exactControl(label);
+    if (!control || host.contains(control)) return;
+    var oldParent = control.parentElement;
+    control.classList.add('rotastic-live-mini-tool');
+    host.appendChild(control);
+    hideEmptySource(oldParent);
+  }
+
+  function apply() {
+    var live = exactLeaf('LIVE') || exactLeaf('Live');
+    if (!live || !live.parentElement) return;
+
+    var host = document.getElementById('rotastic-live-inline-tools-patch-host');
+    if (!host) {
+      host = document.createElement('span');
+      host.id = 'rotastic-live-inline-tools-patch-host';
+      live.insertAdjacentElement('afterend', host);
+    }
+
+    placeMiniTool('ETA', host);
+    placeMiniTool('Weather', host);
+
+    var refresh = exactControl('Refresh');
+    if (refresh) refresh.style.display = 'none';
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', apply, { once: true });
+  } else {
+    apply();
+  }
+
+  var attempts = 0;
+  var timer = setInterval(function () {
+    apply();
+    attempts += 1;
+    if (attempts >= 30) clearInterval(timer);
+  }, 400);
+})();
 </script>
 
 </body>
