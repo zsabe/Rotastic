@@ -1,0 +1,38 @@
+name: Inspect splash date placeholder
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-splash-date-placeholder.yml'
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find splash date references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          needles=['January','rotastic-splash-date','splashDate','getQatarLongDateText','getQatarTodayISO','Today is']
+          out=[]
+          for n in needles:
+              start=0; found=0
+              while True:
+                  i=s.find(n,start)
+                  if i<0: break
+                  found+=1
+                  out.append(f'===== {n} #{found} at {i} =====\n{s[max(0,i-700):min(len(s),i+1200)]}\n')
+                  start=i+1
+          Path('splash-date-inspection.txt').write_text(''.join(out),encoding='utf-8')
+          PY
+      - name: Commit inspection output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add splash-date-inspection.txt
+          git commit -m "Inspect splash date placeholder"
+          git pull --rebase origin main
+          git push origin HEAD:main
