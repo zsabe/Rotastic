@@ -1,0 +1,9 @@
+<div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">
+<button aria-pressed="false" class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-sky-300 transition flex items-center gap-2" data-rotastic-rota-toggle="1" id="rotaZoomBtn" title="Switch between your personal view and the full rota" type="button">
+<i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
+</button>
+<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
+<i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
+</button>
+
+</div>
