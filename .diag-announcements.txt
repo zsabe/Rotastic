@@ -1,827 +1,5 @@
-=== ROTASTIC_CURATED_CLINICAL_UPDATES @ 1602591 ===
-our === 0) hour = 12;
+=== getRegularTickerMessages @ 1605452 ===
 
-  return `${hour}:${minute} ${suffix}`;
-}
-
-function prayerTimeToMinutes(value) {
-  if (!value) return null;
-  const raw = String(value).trim();
-  const ampm = /\b(AM|PM)\b/i.exec(raw);
-  const parts = raw.replace(/\s*(AM|PM).*/i, '').split(':');
-  if (parts.length < 2) return null;
-  let h = parseInt(parts[0],10);
-  const min = parseInt(parts[1],10);
-  if (isNaN(h) || isNaN(min)) return null;
-  if (ampm) {
-    const isPM = ampm[1].toUpperCase() === 'PM';
-    h = h % 12;
-    if (isPM) h += 12;
-  }
-  return h * 60 + min;
-}
-
-function getActiveUserShiftWindowToday() {
-  const today = getTodayScheduleDay();
-  if (!today || !activeUserDocName) return null;
-
-  const briefing = chooseSingleDailyBriefing(today, activeUserDocName);
-  if (!briefing || !briefing.title) return null;
-
-  const title = briefing.title;
-  if (title.indexOf('09:00–16:00') !== -1 || title.indexOf('AM Twilight') !== -1) {
-    return {start:9*60, end:16*60, label:'AM Twilight 9–4'};
-  }
-  if (title.indexOf('14:00–20:00') !== -1 || title.indexOf('PM Twilight') !== -1) {
-    return {start:14*60, end:20*60, label:'PM Twilight 2–8'};
-  }
-  if (title.indexOf('AM shift') !== -1) {
-    return {start:7*60, end:14*60, label:'AM shift'};
-  }
-  if (title.indexOf('PM shift') !== -1) {
-    return {start:16*60, end:22*60, label:'PM shift'};
-  }
-  return null;
-}
-
-async function fetchAbuNakhlaPrayerTimes() {
-  const now = getQatarClock();
-
-  if (abuNakhlaPrayerTimes && abuNakhlaPrayerFetchDate === now.isoDate) {
-    return abuNakhlaPrayerTimes;
-  }
-
-  try {
-    // Abu Nakhla Health Centre area, Qatar.
-    const latitude = ABU_NAKHLA_LAT;
-    const longitude = ABU_NAKHLA_LNG;
-    const url =
-      `https://api.aladhan.com/v1/timings/${now.apiDate}` +
-      `?latitude=${latitude}&longitude=${longitude}&method=8`;
-
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Prayer time request failed');
-
-    const payload = await response.json();
-    const timings = payload && payload.data && payload.data.timings;
-    if (!timings) throw new Error('Prayer times unavailable');
-
-    abuNakhlaPrayerTimes = {
-      Fajr: formatPrayerTime12h(timings.Fajr),
-      Dhuhr: formatPrayerTime12h(timings.Dhuhr),
-      Asr: formatPrayerTime12h(timings.Asr),
-      Maghrib: formatPrayerTime12h(timings.Maghrib),
-      Isha: formatPrayerTime12h(timings.Isha)
-    };
-    abuNakhlaPrayerFetchDate = now.isoDate;
-    return abuNakhlaPrayerTimes;
-  } catch (error) {
-    return null;
-  }
-}
-
-const ROTASTIC_CURATED_CLINICAL_UPDATES = [
-  '🇶🇦 Qatar: hypertension affects about 41% of adults aged 30–79.',
-  '❤️ Qatar: only 24% of adults with hypertension had controlled BP.',
-  '⚖️ Qatar: adult obesity was estimated at about 42%.',
-  '🩺 Qatar primary care: multimorbidity affected 22% of adults.',
-  '👩 Qatar multimorbidity data: 51% of affected patients were women.',
-  '🧂 Qatar: mean adult salt intake was about 7 g/day.',
-  '🚶 Qatar: physical inactivity was estimated at 37% of adults.',
-  '🇦🇪 UAE: adult diabetes prevalence was estimated at about 21%.',
-  '🇰🇼 Kuwait: adult diabetes prevalence was estimated at about 26%.',
-  '🇸🇦 Saudi Arabia: diabetes prevalence is above 15% in many adult estimates.',
-  '🇧🇭 Bahrain: adult diabetes prevalence is above 15% in major estimates.',
-  '🇯🇴 Jordan: diabetes affects roughly 1 in 6 adults in several national estimates.',
-  '🇱🇧 Lebanon: hypertension affects around 1 in 3 adults in many population studies.',
-  '🇹🇷 Turkey: adult obesity has been reported above 30% in national surveys.',
-  '🇮🇶 Iraq: hypertension affects roughly 1 in 4 adults in several studies.',
-  '🇵🇰 Pakistan: diabetes prevalence has been reported above 25% in large national estimates.',
-  '🌍 MENA: diabetes prevalence is among the world’s highest regional rates.',
-  '📈 MENA diabetes burden is projected to rise sharply by 2050.',
-  '💓 Gulf countries report cardiovascular disease among leading causes of death.',
-  '🫀 GCC prevention: obesity, diabetes and hypertension often cluster together.',
-  '🌍 IDF: 589 million adults live with diabetes worldwide — nearly 1 in 9.',
-  '🔎 About 252 million adults with diabetes may be undiagnosed.',
-  '📈 Global adult diabetes cases may reach 853 million by 2050.',
-  '💊 SOUL: CV events were 12.0% with oral semaglutide vs 13.8% with placebo.',
-  '🏃 SELECT: CV events were 6.5% with semaglutide vs 8.0% with placebo.'
-];
-
-let rotasticLiveClinicalUpdates = [];
-let rotasticClinicalUpdateFetchedAt = 0;
-
-let rotasticQatarAchievements = [];
-let rotasticQatarAchievementFetchedAt = 0;
-let tickerSlotCounter = 0;
-let rotasticContentCycleIndex = 1; // opening greeting is step 0; next is Abu Nakhla
-let regularTickerIndex = 0;
-let regularTickerDeck = [];
-let prayerTickerIndex = 0;
-let pendingPrayerTicker = false;
-let pendingCentreTicker = false;
-let rotasticTickerLastRenderAt = 0;
-let rotasticOpeningSequenceHasRun = false;
-
-function shuffleArray(items) {
-  const arr = Array.isArray(items) ? items.slice() : [];
-  for (let i = arr.length - 1; i > 0; i--) {
-    let j;
-    try {
-      const random = new Uint32Array(1);
-      crypto.getRandomValues(random);
-      j = random[0] % (i + 1);
-    } catch (e) {
-      j = Math.floor(Math.random() * (i + 1));
-    }
-    const temp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = temp;
-  }
-  return arr;
-}
-
-function refillRegularTickerDeck() {
-  const messages = getRegularTickerMessages();
-
-  const medicalRegional = [];
-  const medicalInternational = [];
-  const colleagueAdvice = [];
-
-  messages.forEach(function(message) {
-    const s = String(message || '').toLowerCase();
-    const hasNumber = /\d/.test(message);
-
-    if (!hasNumber) {
-      colleagueAdvice.push(message);
-    } else if (/qatar|doha|phcc|hamad|hmc|moph|gcc|gulf|saudi|uae|emirat|kuwait|bahrain|oman|mena|middle east|arab|jordan|egypt|lebanon|morocco|tunisia|iraq|turkey|turkish|pakistan|pakistani/.test(s)) {
-      medicalRegional.push(message);
-    } else {
-      medicalInternational.push(message);
-    }
-  });
-
-  const regional = shuffleArray(medicalRegional);
-  const international = shuffleArray(medicalInternational);
-  const advice = shuffleArray(colleagueAdvice);
-
-  const fallbackAdvice = [
-    '😊 Hope you have a smooth shift.',
-    '💧 Hydrate when you get a quiet minute.',
-    '✨ One patient at a time.',
-    '☕ 2 quiet minutes can help reset.',
-    '🤝 Keep the handover short and clear.',
-    '📝 Document the plan while it is fresh.',
-    '🧠 Difficult case? Ask a colleague early.',
-    '📞 Close the loop on important referrals.',
-    '🩺 A quick medication check can prevent errors.',
-    '🌿 Take a brief pause when the workload allows.',
-    '📌 Highlight red flags clearly.',
-    '📏 Correct cuff size matters.',
-    '📖 Teach-back can reveal misunderstandings.',
-    '🙌 Thank a colleague who helped.',
-    '🧘 A calm tone helps in a busy queue.'
-  ];
-
-  const deck = [];
-  let r = 0, i = 0, a = 0;
-  let takeRegional = true;
-
-  // Strict interleaving. Every medical/statistical item is followed by
-  // a colleague-advice item before another medical fact can appear.
-  while (r < regional.length || i < international.length) {
-    let fact = '';
-
-    // Qatar/GCC/Arab facts are strongly preferred. International facts
-    // are occasional rather than clustered.
-    if (r < regional.length && (takeRegional || i >= international.length)) {
-      fact = regional[r++];
-    } else if (i < international.length) {
-      fact = international[i++];
-    } else if (r < regional.length) {
-      fact = regional[r++];
-    }
-
-    takeRegional = !takeRegional;
-
-    if (fact) deck.push(fact);
-
-    let adviceMessage = '';
-    if (a < advice.length) {
-      adviceMessage = advice[a++];
-    } else {
-      adviceMessage = fallbackAdvice[(a++) % fallbackAdvice.length];
-    }
-    deck.push(adviceMessage);
-  }
-
-  // If there are more advice items than facts, add them at the end.
-  while (a < advice.length) deck.push(advice[a++]);
-
-  regularTickerDeck = deck.length ? deck : shuffleArray(messages);
-  regularTickerIndex = 0;
-}
-
-let lastRegularTickerWasFact = false;
-
-function getNextShuffledRegularMessage() {
-  if (!regularTickerDeck.length || regularTickerIndex >= regularTickerDeck.length) {
-    refillRegularTickerDeck();
-  }
-  if (!regularTickerDeck.length) return '';
-
-  let message = regularTickerDeck[regularTickerIndex++];
-  const isFact = /\d/.test(message);
-
-  // Hard guard: a medical/statistical fact cannot directly follow another
-  // medical/statistical fact, even after a deck refresh.
-  if (lastRegularTickerWasFact && isFact) {
-    const spacers = [
-      '😊 Hope you have a smooth shift.',
-      '💧 Hydrate when you get a quiet minute.',
-      '✨ One patient at a time.',
-      '☕ 2 quiet minutes can help reset.',
-      '🤝 Keep the handover short and clear.',
-      '📝 Document the plan while it is fresh.',
-      '🧠 Difficult case? Ask a colleague early.',
-      '📞 Close the loop on important referrals.',
-      '📌 Highlight red flags clearly.',
-      '📏 Correct cuff size matters.',
-      '🙌 Thank a c
-=== regularTickerDeck @ 1592092 ===
-lassList.add('flex');
-}
-
-function closeApprovedRotaEmailComposer() {
-  const modal = document.getElementById('zaidRotaEmailComposerModal');
-  if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
-}
-
-function launchApprovedRotaEmail() {
-  const recipientsRaw = String(document.getElementById('approvedRotaEmailRecipients')?.value || '').trim();
-  const recipients = recipientsRaw.split(/[;,\s]+/).map(function(x){return x.trim().toLowerCase();}).filter(Boolean).filter(function(email){return email !== ROTASTIC_NABINA_EMAIL;}).join('; ');
-  const reception = String(document.getElementById('approvedRotaReceptionEmail')?.value || '').trim().toLowerCase();
-  const subject = String(document.getElementById('approvedRotaEmailSubject')?.value || '').trim();
-  const body = String(document.getElementById('approvedRotaEmailBody')?.value || '').trim();
-  if (!reception || !/^\S+@\S+\.\S+$/.test(reception)) {
-    alert('Please enter the reception email address.'); return;
-  }
-  Storage.set('rotastic_reception_email', reception);
-  const bcc = [recipients, reception].filter(Boolean).join('; ');
-  const url = 'mailto:?bcc=' + encodeURIComponent(bcc) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  window.location.href = url;
-}
-
-function broadcastAdminAnnouncement() {
-  if (!canBroadcastAnnouncements()) {
-    alert('Broadcasting is available only in Admin View.');
-    return;
-  }
-
-  const input = document.getElementById('adminAnnouncementText');
-  const status = document.getElementById('announcementAdminStatus');
-  const message = (input?.value || '').trim();
-
-  if (!message) {
-    alert('Please type an announcement first.');
-    return;
-  }
-
-  const formatted = `📢 ${message}`;
-
-  Storage.set('rotastic_breaking_news_item', formatted);
-  sendAnnouncementPushToAll(formatted);
-  Storage.setJSON('rotastic_active_announcement_meta', {
-    kind: 'admin',
-    author: activeUserDocName,
-    createdAt: new Date().toISOString()
-  });
-
-  const history = Storage.getJSON('rotastic_announcement_history', []);
-  history.unshift({
-    id: 'ann_' + Date.now(),
-    author: activeUserDocName,
-    message: message,
-    createdAt: new Date().toISOString()
-  });
-  Storage.setJSON('rotastic_announcement_history', history.slice(0, 20));
-  if (typeof rotasticBackendCreateAnnouncement === 'function') {
-    rotasticBackendCreateAnnouncement(message);
-  }
-
-  if (input) input.value = '';
-  updateAnnouncementCharCount();
-  tickerSlotCounter = 0;
-  regularTickerDeck = [];
-  regularTickerIndex = 0;
-  lastRegularTickerWasFact = false;
-  checkAndRenderBreakingNews();
-  renderAnnouncementHistory();
-
-  if (status) {
-    status.className = 'p-3 rounded-xl text-xs bg-emerald-950/40 border border-emerald-500/30 text-emerald-300';
-    status.innerText = 'Announcement broadcast successfully.';
-    status.classList.remove('hidden');
-  }
-}
-
-function clearCurrentAnnouncement() {
-  if (!canBroadcastAnnouncements()) {
-    alert('Only the rota coordinator and Clinical Lead can clear announcements.');
-    return;
-  }
-
-  try {
-    localStorage.removeItem('rotastic_breaking_news_item');
-    localStorage.removeItem('rotastic_active_announcement_meta');
-  } catch(e) {}
-
-  if (typeof rotasticBackendClearAnnouncements === 'function') {
-    rotasticBackendClearAnnouncements();
-  }
-
-  const ticker = document.getElementById('swapsNewsTicker');
-  if (ticker) ticker.classList.add('hidden');
-
-  const status = document.getElementById('announcementAdminStatus');
-  if (status) {
-    status.className = 'p-3 rounded-xl text-xs bg-slate-900 border border-slate-700 text-slate-300';
-    status.innerText = 'Current announcement cleared.';
-    status.classList.remove('hidden');
-  }
-}
-
-function renderAnnouncementHistory() {
-  const list = document.getElementById('announcementHistoryList');
-  if (!list) return;
-
-  const history = Storage.getJSON('rotastic_announcement_history', []);
-
-  if (!history.length) {
-    list.innerHTML = '<div class="text-[11px] text-slate-500">No announcements have been broadcast yet.</div>';
-    return;
-  }
-
-  list.innerHTML = history.map(function(item) {
-    const dt = new Date(item.createdAt);
-    const when = isNaN(dt.getTime())
-      ? ''
-      : dt.toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' });
-
-    return `
-      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-        <div class="flex items-center justify-between gap-3 mb-1">
-          <span class="text-[10px] font-bold text-amber-300">${item.author}</span>
-          <span class="text-[9px] text-slate-500">${when}</span>
-        </div>
-        <div class="text-xs text-slate-200 leading-relaxed">📢 ${item.message}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function updateAnnouncementCharCount() {
-  const input = document.getElementById('adminAnnouncementText');
-  const count = document.getElementById('announcementCharCount');
-
-  if (input && count) {
-    count.innerText = input.value.length + '/280';
-  }
-}
-
-function sanitizeAnnouncementText(item) {
-  if (!item) return '';
-  return String(item).trim();
-}
-
-function getQatarNowParts() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Qatar',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }).formatToParts(new Date());
-
-  const map = {};
-  parts.forEach(function(p) {
-    if (p.type !== 'literal') map[p.type] = p.value;
-  });
-
-  return {
-    date: `${map.year}-${map.month}-${map.day}`,
-    minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10)
-  };
-}
-
-let announcementCarouselTimer = null;
-let announcementCarouselIndex = 0;
-
-function buildAnnouncementCarouselItems(item) {
-  const history = Storage.getJSON('rotastic_announcement_history', []);
-  const activeItems = [];
-
-  if (item) {
-    activeItems.push(item);
-  }
-
-  // Include recent unique admin announcements if available.
-  history.slice().reverse().forEach(function(entry) {
-    const text = entry && (entry.text || entry.message || entry.announcement);
-    if (text && !activeItems.includes(text)) {
-      activeItems.push(String(text).trim());
-    }
-  });
-
-  // Keep the carousel focused and readable.
-  return activeItems.slice(0, 5);
-}
-
-
-function getTickerDisplayDuration(text, minimumMs) {
-  const chars = String(text || '').trim().length;
-
-  // Allow comfortable reading time. Short items stay brisk; longer items remain
-  // visible for proportionally longer instead of disappearing mid-read.
-  const readingMs = chars * 85;
-  return Math.max(minimumMs || 6500, Math.min(18000, readingMs));
-}
-
-function playAnnouncementCarousel(items) {
-  const ticker = document.getElementById('swapsNewsTicker');
-  const content = document.getElementById('tickerContent');
-
-  if (!ticker || !content) return;
-
-  if (announcementCarouselTimer) {
-    clearTimeout(announcementCarouselTimer);
-    announcementCarouselTimer = null;
-  }
-
-  if (!items.length) {
-    ticker.classList.add('hidden');
-    content.innerHTML = '';
-    return;
-  }
-
-  ticker.classList.remove('hidden');
-
-  const sequence = [];
-  items.forEach(function(text) {
-    sequence.push({ type: 'announcement', text: text });
-    sequence.push({ type: 'center', text: 'Abu Nakhla' });
-  });
-
-  if (announcementCarouselIndex >= sequence.length) {
-    announcementCarouselIndex = 0;
-  }
-
-  const current = sequence[announcementCarouselIndex];
-
-  content.innerHTML = '';
-
-  const slide = document.createElement('div');
-  slide.className = 'news-carousel-item';
-
-  if (current.type === 'center') {
-    const badge = document.createElement('span');
-    badge.className = 'news-center-mark';
-    badge.textContent = current.text;
-    slide.appendChild(badge);
-  } else {
-    slide.textContent = current.text;
-  }
-
-  content.appendChild(slide);
-
-  requestAnimationFrame(function() {
-    slide.classList.add('is-active');
-  });
-
-  const carouselDuration = current.type === 'center'
-    ? 2200
-    : getTickerDisplayDuration(current.text, 6500);
-
-  announcementCarouselTimer = setTimeout(function() {
-    announcementCarouselIndex = (announcementCarouselIndex + 1) % sequence.length;
-    playAnnouncementCarousel(items);
-  }, carouselDuration);
-}
-
-
-function getQatarNowParts() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Qatar',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }).formatToParts(new Date());
-
-  const map = {};
-  parts.forEach(function(p) {
-    if (p.type !== 'literal') map[p.type] = p.value;
-  });
-
-  return {
-    date: `${map.year}-${map.month}-${map.day}`,
-    minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10)
-  };
-}
-
-function hasAffectedShiftEnded(date, shiftLabel) {
-  if (!date || !shiftLabel) return false;
-
-  const now = getQatarNowParts();
-  const shift = String(shiftLabel).toUpperCase();
-
-  let end = null;
-
-  if (shift.includes('TWILIGHT AM')) {
-    end = 16 * 60;
-  } else if (shift.includes('TW
-=== function buildRegularTickerDeck @ -1 ===
-=== function renderTicker @ 1684135 ===
-gth - 1) {
-    showRotasticTickerHistory(rotasticTickerHistoryCursor + 1);
-  } else {
-    renderNextTickerSlot();
-  }
-}
-
-function initializeTickerSwipeHistory() {
-  const ticker = document.getElementById('swapsNewsTicker');
-  if (!ticker || ticker.dataset.swipeHistoryBound === '1') return;
-  ticker.dataset.swipeHistoryBound = '1';
-
-  ticker.addEventListener('touchstart', function(event) {
-    const touch = event.touches && event.touches[0];
-    if (!touch) return;
-    rotasticTickerTouchStartX = touch.clientX;
-    rotasticTickerTouchStartY = touch.clientY;
-  }, {passive:true});
-
-  ticker.addEventListener('touchend', function(event) {
-    const touch = event.changedTouches && event.changedTouches[0];
-    if (!touch) return;
-
-    const dx = touch.clientX - rotasticTickerTouchStartX;
-    const dy = touch.clientY - rotasticTickerTouchStartY;
-
-    // Horizontal swipe only; vertical scrolling/pull-to-refresh remains untouched.
-    if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy) * 1.35) return;
-
-    if (dx > 0) navigateRotasticTickerHistory(-1); // swipe right = previous
-    else navigateRotasticTickerHistory(1);        // swipe left = next/resume
-  }, {passive:true});
-}
-
-
-let rotasticTickerTransitionTimer = null;
-let rotasticTickerTransitioning = false;
-
-function rotasticRunTickerTransition(renderFn, immediate) {
-  const row = document.getElementById('tickerInnerRow');
-  const content = document.getElementById('tickerContent');
-  if (!row || !content || immediate || !String(content.textContent || '').trim()) {
-    renderFn();
-    if (row) {
-      row.classList.remove('rotastic-ticker-fade-out');
-      row.classList.add('rotastic-ticker-fade-in');
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() { row.classList.remove('rotastic-ticker-fade-in'); });
-      });
-    }
-    return;
-  }
-
-  if (rotasticTickerTransitionTimer) clearTimeout(rotasticTickerTransitionTimer);
-  rotasticTickerTransitioning = true;
-  row.classList.remove('rotastic-ticker-fade-in');
-  row.classList.add('rotastic-ticker-fade-out');
-
-  rotasticTickerTransitionTimer = setTimeout(function() {
-    renderFn();
-    row.classList.remove('rotastic-ticker-fade-out');
-    row.classList.add('rotastic-ticker-fade-in');
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        row.classList.remove('rotastic-ticker-fade-in');
-        rotasticTickerTransitioning = false;
-      });
-    });
-    rotasticTickerTransitionTimer = null;
-  }, 320);
-}
-
-function renderTickerCardNow(type, message, durationMs, fromHistory) {
-  rotasticTickerLastRenderAt = Date.now();
-  message = String(message || '').replace(/\s+/g, ' ').trim();
-  const knowledgeType = ['stat','medicalnews','worldnews','qnanews','alarabiyanews','reutersnews','nhsinfo'].includes(type);
-  if (knowledgeType) message = fitNormalTickerCopy(message, 16, 112);
-  else if (!['sick','centre','greeting','welcome','notification'].includes(type)) message = fitNormalTickerCopy(message, 18, 124) || message;
-  if (!message) {
-    message = nextDoctorEncouragement() || 'Wishing you a smooth and safe shift today.';
-    type = 'encouragement';
-  }
-  if (rotasticActiveTab !== 'schedule') {
-    const hiddenTicker = document.getElementById('swapsNewsTicker');
-    if (hiddenTicker) hiddenTicker.classList.add('hidden');
-    return;
-  }
-  const ticker = document.getElementById('swapsNewsTicker');
-  const content = document.getElementById('tickerContent');
-  if (!ticker || !content) return;
-  ticker.classList.remove('ticker-greeting-mode');
-  setTickerFullWidthMode(false);
-  ticker.classList.remove('hidden');
-  content.innerHTML = '';
-  setTickerBadge(type, message);
-  if (!fromHistory) rememberRotasticTickerItem(type, message);
-  const card = document.createElement('div');
-  const leftAligned = ['safepractice','encouragement','stat','qatar','qnanews','medicalnews','worldnews','alarabiyanews','reutersnews','nhsinfo','prayer','admin','clinical','rota','general','notification'].includes(type);
-  card.className = 'ticker-message-card ' + getTickerCopySizeClass(message) +
-    (type === 'rota' ? ' ticker-rota-change-card' : '') +
-    (leftAligned ? ' ticker-left-card' : '') +
-    (type === 'prayer' ? ' ticker-prayer-card' : '');
-  if (type === 'prayer') {
-    const body = document.createElement('span');
-    body.className = 'ticker-message-text';
-    body.textContent = message;
-    card.appendChild(body);
-  } else if ((type === 'medicalnews' && rotasticCurrentMedicalLink) || (['qnanews','worldnews','alarabiyanews','reutersnews'].includes(type) && rotasticCurrentTickerLink)) {
-    const link = document.createElement('a');
-    link.className = 'ticker-medical-link';
-    link.href = type === 'medicalnews' ? rotasticCurrentMedicalLink : rotasticCurrentTickerLink;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = message;
-    link.title = 'Open source';
-    card.appendChild(link);
-  } else {
-    card.textContent = message;
-  }
-  content.appendChild(card);
-  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
-  const requestedDuration = Number(durationMs || 0);
-  const comfortableDuration = getTickerDisplayDuration(message, 7800);
-  const finalDuration = Math.max(requestedDuration, comfortableDuration);
-  headlineTickerTimer = setTimeout(function() { renderNextTickerSlot(); }, finalDuration);
-  scheduleSickTakeoverInterrupt();
-}
-
-
-function renderTickerCard(type, message, durationMs, fromHistory) {
-  const immediate = type === 'sick' || type === 'greeting' || type === 'welcome';
-  rotasticRunTickerTransition(function() {
-    renderTickerCardNow(type, message, durationMs, fromHistory);
-  }, immediate);
-}
-
-function choosePrayerMessage(prayerTimes) {
-  const list = getRelevantPrayerMessages(prayerTimes);
-  if (!list.length) return '';
-  const message = list[prayerTickerIndex % list.length];
-  prayerTickerIndex = (prayerTickerIndex + 1) % list.length;
-  return message;
-}
-
-
-
-const ROTASTIC_GREETING_VIBES = [
-  'Hope you have a smooth shift today.',
-  'Wishing you a calm and safe shift.',
-  'Hope today feels steady and manageable.',
-  'Have a good shift and remember to hydrate.',
-  'Wishing you a positive and uncomplicated day.',
-  'Take it one patient at a time today.',
-  'Hope the clinic stays calm and kind to you.',
-  'Remember to pause, hydrate and reset when you can.',
-  'Wishing you clear decisions and an easy workflow.',
-  'Hope you get a few quiet moments between patients.',
-  'Keep it calm, careful and compassionate today.',
-  'Wishing you a safe shift and an easy handover.',
-  'Look after yourself while you look after everyone else.',
-  'Hope today brings more smiles than surprises.',
-  'May your shift be smooth and your coffee stay warm.',
-  'Wishing you a steady pace and a good team around you.',
-  'Stay hydrated and give yourself a moment to breathe.',
-  'Hope the day runs gently from start to finish.',
-  'Wishing you good energy for the whole shift.',
-  'Have a safe shift and be kind to yourself too.'
-];
-
-let rotasticLastGreetingVibe = '';
-
-function nextGreetingVibe() {
-  if (!ROTASTIC_GREETING_VIBES.length) return '';
-
-  let options = ROTASTIC_GREETING_VIBES.filter(function(msg) {
-    return msg !== rotasticLastGreetingVibe;
-  });
-
-  if (!options.length) options = ROTASTIC_GREETING_VIBES.slice();
-
-  const message = options[Math.floor(Math.random() * options.length)];
-  rotasticLastGreetingVibe = message;
-  return message;
-}
-
-function buildRecurringDoctorGreeting() {
-  const doctor = String(activeUserDocName || '').replace(/^Dr\.?\s*/i, '').trim();
-  const first = doctor.split(/\s+/)[0] || 'Doctor';
-
-  let hour = new Date().getHours();
-  try {
-    hour = parseInt(
-      new Intl.DateTimeFormat('en-GB', {
-        timeZone:'Asia/Qatar',
-        hour:'2-digit',
-        hour12:false
-      }).format(new Date()),
-      10
-    );
-  } catch (e) {}
-
-  const greeting =
-    hour < 12 ? 'Good morning' :
-    hour < 17 ? 'Good afternoon' :
-    'Good evening';
-
-  const wish = nextGreetingVibe();
-  return greeting + ', Dr ' + first + '.\n' + wish;
-}
-
-async function renderNextTickerSlot() {
-  const ticker = document.getElementById('swapsNewsTicker');
-  if (!ticker) return;
-
-  if (rotasticActiveTab !== 'schedule') {
-    ticker.classList.add('hidden');
-    return;
-  }
-
-  if (!profileSetupIsComplete()) {
-    renderPersistentFirstSetupTicker();
-    return;
-  }
-
-  const launchNotification = rotasticTakeLaunchTickerNotification();
-  if (launchNotification) {
-    rotasticMarkNotificationShownOnce(launchNotification);
-    const launchText = '🔔 ' + String(launchNotification.message || 'You have a new ROTASTIC notification.');
-    renderTickerCard('notification', launchText, 15000);
-    return;
-  }
-
-  // After all launch notifications have appeared once, preserve the standard
-  // greeting → centre identity → normal announcement sequence.
-  if (!rotasticOpeningSequenceHasRun && !rotasticOpeningTickerActive) {
-    startOpeningTickerSequence();
-    return;
-  }
-
-  const tick
-=== prayerTickerIndex @ 1604806 ===
-huhr),
-      Asr: formatPrayerTime12h(timings.Asr),
-      Maghrib: formatPrayerTime12h(timings.Maghrib),
-      Isha: formatPrayerTime12h(timings.Isha)
-    };
-    abuNakhlaPrayerFetchDate = now.isoDate;
-    return abuNakhlaPrayerTimes;
-  } catch (error) {
-    return null;
-  }
-}
-
-const ROTASTIC_CURATED_CLINICAL_UPDATES = [
-  '🇶🇦 Qatar: hypertension affects about 41% of adults aged 30–79.',
-  '❤️ Qatar: only 24% of adults with hypertension had controlled BP.',
-  '⚖️ Qatar: adult obesity was estimated at about 42%.',
-  '🩺 Qatar primary care: multimorbidity affected 22% of adults.',
-  '👩 Qatar multimorbidity data: 51% of affected patients were women.',
-  '🧂 Qatar: mean adult salt intake was about 7 g/day.',
-  '🚶 Qatar: physical inactivity was estimated at 37% of adults.',
-  '🇦🇪 UAE: adult diabetes prevalence was estimated at about 21%.',
-  '🇰🇼 Kuwait: adult diabetes prevalence was estimated at about 26%.',
-  '🇸🇦 Saudi Arabia: diabetes prevalence is above 15% in many adult estimates.',
-  '🇧🇭 Bahrain: adult diabetes prevalence is above 15% in major estimates.',
-  '🇯🇴 Jordan: diabetes affects roughly 1 in 6 adults in several national estimates.',
-  '🇱🇧 Lebanon: hypertension affects around 1 in 3 adults in many population studies.',
-  '🇹🇷 Turkey: adult obesity has been reported above 30% in national surveys.',
-  '🇮🇶 Iraq: hypertension affects roughly 1 in 4 adults in several studies.',
-  '🇵🇰 Pakistan: diabetes prevalence has been reported above 25% in large national estimates.',
-  '🌍 MENA: diabetes prevalence is among the world’s highest regional rates.',
-  '📈 MENA diabetes burden is projected to rise sharply by 2050.',
-  '💓 Gulf countries report cardiovascular disease among leading causes of death.',
-  '🫀 GCC prevention: obesity, diabetes and hypertension often cluster together.',
-  '🌍 IDF: 589 million adults live with diabetes worldwide — nearly 1 in 9.',
-  '🔎 About 252 million adults with diabetes may be undiagnosed.',
   '📈 Global adult diabetes cases may reach 853 million by 2050.',
   '💊 SOUL: CV events were 12.0% with oral semaglutide vs 13.8% with placebo.',
   '🏃 SELECT: CV events were 6.5% with semaglutide vs 8.0% with placebo.'
@@ -991,6 +169,97 @@ function getTrafficWindowForCurrentUser() {
 
   const now = getQatarClock().minutes;
   const start = shift.start;
+  const end = shift
+=== getNextShuffledRegularMessage @ 1608142 ===
+[];
+  let r = 0, i = 0, a = 0;
+  let takeRegional = true;
+
+  // Strict interleaving. Every medical/statistical item is followed by
+  // a colleague-advice item before another medical fact can appear.
+  while (r < regional.length || i < international.length) {
+    let fact = '';
+
+    // Qatar/GCC/Arab facts are strongly preferred. International facts
+    // are occasional rather than clustered.
+    if (r < regional.length && (takeRegional || i >= international.length)) {
+      fact = regional[r++];
+    } else if (i < international.length) {
+      fact = international[i++];
+    } else if (r < regional.length) {
+      fact = regional[r++];
+    }
+
+    takeRegional = !takeRegional;
+
+    if (fact) deck.push(fact);
+
+    let adviceMessage = '';
+    if (a < advice.length) {
+      adviceMessage = advice[a++];
+    } else {
+      adviceMessage = fallbackAdvice[(a++) % fallbackAdvice.length];
+    }
+    deck.push(adviceMessage);
+  }
+
+  // If there are more advice items than facts, add them at the end.
+  while (a < advice.length) deck.push(advice[a++]);
+
+  regularTickerDeck = deck.length ? deck : shuffleArray(messages);
+  regularTickerIndex = 0;
+}
+
+let lastRegularTickerWasFact = false;
+
+function getNextShuffledRegularMessage() {
+  if (!regularTickerDeck.length || regularTickerIndex >= regularTickerDeck.length) {
+    refillRegularTickerDeck();
+  }
+  if (!regularTickerDeck.length) return '';
+
+  let message = regularTickerDeck[regularTickerIndex++];
+  const isFact = /\d/.test(message);
+
+  // Hard guard: a medical/statistical fact cannot directly follow another
+  // medical/statistical fact, even after a deck refresh.
+  if (lastRegularTickerWasFact && isFact) {
+    const spacers = [
+      '😊 Hope you have a smooth shift.',
+      '💧 Hydrate when you get a quiet minute.',
+      '✨ One patient at a time.',
+      '☕ 2 quiet minutes can help reset.',
+      '🤝 Keep the handover short and clear.',
+      '📝 Document the plan while it is fresh.',
+      '🧠 Difficult case? Ask a colleague early.',
+      '📞 Close the loop on important referrals.',
+      '📌 Highlight red flags clearly.',
+      '📏 Correct cuff size matters.',
+      '🙌 Thank a colleague who helped.'
+    ];
+
+    regularTickerIndex -= 1;
+    message = spacers[Math.floor(Math.random() * spacers.length)];
+    lastRegularTickerWasFact = false;
+    return message;
+  }
+
+  lastRegularTickerWasFact = isFact;
+  return message;
+}
+
+
+
+let rotasticTrafficUpdate = null;
+let rotasticTrafficFetchedAt = 0;
+let rotasticTrafficLastPhase = '';
+
+function getTrafficWindowForCurrentUser() {
+  const shift = getActiveUserShiftWindowToday();
+  if (!shift) return null;
+
+  const now = getQatarClock().minutes;
+  const start = shift.start;
   const end = shift.end;
 
   // Arrival window: 60 min before start until 20 min after start.
@@ -1058,36 +327,342 @@ async function refreshLocalTrafficUpdate() {
   rotasticTrafficFetchedAt = now;
   rotasticTrafficLastPhase = trafficWindow.phase;
 
-  const endpoint = window.ROTASTI
+  const endpoint = window.ROTASTIC_TRAFFIC_ENDPOINT || '';
+
+  if (!endpoint) {
+    // No fake traffic data. The app simply omits traffic messages until a live
+    // Qatar traffic/maps backend is connected.
+    rotasticTrafficUpdate = null;
+    return null;
+  }
+
+  try {
+    const url = new URL(endpoint, window.location.href);
+    url.searchParams.set('location', 'Abu Nakhla Health Centre, Qatar');
+    url.searchParams.set('phase', trafficWindow.phase);
+    url.searchParams.set('shift', trafficWindow.shiftLabel);
+    url.searchParams.set('qatarTime', getQatarClock().isoDate);
+
+    const response = await fetch(url.toString(), {headers:{'Accept':'application/json'}});
+    if (!response.ok) throw new Error('Traffic request failed');
+
+    const payload = await response.json();
+    const candidates = Array.isArray(payload)
+      ? payload
+      : (Array.isArray(payload.items) ? payload.items : [payload]);
+
+    const normalized = candidates
+      .map(function(item){ return normalizeTrafficItem(item, trafficWindow.phase); })
+      .filter(Boolean);
+
+    if (!n
+=== checkAndRenderBreakingNews @ 949846 ===
+BackendReady || !rotasticBackendClient || rotasticBackendHydrating) return;
+  rotasticBackendHydrating = true;
+  try {
+    await Promise.all([
+      rotasticBackendHydrateLeaves(),
+      rotasticBackendHydrateAdminGrants(),
+      rotasticBackendHydrateAppState(),
+      rotasticBackendHydrateNotificationPreferences(),
+      rotasticBackendHydrateRotaDocument(),
+      rotasticBackendHydrateFeedback(),
+      rotasticBackendHydrateNotifications(),
+      rotasticBackendHydrateAnnouncements()
+    ]);
+
+    if (typeof renderAnnualLeaveCalendar === 'function') renderAnnualLeaveCalendar();
+    if (typeof renderRecentLeaveSubmissions === 'function') renderRecentLeaveSubmissions();
+    if (typeof renderLeaveBalanceSummary === 'function') renderLeaveBalanceSummary();
+    if (typeof renderAdminGrantList === 'function') renderAdminGrantList();
+    if (typeof renderRotaApprovalWorkflow === 'function') renderRotaApprovalWorkflow();
+    if (typeof renderAnnouncementHistory === 'function') renderAnnouncementHistory();
+    if (typeof showNotificationsForCurrentUser === 'function') showNotificationsForCurrentUser();
+    if (typeof renderScheduleView === 'function') renderScheduleView();
+    if (typeof checkAndRenderBreakingNews === 'function') checkAndRenderBreakingNews();
+  } catch (e) {
+    console.warn('ROTASTIC backend refresh:', e?.message || e);
+  } finally {
+    rotasticBackendHydrating = false;
+  }
+}
+
+function rotasticBackendScheduleHydrate() {
+  clearTimeout(rotasticBackendHydrateTimer);
+  rotasticBackendHydrateTimer = setTimeout(rotasticBackendHydrateAll,180);
+}
+
+function rotasticBackendStartRealtime() {
+  if (!rotasticBackendClient || rotasticBackendRealtimeChannel) return;
+  rotasticBackendRealtimeChannel = rotasticBackendClient
+    .channel('rotastic-live-sync')
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_leave_requests'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_admin_grants'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_app_state'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_announcements'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_notification_queue'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_rota_documents'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_feedback'},rotasticBackendScheduleHydrate)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rotastic_notification_preferences'},rotasticBackendScheduleHydrate)
+    .subscribe();
+}
+
+function rotasticBackendMirrorStorageChange(key, value, isJSON) {
+  if (rotasticBackendHydrating) return;
+
+  if (key === 'rotastic_user_doc_name') {
+    setTimeout(rotasticBackendSyncProfile,0);
+    return;
+  }
+  if (!rotasticBackendReady) return;
+
+  if (key === 'rotastic_leave_submissions' && isJSON) {
+    setTimeout(() => rotasticBackendMirrorLeaves(value),0);
+    return;
+  }
+  if (key === 'rotastic_admin_access_grants' && isJSON) {
+    setTimeout(() => rotasticBackendMirrorAdminGrants(value),0);
+    return;
+  }
+  if (String(key || '').indexOf('rotastic_notification_prefs_') === 0 && isJSON) {
+    setTimeout(() => rotasticBackendMirrorNotificationPreferences(value),0);
+    return;
+  }
+  if (ROTASTIC_BACKEND_APP_STATE_KEYS.has(key)) {
+    setTimeout(() => rotasticBackendWriteAppState(key,value,isJSON),0);
+  }
+}
+
+
+function rotasticRunLaunchSelfTest() {
+  const issues = [];
+  const requiredIds = [
+    'tabSchedule','tabLeavePlanner','tabFeedback','tabUserSettings',
+    'rotaZoomBtn','plannerWeekSelect','driveTimeBtn','weatherBadge',
+    'scheduleMatrixContainer','inlineSetupBanner'
+  ];
+  requiredIds.forEach(function(id){ if (!document.getElementById(id)) issues.push('Missing UI element: '+id); });
+
+  try {
+    const rotaIssues = rotasticValidateGeneratedRotaRules(currentSchedule);
+    rotaIssues.forEach(function(x){ issues.push('Rota rule: '+x); });
+  } catch (e) { issues.push('Rota validation failed: '+(e.message || e)); }
+
+  if (typeof switchTab !== 'function') issues.push('Navigation unavailable');
+  if (typeof renderScheduleView !== 'function') issues.push('Schedule renderer unavailable');
+  if (typeof renderWeeklyLeavePlanner !== 'function') issues.push('Planner renderer unavailable');
+  if (typeof submitShiftFeedback !== 'function') issues.push('Feedback submit unavailable');
+  if (typeof submitSwapForLeadApproval !== 'function') issues.push('Swap submit unavailable');
+
+  window.__rotasticLaunchSelfTest = {
+    ok:issues.length === 0,
+    issues:issues,
+    backendReady:!!rotasticBackendReady,
+    backendUser:!!rotasticBackendUser,
+    testedAt:new Date().toISOString()
+  };
+  if (issues.length) console.warn('ROTASTIC launch self-test issues:', issues);
+  else console.info('ROTASTIC launch self-test: OK');
+  return window.__rotasticLaunchSelfTest;
+}
+
+async function rotasticBackendSyncAdminSessionState() {
+  if (rotasticIsPermanentAdminIdentity()) return true;
+  const token = Storage.get('rotastic_admin_token', null);
+  if (!token || token === 'permanent') return false;
+  try {
+    if (!rotasticBackendClient || !rotasticBackendUser) return false;
+    const res = await rotasticBackendClient.r
+=== renderTicker @ 1128490 ===
+tail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementById('liveRotaUpdatedAt');
+  if (stamp) {
+    const now = new Date();
+    stamp.textContent = rotasticLiveUpdatedExpanded
+      ? 'Updated (' + new Intl.DateTimeFormat('en-GB', {
+          timeZone:'Asia/Qatar',
+          weekday:'short',
+          day:'2-digit',
+          month:'short',
+          hour:'2-digit',
+          minute:'2-digit'
+        }).format(now) + ')'
+      : 'Updated (' + formatRotaUpdatedTime(now) + ')';
+    stamp.title = rotasticLiveUpdatedExpanded
+      ? 'Tap to show time only'
+      : 'Tap to show full update date and time';
+  }
+}
+
+function triggerRotaChangeAlert() {
+  const message = 'Rota updated — please review your latest duties.';
+  Storage.setJSON('rotastic_rota_change_alert', {
+    message: message,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + (20 * 60 * 1000)
+  });
+
+  // Show it immediately in the same top news ticker.
+  renderTickerCard('rota', message, 8500);
+}
+
+function detectRotaChangeAndAlert() {
+  const fingerprint = getRotaFingerprint();
+  if (!fingerprint) return false;
+
+  if (!rotasticLastScheduleFingerprint) {
+    rotasticLastScheduleFingerprint = fingerprint;
+    return false;
+  }
+
+  if (fingerprint !== rotasticLastScheduleFingerprint) {
+    rotasticLastScheduleFingerprint = fingerprint;
+    triggerRotaChangeAlert();
+    return true;
+  }
+
+  return false;
+}
+
+async function refreshLiveRota(options) {
+  const opts = options || {};
+  const buttonIcon = document.querySelector('button[onclick="refreshLiveRota()"] i');
+  if (buttonIcon && !opts.silent) buttonIcon.classList.add('fa-spin');
+
+  try {
+    renderScheduleView();
+    renderTodayBriefing();
+    renderAnnualLeaveCalendar();
+    renderRecentLeaveSubmissions();
+
+    if (typeof refreshLiveClinicalUpdates === 'function') {
+      await refreshLiveClinicalUpdates();
+    }
+    if (typeof refreshQatarAchievements === 'function') {
+      try { await refreshQatarAchievements(); } catch (e) {}
+    }
+
+    detectRotaChangeAndAlert();
+    setLiveRotaUpdatedStamp();
+
+    if (typeof startSwapsNewsTicker === 'function' && !opts.silent) {
+      startSwapsNewsTicker();
+    }
+  } finally {
+    if (buttonIcon && !opts.silent) {
+      setTimeout(function(){ buttonIcon.classList.remove('fa-spin'); }, 450);
+    }
+  }
+}
+
+
+async function refreshRotaWithoutAnnouncements() {
+  // Pull DOWN or pull UP refreshes the Rota only.
+  // It never advances, rewinds, resets, or restarts the announcement ticker.
+  // No page reload and no Feedback/Settings refresh.
+  renderScheduleView();
+  updateRotaChromeVisibility();
+  setLiveRotaUpdatedStamp();
+
+  const jobs = [];
+
+  if (typeof updateAbuNakhlaWeather === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      return updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline.value) || (prefs && prefs.value) || '').trim();
+  }
+
+  return profile;
+}
+
+
+function getRotasticGreetingContext(profileName) {
+  const now = new Date();
+  const qatarHour = parseInt(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      hour: '2-digit',
+      hour12: false
+    }).format(now),
+    10
+  );
+
+  let greeting = 'Good morning';
+  if (qatarHour >= 12 && qatarHour < 17) greeting = 'Good afternoon';
+  else if (qatarHour >= 17) greeting = 'Good evening';
+
+  const todayISO = getQatarTodayISO();
+  const holiday = getQatarHolidayInfo(todayISO);
+  const doctor = profileName ? getDoctorFirstNameDisplay(profileName) : 'Doctor';
+
+  return {
+    standardGreeting: greeting + ', ' + doctor,
+    splashGreeting: holiday
+      ? holiday.greeting.replace(/[!]+$/, '') + ', ' + doctor
+      : greeting + ', ' + doctor,
+    holiday: holiday
+  };
+}
+
+
+function getSplashShiftNote() {
+  const profile = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!profile || !day) {
+    return 'A smooth day ahead — and time to unwind soon.';
+  }
+
+
+=== tickerContent.innerHTML @ -1 ===
 === ticker-prayer @ 5043 ===
-canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Allura&family=Dancing+Script:wght@500;600&family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-    :root {
-      --bg-base: #090d16;
-      --surface-card: #0f1624;
-      --border-subtle: rgba(148, 163, 184, 0.12);
-      --teal-primary: #14b8a6;
-    }
-
-    * {
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-base);
-      color: #e2e8f0;
-      min-height: 100vh;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
@@ -1288,635 +863,4 @@ canvas/1.4.1/html2canvas.min.js"></script>
       background-color: rgba(20, 184, 166, 0.15) !important;
       border-color: #14b8a6 !important;
       box-shadow: 0 0 10px rgba(20, 184, 166, 0.25);
-    }
-
     
-
-    .news-stage {
-      position: relative;
-      min-height: 2.9rem;
-      height: auto;
-      display: flex;
-      align-items: center;
-      overflow: visible;
-      padding: 0.3rem 0;
-    }
-
-    .news-drop-item {
-      position: relative;
-      width: 100%;
-      min-height: 2.6rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: visible;
-      white-space: normal;
-      line-height: 1.4;
-      word-spacing: normal;
-      letter-spacing: normal;
-      text-align: center;
-    }
-
-    .news-carousel-item {
-      position: relative;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 1;
-      transform: none;
-      white-space: normal;
-      text-align: center;
-      overflow-wrap: anywhere;
-      word-break: normal;
-      padding: 0.2rem 0.35rem;
-      pointer-events: none;
-    }
-
-    .news-carousel-item.is-active {
-      animation: news-message-fade-in 0.25s ease-out;
-    }
-
-    .news-center-mark {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.2rem 0.9rem;
-      border-radius: 9999px;
-      border: 1px solid rgba(45, 212, 191, 0.35);
-      background: rgba(13, 148, 136, 0.12);
-      color: #99f6e4;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    @keyframes news-carousel-crawl {
-      0% {
-        opacity: 1;
-        transform: translateX(0);
-      }
-      38% {
-        opacity: 1;
-        transform: translateX(0);
-      }
-      100% {
-        opacity: 1;
-        transform: translateX(-115%);
-      }
-    }
-
-    .news-drop-item:hover {
-      animation-play-state: paused;
-    }
-
-    @keyframes pulse-siren {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.2; transform: scale(1.3); filter: drop-shadow(0 0 8px #ef4444); }
-    }
-
-    .siren-badge {
-      display: inline-flex;
-      align-items: center;
-      animation: pulse-siren 0.7s infinite ease-in-out;
-    }
-
-    .mobile-nav-bar {
-      padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-    }
-
-    /* Reference-matched export sheet: the supplied rota is a tall, narrow A4-style layout. */
-    #pdfExportWrapper {
-      position: fixed;
-      left: -9999
-=== tickerContent.innerHTML @ -1 ===
-=== tickerContent @ 109051 ===
-tons */
-    #rotaExportToggleBtn {
-      display: inline-flex !important;
-    }
-
-    #rotaExportActions {
-      display: none !important;
-      position: absolute;
-      left: 0;
-      top: calc(100% + 7px);
-      z-index: 90;
-      min-width: 190px;
-      max-width: min(240px, 82vw);
-      padding: 8px;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 6px;
-      border-radius: 12px;
-      background: rgba(8,14,25,.99);
-      border: 1px solid rgba(71,85,105,.45);
-      box-shadow: 0 18px 36px rgba(0,0,0,.38);
-    }
-
-    #rotaExportActions.rotastic-export-open {
-      display: flex !important;
-    }
-
-    #rotaExportActions > button {
-      width: 100%;
-      justify-content: flex-start;
-      margin: 0 !important;
-      padding: 8px 10px !important;
-      min-height: 38px;
-    }
-
-    #rotaExportToggleBtn.rotastic-no-rota-hidden {
-      display: none !important;
-    }
-
-    /* My Shift is the calm colleague landing view. Day tabs/export/drive strip
-       only appear when the user explicitly switches to the full rota. */
-    body.rotastic-colleague-view.rotastic-myshift-mode #rotaDaySelector,
-    body.rotastic-colleague-view.rotastic-myshift-mode #rotaSecondaryTools {
-      display: none !important;
-    }
-
-    body.rotastic-colleague-view.rotastic-myshift-mode #rotaExportToggleBtn {
-      display: none !important;
-    }
-
-    body.rotastic-colleague-view #scheduleMatrixContainer {
-      min-height: 360px;
-    }
-
-    .my-shift-presence-card {
-      min-height: 340px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .my-shift-leave-hero {
-      width: 88px;
-      height: 88px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      margin: 0 auto;
-      font-size: 38px;
-      background: radial-gradient(circle, rgba(45,212,191,.14), rgba(15,23,42,.72));
-      border: 1px solid rgba(45,212,191,.22);
-      box-shadow: 0 0 30px rgba(45,212,191,.08);
-    }
-
-    /* Notification choices stay compact until opened. */
-    #notificationPreferencesDetails > summary {
-      list-style: none;
-      cursor: pointer;
-    }
-    #notificationPreferencesDetails > summary::-webkit-details-marker {
-      display: none;
-    }
-    #notificationPreferencesDetails[open] .notification-chevron {
-      transform: rotate(180deg);
-    }
-
-
-    /* v160 ticker visibility safeguard */
-    #swapsNewsTicker:not(.hidden) {
-      display: flex !important;
-      min-height: 56px;
-    }
-
-    #swapsNewsTicker #tickerContent {
-      min-width: 0;
-      flex: 1 1 auto;
-    }
-
-
-    /* v162 — Leave Planner organised by week commencing Sunday */
-    #weeklyLeaveCalendar {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .planner-week-day-card {
-      position: relative;
-      min-width: 0;
-      min-height: 178px;
-      text-align: left;
-      padding: 11px;
-      border-radius: 14px;
-      border: 1px solid rgba(71,85,105,.34);
-      background: rgba(15,23,42,.56);
-      transition: transform .15s ease, border-color .15s ease, background .15s ease;
-    }
-
-    .planner-week-day-card.has-away {
-      border-color: rgba(245,158,11,.26);
-      background: linear-gradient(180deg, rgba(120,53,15,.10), rgba(15,23,42,.60));
-    }
-
-    .planner-week-day-card.is-today {
-      box-shadow: inset 0 0 0 1px rgba(45,212,191,.30);
-    }
-
-    .planner-week-day-card:active {
-      transform: scale(.99);
-    }
-
-    .planner-week-day-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .planner-week-day-name {
-      font-size: 12px;
-      line-height: 1;
-      font-weight: 900;
-      color: #f8fafc;
-    }
-
-    .planner-week-day-date {
-      margin-top: 4px;
-      font-size: 9px;
-      font-weight: 700;
-      color: #64748b;
-    }
-
-    .planner-week-total {
-      flex: 0 0 auto;
-      padding: 4px 7px;
-      border-radius: 999px;
-      font-size: 8px;
-      font-weight: 900;
-      border: 1px solid rgba(71,85,105,.35);
-    }
-
-    .planner-week-total.open {
-      color: #6ee7b7;
-      background: rgba(16,185,129,.08);
-      border-color: rgba(16,185,129,.18);
-    }
-
-    .planner-week-total.away {
-      color: #fbbf24;
-      background: rgba(245,158,11,.08);
-      border-color: rgba(245,158,11,.20);
-    }
-
-    .planner-week-group-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .planner-week-group-label {
-      font-size: 8px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .planner-week-group-label.group1 { color: #c4b5fd; }
-    .planner-week-group-label.group2 { color: #7dd3fc; }
-    .planner-week-group-label.other { color: #94a3b8; }
-
-    .planner-week-group-count {
-      min-width: 22px;
-      height: 22px;
-      display: grid;
-      place-items: center;
-      border-radius: 999px;
-      background: rgba(2,6,23,.52);
-      border: 1px solid rgba(71,85,105,.35);
-      color: #f8fafc;
-      font-size: 10px;
-      font-weight: 900;
-    }
-
-    .planner-week-name-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 3px;
-      margin-top: 5px;
-      min-height: 18px;
-      color: #cbd5e1;
-      font-size: 8px;
-      line-height: 1.2;
-    }
-
-    .planner-week-today {
-      position: absolute;
-      right: 10px;
-      bottom: 8px;
-      font-size: 7px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: #5eead4;
-    }
-
-    @media (max-width: 900px) {
-      #weeklyLeaveCalendar {
-        grid-template-columns: 1fr;
-      }
-
-      .planner-week-day-card {
-        min-height: 0;
-      }
-    }
-
-
-    /* v163 — Live Rota | location | Weather */
-    .live-rota-meta-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
-    .live-drive-slot{min-width:0;display:flex;justify-content:center;align-items:center;overflow:hidden}
-    .live-drive-slot #driveTimeBtn{max-width:100%!important;min-width:0!important;margin:0!important}
-    .live-drive-slot #driveTimeBtnText{display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-    #scheduleMatrixContainer{min-height:350px}
-    .personal-poster-card{position:relative;min-height:470px;overflow:hidden;border-radius:22px;border:1px solid color-mix(in srgb,var(--poster-accent) 38%,transparent);background:#07111e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 48px rgba(0,0,0,.18)}
-    .personal-poster-art{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.92) contrast(1.02);opacity:.72}
-    .personal-poster-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,10,20,.78) 0%,rgba(4,10,20,.46) 36%,rgba(4,10,20,.28) 57%,rgba(4,10,20,.87) 100%),radial-gradient(circle at 50% 24%,color-mix(in srgb,var(--poster-accent) 18%,transparent),transparent 35%)}
-    .personal-poster-content{position:relative;z-index:2;min-height:470px;padding:22px 18px 18px;display:flex;flex-direction:column;align-items:center;text-align:center}
-    .personal-poster-kicker{align-self:flex-start;font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:rgba(226,232,240,.72)}
-    .personal-poster-icon{width:68px;height:68px;margin-top:22px;border-radius:999px;display:grid;place-items:center;font-size:31px;background:rgba(4,12,24,.64);border:1px solid color-mix(in srgb,var(--poster-accent2) 70%,transparent);box-shadow:0 0 25px color-mix(in srgb,var(--poster-accent2) 16%,transparent)}
-    .personal-poster-title{margin-top:15px;font-size:clamp(26px,6vw,42px);line-height:1;font-weight:950;letter-spacing:-.035em;color:white;text-shadow:0 3px 18px rgba(0,0,0,.45)}
-    .personal-poster-person{margin-top:12px;max-width:650px;font-size:clamp(14px,3.4vw,20px);line-height:1.25;font-weight:850;color:#f8fafc;text-shadow:0 2px 10px rgba(0,0,0,.55)}
-    .personal-poster-message{margin-top:9px;max-width:620px;font-size:clamp(13px,3vw,18px);line-height:1.35;font-weight:850;color:var(--poster-accent2);text-shadow:0 2px 10px rgba(0,0,0,.5)}
-    .personal-poster-sub{margin-top:8px;max-width:600px;font-size:11px;line-height:1.4;color:rgba(226,232,240,.82);text-shadow:0 2px 8px rgba(0,0,0,.5)}
-    .personal-poster-switch{width:100%;margin-top:auto;min-height:52px;display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:10px;padding:0 15px;border-radius:14px;border:1px solid color-mix(in srgb,var(--poster-accent) 70%,transparent);background:rgba(2,18,34,.76);color:#7dd3fc;font-size:12px;font-weight:900;backdrop-filter:blur(8px)}
-    @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(82px,1fr) auto;gap:5px}.live-drive-slot #driveTimeBtnText{max-width:88px}.personal-poster-card,.personal-poster-content{min-height:500px}.personal-poster-content{padding:18px 14px 14px}}
-
-
-    /* v164 — ETA minutes prominent; personal view neve
-=== rotasticClinical @ 1604517 ===
-onst payload = await response.json();
-    const timings = payload && payload.data && payload.data.timings;
-    if (!timings) throw new Error('Prayer times unavailable');
-
-    abuNakhlaPrayerTimes = {
-      Fajr: formatPrayerTime12h(timings.Fajr),
-      Dhuhr: formatPrayerTime12h(timings.Dhuhr),
-      Asr: formatPrayerTime12h(timings.Asr),
-      Maghrib: formatPrayerTime12h(timings.Maghrib),
-      Isha: formatPrayerTime12h(timings.Isha)
-    };
-    abuNakhlaPrayerFetchDate = now.isoDate;
-    return abuNakhlaPrayerTimes;
-  } catch (error) {
-    return null;
-  }
-}
-
-const ROTASTIC_CURATED_CLINICAL_UPDATES = [
-  '🇶🇦 Qatar: hypertension affects about 41% of adults aged 30–79.',
-  '❤️ Qatar: only 24% of adults with hypertension had controlled BP.',
-  '⚖️ Qatar: adult obesity was estimated at about 42%.',
-  '🩺 Qatar primary care: multimorbidity affected 22% of adults.',
-  '👩 Qatar multimorbidity data: 51% of affected patients were women.',
-  '🧂 Qatar: mean adult salt intake was about 7 g/day.',
-  '🚶 Qatar: physical inactivity was estimated at 37% of adults.',
-  '🇦🇪 UAE: adult diabetes prevalence was estimated at about 21%.',
-  '🇰🇼 Kuwait: adult diabetes prevalence was estimated at about 26%.',
-  '🇸🇦 Saudi Arabia: diabetes prevalence is above 15% in many adult estimates.',
-  '🇧🇭 Bahrain: adult diabetes prevalence is above 15% in major estimates.',
-  '🇯🇴 Jordan: diabetes affects roughly 1 in 6 adults in several national estimates.',
-  '🇱🇧 Lebanon: hypertension affects around 1 in 3 adults in many population studies.',
-  '🇹🇷 Turkey: adult obesity has been reported above 30% in national surveys.',
-  '🇮🇶 Iraq: hypertension affects roughly 1 in 4 adults in several studies.',
-  '🇵🇰 Pakistan: diabetes prevalence has been reported above 25% in large national estimates.',
-  '🌍 MENA: diabetes prevalence is among the world’s highest regional rates.',
-  '📈 MENA diabetes burden is projected to rise sharply by 2050.',
-  '💓 Gulf countries report cardiovascular disease among leading causes of death.',
-  '🫀 GCC prevention: obesity, diabetes and hypertension often cluster together.',
-  '🌍 IDF: 589 million adults live with diabetes worldwide — nearly 1 in 9.',
-  '🔎 About 252 million adults with diabetes may be undiagnosed.',
-  '📈 Global adult diabetes cases may reach 853 million by 2050.',
-  '💊 SOUL: CV events were 12.0% with oral semaglutide vs 13.8% with placebo.',
-  '🏃 SELECT: CV events were 6.5% with semaglutide vs 8.0% with placebo.'
-];
-
-let rotasticLiveClinicalUpdates = [];
-let rotasticClinicalUpdateFetchedAt = 0;
-
-let rotasticQatarAchievements = [];
-let rotasticQatarAchievementFetchedAt = 0;
-let tickerSlotCounter = 0;
-let rotasticContentCycleIndex = 1; // opening greeting is step 0; next is Abu Nakhla
-let regularTickerIndex = 0;
-let regularTickerDeck = [];
-let prayerTickerIndex = 0;
-let pendingPrayerTicker = false;
-let pendingCentreTicker = false;
-let rotasticTickerLastRenderAt = 0;
-let rotasticOpeningSequenceHasRun = false;
-
-function shuffleArray(items) {
-  const arr = Array.isArray(items) ? items.slice() : [];
-  for (let i = arr.length - 1; i > 0; i--) {
-    let j;
-    try {
-      const random = new Uint32Array(1);
-      crypto.getRandomValues(random);
-      j = random[0] % (i + 1);
-    } catch (e) {
-      j = Math.floor(Math.random() * (i + 1));
-    }
-    const temp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = temp;
-  }
-  return arr;
-}
-
-function refillRegularTickerDeck() {
-  const messages = getRegularTickerMessages();
-
-  const medicalRegional = [];
-  const medicalInternational = [];
-  const colleagueAdvice = [];
-
-  messages.forEach(function(message) {
-    const s = String(message || '').toLowerCase();
-    const hasNumber = /\d/.test(message);
-
-    if (!hasNumber) {
-      colleagueAdvice.push(message);
-    } else if (/qatar|doha|phcc|hamad|hmc|moph|gcc|gulf|saudi|uae|emirat|kuwait|bahrain|oman|mena|middle east|arab|jordan|egypt|lebanon|morocco|tunisia|iraq|turkey|turkish|pakistan|pakistani/.test(s)) {
-      medicalRegional.push(message);
-    } else {
-      medicalInternational.push(message);
-    }
-  });
-
-  const regional = shuffleArray(medicalRegional);
-  const international = shuffleArray(medicalInternational);
-  const advice = shuffleArray(colleagueAdvice);
-
-  const fallbackAdvice = [
-    '😊 Hope you have a smooth shift.',
-    '💧 Hydrate when you get a quiet minute.',
-    '✨ One patient at a time.',
-    '☕ 2 quiet minutes can help reset.',
-    '🤝 Keep the handover short and clear.',
-    '📝 Document the plan while it is fresh.',
-    '🧠 Difficult case? Ask a colleague early.',
-    '📞 Close the loop on important referrals.',
-    '🩺 A quick medication check can prevent errors.',
-    '🌿 Take a brief pause when the workload allows.',
-    '📌 Highlight red flags clearly.',
-    '📏 Correct cuff size matters.',
-    '📖 Teach-back can reveal misunderstandings.',
-    '🙌 Thank a colleague who helped.',
-    '🧘 A calm tone helps in a busy queue.'
-  ];
-
-  const deck = [];
-  let r = 0, i = 0, a = 0;
-  let takeRegional = true;
-
-  // Strict interleaving. Every medical/statistical item is followed by
-  // a colleague-advice item before another medical fact can appear.
-  while (r < regional.length || i < international.length) {
-    let fact = '';
-
-    // Qatar/GCC/Arab facts are strongly preferred. International facts
-    // are occasional rather than clustered.
-    if (r < regional.length && (takeRegional || i >= international.length)) {
-      fact = regional[r++];
-    } else if (i < international.length) {
-      fact = international[i++];
-    } else if (r < regional.length) {
-      fact = regional[r++];
-    }
-
-    takeRegional = !takeRegional;
-
-    if (fact) deck.push(fact);
-
-    let adviceMessage = '';
-    if (a < advice.length) {
-      adviceMessage = advice[a++];
-    } else {
-      adviceMessage = fallbackAdvice[(a++) % fallbackAdvice.length];
-    }
-    deck.push(adviceMessage);
-  }
-
-  // If there are more advice items than facts, add them at the end.
-  while (a < advice.length) deck.push(advice[a++]);
-
-  regularTickerDeck = deck.length ? deck : shuffleArray(messages);
-  regularTickerIndex = 0;
-}
-
-let lastRegularTickerWasFact = false;
-
-function getNextShuffledRegularMessage() {
-  if (!regularTickerDeck.length || regularTickerIndex >= regularTickerDeck.length) {
-    refillRegularTickerDeck();
-  }
-  if (!regularTickerDeck.length) return '';
-
-  let message = regularTickerDeck[regularTickerIndex++];
-  const isFact = /\d/.test(message);
-
-  // Hard guard: a medical/statistical fact cannot directly follow another
-  // medical/statistical fact, even after a deck refresh.
-  if (lastRegularTickerWasFact && isFact) {
-    const spacers = [
-      '😊 Hope you have a smooth shift.',
-      '💧 Hydrate when you get a quiet minute.',
-      '✨ One patient at a time.',
-      '☕ 2 quiet minutes can help reset.',
-      '🤝 Keep the handover short and clear.',
-      '📝 Document the plan while it is fresh.',
-      '🧠 Difficult case? Ask a colleague early.',
-      '📞 Close the loop on important referrals.',
-      '📌 Highlight red flags clearly.',
-      '📏 Correct cuff size matters.',
-      '🙌 Thank a colleague who helped.'
-    ];
-
-    regularTickerIndex -= 1;
-    message = spacers[Math.floor(Math.random() * spacers.length)];
-    lastRegularTickerWasFact = false;
-    return message;
-  }
-
-  lastRegularTickerWasFact = isFact;
-  return message;
-}
-
-
-
-let rotasticTrafficUpdate = null;
-let rotasticTrafficFetchedAt = 0;
-let rotasticTrafficLastPhase = '';
-
-function getTrafficWindowForCurrentUser() {
-  const shift = getActiveUserShiftWindowToday();
-  if (!shift) return null;
-
-  const now = getQatarClock().minutes;
-  const start = shift.start;
-  const end = shift.end;
-
-  // Arrival window: 60 min before start until 20 min after start.
-  if (now >= start - 60 && now <= start + 20) {
-    return {
-      phase:'arrival',
-      shiftLabel:shift.label,
-      minutesToEvent:start - now
-    };
-  }
-
-  // End-of-shift window: 60 min before finish until 20 min after finish.
-  if (now >= end - 60 && now <= end + 20) {
-    return {
-      phase:'departure',
-      shiftLabel:shift.label,
-      minutesToEvent:end - now
-    };
-  }
-
-  return null;
-}
-
-function normalizeTrafficItem(item, phase) {
-  if (!item) return null;
-
-  if (typeof item === 'string') {
-    return {text:item.trim(), phase:phase || '', source:''};
-  }
-
-  const text = String(item.text || item.summary || item.message || '').trim();
-  const source = String(item.source || '').trim();
-  const delayMinutes = Number(item.delayMinutes || item.delay || 0);
-
-  if (!text) return null;
-
-  return {
-    text:text,
-    phase:phase || String(item.phase || ''),
-    source:source,
-    delayMinutes:isNaN(delayMinutes) ? 0 : delayMinutes
-  };
-}
-
-async function refreshLocalTrafficUpdate() {
-  const trafficWindow = getTrafficWindowForCurrentUser();
-
-  if (!trafficWindow) {
-    rotasticTrafficUpdate = null;
-    rotasticTrafficLastPhase = '';
-    return null;
-  }
-
-  const now = Date.now();
-
-  // Refresh every 10 minutes while in an arrival/departure window.
-  if (
-    rotasti
