@@ -26226,5 +26226,23 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
   new MutationObserver(function(){setTimeout(enhance,20);}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="rotastic-planner-modern-v2">
+#weeklyLeaveCalendar{display:flex!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:4px 2px 14px!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+#weeklyLeaveCalendar>.planner-week-day-card{flex:0 0 min(82vw,360px)!important;scroll-snap-align:start;border-radius:16px!important}
+.rotastic-planner-v2-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.rotastic-planner-v2-toolbar label{font-size:12px;font-weight:800}
+.rotastic-planner-v2-toolbar select{min-width:130px}
+.rotastic-group-hidden{display:none!important}
+@media(min-width:900px){#weeklyLeaveCalendar>.planner-week-day-card{flex-basis:330px!important}}
+</style>
+<script id="rotastic-planner-modern-v2-js">
+(function(){
+  function t(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim()}
+  function apply(c,w){Array.from(c.querySelectorAll('*')).forEach(function(e){var x=t(e),g=/\bGroup\s*1\b/i.test(x)?'1':(/\bGroup\s*2\b/i.test(x)?'2':'');if(!g)return;var b=e.closest('[class*=group],[class*=section],[class*=panel]')||e;if(b!==c&&!b.classList.contains('planner-week-day-card'))b.classList.toggle('rotastic-group-hidden',g!==w)})}
+  function go(){var c=document.getElementById('weeklyLeaveCalendar');if(!c||!c.parentElement)return;var h=c.parentElement;if(!h.querySelector('.rotastic-planner-v2-toolbar')){var b=document.createElement('div');b.className='rotastic-planner-v2-toolbar';var l=document.createElement('label');l.textContent='Display group ';var q=document.createElement('select');q.innerHTML='<option value="1">Group 1</option><option value="2">Group 2</option>';l.appendChild(q);b.appendChild(l);h.insertBefore(b,c);q.onchange=function(){apply(c,q.value)};apply(c,q.value)}var e=document.getElementById('plannerExportScope');if(e){Array.from(e.options).forEach(function(o){if(/group\s*1/i.test(o.text))o.text='Group 1';if(/group\s*2/i.test(o.text))o.text='Group 2'})}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,50)});else setTimeout(go,50);new MutationObserver(function(){setTimeout(go,30)}).observe(document.documentElement,{childList:true,subtree:true})
+})();
+</script>
 </body>
 </html>
