@@ -1,0 +1,36 @@
+name: Capture targeted announcements
+on:
+  push:
+    paths:
+      - '.github/workflows/capture-targeted-announcements.yml'
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture targeted code
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('index.html').read_text(errors='ignore')
+          low=src.lower()
+          for key in ['diabetes','obesity','prayer','tickerprayer','medical','newsitems','announcements','swapsnewsticker']:
+              positions=[]; start=0
+              while True:
+                  i=low.find(key,start)
+                  if i<0: break
+                  positions.append(i); start=i+len(key)
+              out=[f'key={key} count={len(positions)} positions={positions[-12:]}']
+              for i in positions[-8:]:
+                  out.append('\n---\n'+src[max(0,i-1800):min(len(src),i+4200)])
+              Path(f'.github/target-{key}.txt').write_text('\n'.join(out))
+          PY
+      - name: Commit captures
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/target-*.txt
+          git commit -m 'Add temporary targeted announcement captures'
+          git push
