@@ -4071,16 +4071,19 @@ html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!i
     /* v167 — publish-ready interaction and layout polish */
 
     .live-rota-meta-row {
-      grid-template-columns: auto minmax(92px,1fr) auto !important;
+      grid-template-columns: 1fr 1fr 1fr !important;
       gap: 6px !important;
       align-items: center !important;
     }
     .rota-action-btn { min-height:74px; border-radius:18px; }
-    .live-rota-meta-row .rotastic-live-mini { min-height:24px !important; height:24px !important; padding:0 4px !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
-    .live-drive-slot { display:flex; align-items:center; justify-content:center; overflow:hidden; }
-    .live-drive-slot #driveTimeBtn { width:auto !important; min-width:88px !important; max-width:118px !important; height:24px !important; padding:0 4px !important; gap:5px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }
-    #weatherBadge { height:24px !important; min-height:24px !important; max-height:24px !important; padding:0 4px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }
-    #driveTimeBtnSub {
+    .live-rota-meta-row .rotastic-live-mini { min-height:20px !important; height:20px !important; padding:0 2px !important; border:0 !important; background:transparent !important; box-shadow:none !important; justify-self:start !important; }
+    .live-drive-slot { display:flex; align-items:center; justify-content:center; overflow:hidden; justify-self:center !important; min-width:0 !important; }
+    .live-drive-slot #driveTimeBtn { width:auto !important; min-width:0 !important; max-width:none !important; height:20px !important; min-height:20px !important; padding:0 2px !important; gap:4px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }
+    #weatherBadge { height:20px !important; min-height:20px !important; max-height:20px !important; width:auto !important; padding:0 2px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; justify-self:end !important; }
+    #liveRotaUpdatedAt { display:none !important; }
+    .rotastic-live-mini-label, #driveTimeBtnText, #weatherTemp { font-size:10px !important; line-height:1 !important; font-weight:700 !important; }
+    .rotastic-live-mini-label { color:#f43f5e !important; }
+    #driveTimeBtnSub { display:none !important;
       font-size: 10px;
       color: rgba(191, 219, 254, .88);
       white-space: nowrap;
