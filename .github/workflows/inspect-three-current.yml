@@ -1,4 +1,4 @@
-name: Inspect Refresh button markup only
+name: Inspect second Refresh markup occurrence
 on:
   push:
     branches: [main]
@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   inspect:
-    if: ${{ !contains(github.event.head_commit.message, 'Write Refresh button markup') }}
+    if: ${{ !contains(github.event.head_commit.message, 'Write second Refresh markup') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,14 +15,15 @@ jobs:
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
           needle='onclick="refreshLiveRota()"'
-          i=s.find(needle)
-          if i<0: raise SystemExit('Refresh button markup not found')
-          Path('refresh-button-current.txt').write_text(s[max(0,i-1200):min(len(s),i+1600)],encoding='utf-8')
+          first=s.find(needle)
+          second=s.find(needle, first+1) if first>=0 else -1
+          if second<0: raise SystemExit('Second Refresh occurrence not found')
+          Path('refresh-button-current.txt').write_text(s[max(0,second-1200):min(len(s),second+1800)],encoding='utf-8')
           PY
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add refresh-button-current.txt
-          git commit -m "Write Refresh button markup"
+          git commit -m "Write second Refresh markup"
           git pull --rebase origin main
           git push origin HEAD:main
