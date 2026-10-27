@@ -12295,22 +12295,6 @@ function exportAdminMetricsInfographic() {
 #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-prayer-card{transform:translateY(10px)!important}
 @media(max-width:520px){#swapsNewsTicker:not(.ticker-greeting-mode){padding-right:8px!important}#tickerInnerRow:not(.ticker-fullwidth-mode){padding-right:8px!important}#tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card.ticker-prayer-card{transform:translateY(9px)!important}}
 </style>
-
-<script id="rotastic-review-before-auto-rules-v1">
-(function(){
-  function text(el){return String(el&&el.textContent||'').replace(/\s+/g,' ').trim();}
-  function moveReview(){
-    var headings=Array.from(document.querySelectorAll('h3'));
-    var reviewHeading=headings.find(function(h){return text(h).indexOf('Rota Review & Approval')!==-1;});
-    var rulesHeading=headings.find(function(h){return text(h).indexOf('Automatic Rota Rules')!==-1;});
-    if(!reviewHeading||!rulesHeading)return;
-    var review=reviewHeading.closest('.clean-card');
-    var rules=rulesHeading.closest('.clean-card');
-    if(review&&rules&&rules.parentNode&&review!==rules.previousElementSibling){rules.parentNode.insertBefore(review,rules);}
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveReview);else moveReview();
-})();
-</script>
 </body>
 </html>`;
   try {
