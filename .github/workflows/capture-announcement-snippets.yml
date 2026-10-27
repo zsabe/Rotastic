@@ -1,0 +1,40 @@
+name: Capture announcement snippets
+on:
+  push:
+    paths:
+      - '.github/workflows/capture-announcement-snippets.yml'
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture relevant announcement sections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('index.html').read_text(errors='ignore').splitlines()
+          keys=('announcement','prayer','adhan','diabetes','obesity','ticker','medical','cpd')
+          hits=[]
+          for i,line in enumerate(src,1):
+              low=line.lower()
+              if any(k in low for k in keys): hits.append(i)
+          ranges=[]
+          for i in hits:
+              a=max(1,i-12); b=min(len(src),i+25)
+              if ranges and a<=ranges[-1][1]+3: ranges[-1]=(ranges[-1][0],max(ranges[-1][1],b))
+              else: ranges.append((a,b))
+          out=[]
+          for a,b in ranges:
+              out.append(f'===== {a}-{b} =====')
+              out += [f'{n}: {src[n-1]}' for n in range(a,b+1)]
+          Path('.github/announcement-snippets.txt').write_text('\n'.join(out))
+          PY
+      - name: Commit snippet file
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/announcement-snippets.txt
+          git commit -m 'Add temporary announcement snippets'
+          git push
