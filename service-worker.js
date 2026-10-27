@@ -1,4 +1,4 @@
-const CACHE = 'rotastic-v234-access-code-outlook';
+const CACHE = 'rotastic-v240-known-good-reset';
 const CORE = [
   './',
   './index.html',
