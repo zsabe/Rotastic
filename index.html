@@ -6533,26 +6533,13 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <i class="fa-solid fa-kit-medical mr-1.5"></i>Report Sick Leave
           </button>
 </div>
+<p class="text-[9px] leading-relaxed text-slate-500 text-center mt-2 px-1" id="leaveErpReminder"><i class="fa-solid fa-circle-info mr-1 text-slate-600"></i>Requests submitted through ROTASTIC do not replace the official ERP application. Please make sure you also apply through ERP.</p>
 <div class="text-[10px] text-slate-500 text-center">
           Approved leave is shared; sick leave stays private.
         </div>
 </div>
 <div class="pt-2">
-<div class="mb-3" id="plannerWeekHeading">
-<div class="flex flex-wrap items-center justify-center gap-2">
-<button aria-label="Previous week" class="w-9 h-9 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300" onclick="changePlannerWeek(-1)" type="button">
-<i class="fa-solid fa-chevron-left text-[10px]"></i>
-</button>
-<div class="min-w-[220px]">
-<div class="text-[8px] uppercase tracking-[.14em] text-slate-500 font-black text-center mb-1">Week commencing</div>
-<select class="w-full bg-slate-900 text-white text-xs px-3 py-2 rounded-lg border border-slate-700 outline-none font-bold text-center" id="plannerWeekSelect" onchange="renderWeeklyLeavePlanner()">
-</select>
-</div>
-<button aria-label="Next week" class="w-9 h-9 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300" onclick="changePlannerWeek(1)" type="button">
-<i class="fa-solid fa-chevron-right text-[10px]"></i>
-</button>
-</div>
-</div>
+
 <div class="flex items-center justify-between gap-3 mb-2">
 <div>
 <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">Leave availability for selected week</div>
@@ -6563,7 +6550,7 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>People away</span>
 </div>
 </div>
-<div class="grid grid-cols-2 gap-2 mb-3" id="plannerGroupWeekSummary">
+<div class="hidden" id="plannerGroupWeekSummary" aria-hidden="true">
 <div class="rounded-xl border border-violet-500/20 bg-violet-500/5 px-3 py-2 text-center">
 <div class="text-[9px] uppercase tracking-wider font-black text-violet-300">Group 1 away this week</div>
 <div class="text-lg font-black text-white mt-0.5" id="plannerGroup1WeekAway">0</div>
@@ -6575,7 +6562,7 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="text-[8px] text-slate-500 mt-0.5" id="plannerGroup2WeekMeta">0 doctor-days</div>
 </div>
 </div>
-<div class="leave-date-grid" id="weeklyLeaveCalendar"></div>
+<div class="leave-date-grid hidden" id="weeklyLeaveCalendar" aria-hidden="true"></div>
 </div>
 <div class="mt-5 pt-4 border-t border-slate-800">
 <div class="flex items-center justify-between gap-3 mb-3">
