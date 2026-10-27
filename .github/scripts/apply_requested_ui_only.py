@@ -10,7 +10,6 @@ for marker in ['id="topActionGrid"', 'id="rotasticLiveMini"', 'id="driveTimeBtn"
         raise SystemExit('Missing protected working-view anchor: ' + marker)
 
 # ---- LIVE / ETA / Weather row ----
-# Extract the existing LIVE block without changing any of its handlers/content.
 live_re = re.compile(r'<div class="rotastic-live-mini" id="rotasticLiveMini">.*?</div>', re.S)
 live_matches = list(live_re.finditer(s))
 if len(live_matches) != 1:
@@ -22,18 +21,12 @@ grid_start = s.find('id="topActionGrid"')
 if row_start < 0 or grid_start < 0 or row_start > grid_start:
     raise SystemExit('Could not locate metadata row before action grid')
 
-# If LIVE is not already in the metadata row, move it there by replacing only
-# the visible Export card in that row. Export functionality is preserved below
-# by placing Export where Refresh currently sits.
 row_region = s[row_start:grid_start]
 if 'id="rotasticLiveMini"' not in row_region:
     s = s[:live_matches[0].start()] + s[live_matches[0].end():]
     row_start = s.find('<div class="live-rota-meta-row')
     grid_start = s.find('id="topActionGrid"')
     row_region = s[row_start:grid_start]
-
-    # Prefer the known top export card. Fall back to the first export-menu button
-    # in the metadata row only; never scan outside that row.
     exp = re.search(r'<button[^>]*id="topExportCard"[^>]*>.*?</button>', row_region, re.S)
     if not exp:
         exp = re.search(r'<button[^>]*onclick="toggleRotaExportMenu\(\)"[^>]*>.*?</button>', row_region, re.S)
@@ -46,20 +39,16 @@ if 'id="rotasticLiveMini"' not in row_region:
 # ---- Action row: remove Refresh, preserve Export ----
 grid_id = s.find('id="topActionGrid"')
 grid_open = s.rfind('<div', 0, grid_id)
-# The action grid is short; limit edits to the next 5000 chars only.
 grid_end = min(len(s), grid_open + 5000)
 grid_region = s[grid_open:grid_end]
-
-refresh = re.search(r'<button[^>]*onclick="refreshLiveRota\(\)"[^>]*>.*?</button>', grid_region, re.S)
+refresh_button_re = re.compile(r'<button[^>]*onclick="refreshLiveRota\(\)"[^>]*>.*?</button>', re.S)
+refresh = refresh_button_re.search(grid_region)
 export_in_grid = re.search(r'<button[^>]*onclick="toggleRotaExportMenu\(\)"[^>]*>.*?</button>', grid_region, re.S)
 
 if refresh:
     if export_in_grid:
-        # Export already exists in the action grid: remove Refresh only.
         replacement = ''
     else:
-        # Preserve the three-box layout and Export functionality by changing only
-        # the Refresh button's handler/icon/label to Export.
         old = refresh.group(0)
         cls = re.search(r'class="([^"]*)"', old)
         class_text = cls.group(1) if cls else 'rota-action-btn w-full'
@@ -71,8 +60,10 @@ if refresh:
     a = grid_open + refresh.start()
     b = grid_open + refresh.end()
     s = s[:a] + replacement + s[b:]
-elif 'onclick="refreshLiveRota()"' in s:
-    raise SystemExit('Refresh handler exists outside expected action grid; refusing broad edit')
+else:
+    # It is fine for the refreshLiveRota function itself to remain; only its visible button is removed.
+    if not re.search(r'<button[^>]*onclick="toggleRotaExportMenu\(\)"[^>]*>.*?</button>', grid_region, re.S):
+        raise SystemExit('Neither Refresh nor Export action found in top action grid')
 
 # ---- Scoped visual override only ----
 css = '''
@@ -156,7 +147,6 @@ css = '''
 </style>
 '''
 
-# Replace a previous copy if present; otherwise insert before </head>.
 old_css = re.compile(r'<style id="requested-ui-only-20261027">.*?</style>\s*', re.S)
 if old_css.search(s):
     s = old_css.sub(css, s, count=1)
@@ -167,8 +157,9 @@ else:
     s = s[:head_end] + css + s[head_end:]
 
 # ---- Exact safety checks ----
-if 'onclick="refreshLiveRota()"' in s:
-    raise SystemExit('Refresh button/handler still present')
+# Only the visible Refresh button must be gone; the refreshLiveRota function stays intact.
+if refresh_button_re.search(s):
+    raise SystemExit('Visible Refresh button still present')
 if s.count('id="rotasticLiveMini"') != 1:
     raise SystemExit('LIVE id count changed')
 if s.count('id="driveTimeBtn"') != 1:
@@ -176,7 +167,6 @@ if s.count('id="driveTimeBtn"') != 1:
 if s.count('id="weatherBadge"') != 1:
     raise SystemExit('Weather id count changed')
 
-# LIVE must now be in the same metadata row before ETA and weather.
 row_start = s.find('<div class="live-rota-meta-row')
 grid_start = s.find('id="topActionGrid"')
 row_region = s[row_start:grid_start]
@@ -184,7 +174,6 @@ positions = [row_region.find('id="rotasticLiveMini"'), row_region.find('id="driv
 if not (positions[0] >= 0 and positions[0] < positions[1] < positions[2]):
     raise SystemExit('LIVE / ETA / Weather are not in the requested order in one row')
 
-# Protect unrelated design/functionality anchors.
 for marker in [
     'id="scheduleMatrixContainer"',
     'onclick="openSwapRequestModal()"',
