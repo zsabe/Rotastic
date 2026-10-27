@@ -13,28 +13,22 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8').splitlines()
-          terms=['announcement','ticker','prayer','diabetes','obesity','swapsNewsTicker','tickerContent','medical','health stat','CPD']
-          hits=[]
-          for i,line in enumerate(s,1):
-              low=line.lower()
-              if any(t.lower() in low for t in terms):
-                  hits.append(i)
-          ranges=[]
-          for i in hits:
-              a=max(1,i-12); b=min(len(s),i+18)
-              if ranges and a <= ranges[-1][1] + 2:
-                  ranges[-1]=(ranges[-1][0],max(ranges[-1][1],b))
-              else:
-                  ranges.append((a,b))
-          out=[]
-          for a,b in ranges:
-              out.append(f'--- lines {a}-{b} ---')
-              for n in range(a,b+1): out.append(f'{n}: {s[n-1]}')
+          p=Path('index.html')
+          raw=p.read_text(encoding='utf-8')
+          low=raw.lower()
+          terms=['announcement','ticker','prayer','diabetes','obesity','swapsnewsticker','tickercontent','medical','health','cpd']
+          out=[f'bytes={len(raw.encode("utf-8"))}',f'chars={len(raw)}',f'lines={len(raw.splitlines())}',f'prefix={raw[:220]!r}']
+          for t in terms: out.append(f'{t}={low.count(t)}')
+          for t in terms:
+              pos=low.find(t)
+              if pos>=0:
+                  a=max(0,pos-900); b=min(len(raw),pos+1800)
+                  out.append(f'--- around {t} at {pos} ---\n{raw[a:b]}')
           Path('.diag-announcements.txt').write_text('\n'.join(out),encoding='utf-8')
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .diag-announcements.txt
           git commit -m "Capture announcement diagnostics" || exit 0
+          git pull --rebase origin main
           git push
