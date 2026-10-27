@@ -1,0 +1,66 @@
+name: Compact status strip once
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ github.event.head_commit.message == 'Apply compact LIVE ETA temperature strip' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Make only the status strip smaller
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          required=['id="rotasticLiveMini"','id="driveTimeBtn"','id="weatherBadge"','id="driveTimeBtnText"','id="weatherTemp"','id="topActionGrid"','onclick="openSwapRequestModal()"','onclick="toggleRotaExportMenu()"']
+          for x in required:
+              if x not in s:
+                  raise SystemExit('Missing expected anchor: '+x)
+          start=s.find('    /* v167 — publish-ready interaction and layout polish */')
+          end=s.find('    /* v168', start)
+          if start < 0 or end < 0:
+              raise SystemExit('v167/v168 CSS markers missing')
+          block=s[start:end]
+          changes={
+            'grid-template-columns: auto minmax(92px,1fr) auto !important;':'grid-template-columns: 1fr 1fr 1fr !important;',
+            '.live-rota-meta-row .rotastic-live-mini { min-height:24px !important; height:24px !important; padding:0 4px !important; border:0 !important; background:transparent !important; box-shadow:none !important; }':'.live-rota-meta-row .rotastic-live-mini { min-height:20px !important; height:20px !important; padding:0 2px !important; border:0 !important; background:transparent !important; box-shadow:none !important; justify-self:start !important; }',
+            '.live-drive-slot { display:flex; align-items:center; justify-content:center; overflow:hidden; }':'.live-drive-slot { display:flex; align-items:center; justify-content:center; overflow:hidden; justify-self:center !important; min-width:0 !important; }',
+            '.live-drive-slot #driveTimeBtn { width:auto !important; min-width:88px !important; max-width:118px !important; height:24px !important; padding:0 4px !important; gap:5px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }':'.live-drive-slot #driveTimeBtn { width:auto !important; min-width:0 !important; max-width:none !important; height:20px !important; min-height:20px !important; padding:0 2px !important; gap:4px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }',
+            '#weatherBadge { height:24px !important; min-height:24px !important; max-height:24px !important; padding:0 4px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }':'#weatherBadge { height:20px !important; min-height:20px !important; max-height:20px !important; width:auto !important; padding:0 2px !important; border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; justify-self:end !important; }'
+          }
+          for old,new in changes.items():
+              if old not in block:
+                  raise SystemExit('Expected current status-strip CSS not found: '+old[:65])
+              block=block.replace(old,new,1)
+          marker='    #driveTimeBtnSub {'
+          if marker not in block:
+              raise SystemExit('ETA subtext CSS anchor missing')
+          compact='''    #liveRotaUpdatedAt { display:none !important; }\n    .rotastic-live-mini-label, #driveTimeBtnText, #weatherTemp { font-size:10px !important; line-height:1 !important; font-weight:700 !important; }\n    .rotastic-live-mini-label { color:#f43f5e !important; }\n'''
+          block=block.replace(marker,compact+marker,1)
+          # Preserve ETA click target while removing only its secondary line.
+          block=block.replace('    #driveTimeBtnSub {','    #driveTimeBtnSub { display:none !important;',1)
+          s=s[:start]+block+s[end:]
+          # Verify requested order and critical controls remain exactly present.
+          if not (s.find('id="rotasticLiveMini"') < s.find('id="driveTimeBtn"') < s.find('id="weatherBadge"')):
+              raise SystemExit('LIVE/ETA/weather order incorrect')
+          if s.count('id="rotasticLiveMini"') != 1 or s.count('id="driveTimeBtn"') != 1 or s.count('id="weatherBadge"') != 1:
+              raise SystemExit('Status IDs are not unique')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify and commit only index
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr -d '\r')" = "index.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/compact-status-strip-once.yml
+          git commit -m "Make LIVE ETA temperature equally compact"
+          git pull --rebase origin main
+          git push origin HEAD:main
