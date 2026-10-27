@@ -8,8 +8,8 @@ function renameTab(){
  const desktop=document.getElementById('deskTabBtnFeedback');
  if(desktop){desktop.setAttribute('aria-label','Communications');desktop.innerHTML=desktop.innerHTML.replace(/Shift Feedback|Feedback/g,'Communications');}
  document.querySelectorAll('[data-rotastic-tab="feedback"]').forEach(b=>{const label=b.querySelector('span');if(label)label.textContent='Communications';b.setAttribute('aria-label','Communications')});
- document.querySelectorAll('button[onclick*="announcements"]').forEach(b=>{b.hidden=true;b.style.setProperty('display','none','important');b.setAttribute('aria-hidden','true');b.tabIndex=-1});
- if(!document.getElementById('rotastic-nav-label-style')){const css=document.createElement('style');css.id='rotastic-nav-label-style';css.textContent='nav.fixed [data-rotastic-tab="feedback"] span,.bottom-nav [data-rotastic-tab="feedback"] span{font-size:10px!important;font-weight:500!important;letter-spacing:0!important;line-height:1.2!important;white-space:nowrap!important}nav.fixed [data-rotastic-tab="feedback"],.bottom-nav [data-rotastic-tab="feedback"]{min-width:0!important;flex:1 1 0!important}';document.head.appendChild(css)}
+ document.querySelectorAll('button[onclick*="announcements"]').forEach(b=>b.remove());
+ if(!document.getElementById('rotastic-nav-label-style')){const css=document.createElement('style');css.id='rotastic-nav-label-style';css.textContent='nav.fixed [data-rotastic-tab="feedback"] span,.bottom-nav [data-rotastic-tab="feedback"] span{font-size:clamp(8px,2.1vw,10px)!important;font-weight:500!important;letter-spacing:-.35px!important;line-height:1.2!important;white-space:nowrap!important;max-width:100%!important}nav.fixed [data-rotastic-tab="feedback"],.bottom-nav [data-rotastic-tab="feedback"]{min-width:0!important;flex:1 1 0!important;padding-left:0!important;padding-right:0!important}nav.fixed [data-rotastic-tab="feedback"] i,.bottom-nav [data-rotastic-tab="feedback"] i{font-size:1rem!important;margin-bottom:.125rem!important}';document.head.appendChild(css)}
  return desktop;
 }
 function panelFor(){return document.getElementById('tabFeedback')}
