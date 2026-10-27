@@ -2205,7 +2205,7 @@ window.ROTASTIC_PUSH_BROADCAST_ENDPOINT = window.ROTASTIC_PUSH_BROADCAST_ENDPOIN
       overflow-wrap: anywhere !important;
     }
     #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-prayer-card {
-      transform: translateY(7px);
+      transform: translateY(14px);
     }
 
     .ticker-type-badge {
@@ -12338,6 +12338,35 @@ function exportAdminMetricsInfographic() {
 .rotastic-shift-header-meta{margin-top:4px;font-size:9px;line-height:1.25;font-weight:800;color:#cbd5e1;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:520px){.live-rota-meta-row{grid-template-columns:auto minmax(0,1fr) auto!important;gap:6px!important}#driveTimeBtnText{max-width:190px!important;font-size:9px!important;line-height:1.12!important}.live-drive-slot #driveTimeBtn>i{font-size:11px!important}.personal-poster-card,.personal-poster-content,.my-shift-presence-card{min-height:clamp(520px,62dvh,650px)!important}.rotastic-shift-head{align-items:flex-start!important}.rotastic-shift-header-meta{font-size:8px!important;max-width:100%!important}}
 </style>
+
+<style id="rotastic-family-practice-announcement-scope">
+  /* ROTASTIC family-practice announcement scope 2026-10-27 */
+  #tickerInnerRow:not(.ticker-fullwidth-mode) #tickerContent,
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .news-stage,
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .news-drop-item,
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-left-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .news-stage {
+    width: 100% !important;
+    padding-right: 8px !important;
+  }
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-card,
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-medical-link,
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-message-text {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #tickerInnerRow:not(.ticker-fullwidth-mode) .ticker-medical-link {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+</style>
+
 </body>
 </html>`;
   try {
@@ -20628,6 +20657,8 @@ const ROTASTIC_CURATED_CLINICAL_UPDATES = [
 
 
 const ROTASTIC_CPD_EVENTS = [
+  {startDate:'2026-12-10', endDate:'2026-12-12', text:'🇶🇦 CPD • 3rd Qatar Nephrology Conference • 10–12 Dec 2026 • Cat 1 • 19 hours', link:'https://www.hamad.qa/EN/All-Events/3QNC2026/Pages/default.aspx'},
+
   {startDate:'2026-10-31', endDate:'2026-11-01', text:'🇦🇪 CPD • EHS International Pediatric & Critical Care Conference • 31 Oct–1 Nov 2026 • Dubai', link:'https://ippccc.com/'},
   {startDate:'2026-11-04', endDate:'2026-11-07', text:'🇶🇦 CPD • Qatar International Neonatal Conference • 4–7 Nov 2026 • Category 1/3 credits available', link:'https://www.cmegallery.com/events/pediatrics/qatar-international-neonatal-conference-qinc-2026-doha-2026'},
   {startDate:'2026-11-05', endDate:'2026-11-06', text:'🇦🇪 CPD • Global Pediatric Congress • 5–6 Nov 2026 • Dubai', link:'https://globalpediatriccongress.com/'},
@@ -22177,6 +22208,18 @@ function getPrayerTickerMessage(prayerTimes) {
 }
 
 const ROTASTIC_MEDICAL_STATS = [
+  {country:'Global',weight:12,text:'🌍 WHO: 1.4 billion adults aged 30–79 had hypertension in 2024 (33%).'},
+  {country:'Global',weight:10,text:'🌍 WHO: 44% of adults with hypertension are unaware they have it.'},
+  {country:'Global',weight:10,text:'🌍 WHO: only 23% of adults with hypertension have it controlled.'},
+  {country:'Global',weight:11,text:'🌍 Asthma affected about 363 million people worldwide in 2023.'},
+  {country:'Global',weight:10,text:'🌍 COPD caused about 3.4 million deaths worldwide in 2023.'},
+  {country:'Global',weight:10,text:'🌍 Depression affects an estimated 5.2% of adults worldwide.'},
+  {country:'Global',weight:10,text:'🌍 Tobacco causes more than 7 million deaths worldwide each year.'},
+  {country:'Global',weight:10,text:'🌍 In 2024, about 1.1 billion people worldwide were living with obesity.'},
+  {country:'Global',weight:10,text:'🌍 In 2024, an estimated 20.6 million people were diagnosed with cancer.'},
+  {country:'Global',weight:9,text:'🌍 In 2025, 13.5 million children received no routine vaccine doses.'},
+  {country:'Global',weight:9,text:'🌍 Global DTP3 childhood vaccination coverage was 85% in 2025.'},
+
   {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
   {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
   {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
