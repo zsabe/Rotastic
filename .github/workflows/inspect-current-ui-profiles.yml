@@ -1,30 +1,188 @@
-name: Inspect live Pages and physician profiles
+name: Apply final compact status strip and physician emails
 on:
   push:
     branches: [main]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  inspect:
+  patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect source anchors
+        with:
+          fetch-depth: 0
+      - name: Apply exact requested changes
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8')
-          terms=['ROTASTIC_FULL_DOCTOR_NAMES','physicianDirectory','renderPhysician','doctor profile','profile','mailto:','email','ROTASTIC_COMPACT_DOCTOR_NAMES']
-          for term in terms:
-              print(f'\n===== {term} =====')
-              start=0; shown=0
-              while shown<12:
-                  i=s.lower().find(term.lower(),start)
-                  if i<0: break
-                  a=max(0,i-650); b=min(len(s),i+1400)
-                  print(s[a:b].replace('\r',''))
-                  print('\n---')
-                  start=i+len(term); shown+=1
-              if shown==0: print('NOT FOUND')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Safety anchors: preserve existing controls and profile functions.
+          for anchor in [
+              'id="rotasticLiveMini"', 'id="driveTimeBtn"', 'id="weatherBadge"',
+              'onclick="openSwapRequestModal()"', 'onclick="toggleRotaExportMenu()"',
+              'function getKnownPhysicianEmail(docName)', 'function renderPhysicianManagement()'
+          ]:
+              assert anchor in s, f'Missing safety anchor: {anchor}'
+
+          # 1) Expand the existing permanent physician email directory only.
+          old_directory = """  const permanentDirectory = {
+    'Dr Zaid SE.': 'zeleish@phcc.gov.qa',
+    'Dr Mohamed M.': 'mmoursi@phcc.gov.qa',
+    'Dr Nabina': 'fnabina@phcc.gov.qa',
+    'Dr. Nabina': 'fnabina@phcc.gov.qa'
+  };"""
+          new_directory = """  const permanentDirectory = {
+    'Dr Mohamed M.': 'mmoursi@phcc.gov.qa',
+    'Dr Husam S': 'halsaudi@phcc.gov.qa',
+    'Dr Fazila K.': 'fkhattak@phcc.gov.qa',
+    'Dr Mohammed S.': 'msayed@phcc.gov.qa',
+    'Dr Bilal C.': 'bchaudhry@phcc.gov.qa',
+    'Dr Saima N.': 'snaz@phcc.gov.qa',
+    'Dr Imran A.': 'imahmad@phcc.gov.qa',
+    'Dr Maher A.': 'mahed@phcc.gov.qa',
+    'Dr Laith A.': 'lalmarsomi@phcc.gov.qa',
+    'Dr Oula T.': 'otayar@phcc.gov.qa',
+    'Dr Abdulgafoor K.': 'akuniyil@phcc.gov.qa',
+    'Dr Abdulrashid S.': 'asiddique@phcc.gov.qa',
+    'Dr Shadi T': 'saltarawneh@phcc.gov.qa',
+    'Dr Syed I.': 'sislam@phcc.gov.qa',
+    'Dr Selman E.': 'serturhan@phcc.gov.qa',
+    'Dr Enan M.': 'emasoud@phcc.gov.qa',
+    'Dr Gani M.': 'gsmohamed@phcc.gov.qa',
+    'Dr Faisal C.': 'fchaudhry@phcc.gov.qa',
+    'Dr Muhammad K.': 'mkhattak@phcc.gov.qa',
+    'Dr Aminullah Z.': 'azamani@phcc.gov.qa',
+    'Dr Salah M.': 'salmohammed@phcc.gov.qa',
+    'Dr Rida C.': 'rchandio@phcc.gov.qa',
+    'Dr Maya S.': 'msukkari@phcc.gov.qa',
+    'Dr Laila A.': 'layoub@phcc.gov.qa',
+    'Dr Saba T.': 'satahir@phcc.gov.qa',
+    'Dr Tayseer A.': 'tayed@phcc.gov.qa',
+    'Dr Zaid SE.': 'zeleish@phcc.gov.qa',
+    'Dr Nabina': 'fnabina@phcc.gov.qa',
+    'Dr. Nabina': 'fnabina@phcc.gov.qa'
+  };"""
+          assert s.count(old_directory) == 1, 'Expected permanentDirectory block exactly once'
+          s = s.replace(old_directory, new_directory, 1)
+
+          # 2) Show the existing known email directly beneath each physician name.
+          old_render = """    const safe = doc.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\"/g,'&quot;');
+    const encodedName = encodeURIComponent(doc.name);"""
+          new_render = """    const safe = doc.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\"/g,'&quot;');
+    const physicianEmail = getKnownPhysicianEmail(doc.name);
+    const safeEmail = String(physicianEmail || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\"/g,'&quot;');
+    const encodedName = encodeURIComponent(doc.name);"""
+          assert s.count(old_render) == 1, 'Expected physician render variables exactly once'
+          s = s.replace(old_render, new_render, 1)
+
+          name_line = '<div class="text-xs font-bold text-white">${safe}</div>'
+          email_line = name_line + "\n          ${safeEmail ? `<div class=\"text-[9px] text-cyan-300/80 break-all mt-0.5\">${safeEmail}</div>` : ''}"
+          assert s.count(name_line) == 1, 'Expected physician name line exactly once'
+          s = s.replace(name_line, email_line, 1)
+
+          # 3) Put the compact status rules at the very end of the document so v168/v169 cannot override them.
+          final_css = r'''
+<style id="rotastic-final-compact-status-strip">
+/* Final requested status strip: small red LIVE, ETA and temperature on one line. */
+.live-rota-meta-row {
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  gap: 6px !important;
+  align-items: center !important;
+}
+.live-rota-meta-row > div:first-child,
+.live-rota-meta-row .rotastic-live-mini,
+.live-drive-slot,
+#weatherBadge {
+  min-height: 20px !important;
+  height: 20px !important;
+  padding: 0 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.live-drive-slot {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.live-drive-slot #driveTimeBtn {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 20px !important;
+  height: 20px !important;
+  padding: 0 2px !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#liveRotaUpdatedAt,
+#driveTimeBtnSub { display: none !important; }
+.rotastic-live-mini-label,
+#driveTimeBtnText,
+#weatherTemp {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+}
+.rotastic-live-mini-label { color: #f43f5e !important; }
+#weatherBadge { width: auto !important; min-width: 0 !important; justify-content: flex-end !important; }
+@media (max-width:640px) {
+  .live-rota-meta-row > div:first-child,
+  .live-rota-meta-row .rotastic-live-mini,
+  .live-drive-slot,
+  #weatherBadge,
+  .live-drive-slot #driveTimeBtn {
+    min-height: 20px !important;
+    height: 20px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  #driveTimeBtnText,
+  #weatherTemp,
+  .rotastic-live-mini-label { font-size: 10px !important; }
+}
+</style>
+'''
+          assert 'id="rotastic-final-compact-status-strip"' not in s
+          body_close = s.rfind('</body>')
+          assert body_close != -1, 'Missing </body>'
+          s = s[:body_close] + final_css + s[body_close:]
+
+          # Verification: requested controls remain and all supplied emails are present.
+          for anchor in ['onclick="openSwapRequestModal()"','onclick="toggleRotaExportMenu()"','id="rotasticLiveMini"','id="driveTimeBtn"','id="weatherBadge"']:
+              assert anchor in s
+          emails = [
+            'mmoursi@phcc.gov.qa','halsaudi@phcc.gov.qa','fkhattak@phcc.gov.qa','msayed@phcc.gov.qa',
+            'bchaudhry@phcc.gov.qa','snaz@phcc.gov.qa','imahmad@phcc.gov.qa','mahed@phcc.gov.qa',
+            'lalmarsomi@phcc.gov.qa','otayar@phcc.gov.qa','akuniyil@phcc.gov.qa','asiddique@phcc.gov.qa',
+            'saltarawneh@phcc.gov.qa','sislam@phcc.gov.qa','serturhan@phcc.gov.qa','emasoud@phcc.gov.qa',
+            'gsmohamed@phcc.gov.qa','fchaudhry@phcc.gov.qa','mkhattak@phcc.gov.qa','azamani@phcc.gov.qa',
+            'salmohammed@phcc.gov.qa','rchandio@phcc.gov.qa','msukkari@phcc.gov.qa','layoub@phcc.gov.qa',
+            'satahir@phcc.gov.qa','tayed@phcc.gov.qa','zeleish@phcc.gov.qa','fnabina@phcc.gov.qa'
+          ]
+          for email in emails:
+              assert email in s, email
+          p.write_text(s, encoding='utf-8')
           PY
+      - name: Verify and commit only index
+        shell: bash
+        run: |
+          git diff --check
+          test "$(git diff --name-only)" = "index.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix compact status strip and add physician emails"
+          git pull --rebase origin main
+          git push origin main
