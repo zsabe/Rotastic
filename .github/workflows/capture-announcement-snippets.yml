@@ -14,21 +14,27 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          src=Path('index.html').read_text(errors='ignore').splitlines()
-          keys=('announcement','prayer','adhan','diabetes','obesity','ticker','medical','cpd')
-          hits=[]
-          for i,line in enumerate(src,1):
-              low=line.lower()
-              if any(k in low for k in keys): hits.append(i)
-          ranges=[]
-          for i in hits:
-              a=max(1,i-12); b=min(len(src),i+25)
-              if ranges and a<=ranges[-1][1]+3: ranges[-1]=(ranges[-1][0],max(ranges[-1][1],b))
-              else: ranges.append((a,b))
-          out=[]
-          for a,b in ranges:
-              out.append(f'===== {a}-{b} =====')
-              out += [f'{n}: {src[n-1]}' for n in range(a,b+1)]
+          import re
+          p=Path('index.html')
+          src=p.read_text(errors='ignore')
+          keys=('announcement','prayer','adhan','diabetes','obesity','ticker','medical','cpd','salah','fajr','dhuhr','asr','maghrib','isha')
+          out=[f'bytes={len(src)} lines={src.count(chr(10))+1}']
+          seen=[]
+          low=src.lower()
+          for key in keys:
+              start=0
+              count=0
+              while True:
+                  i=low.find(key,start)
+                  if i<0: break
+                  if all(abs(i-j)>900 for j in seen):
+                      seen.append(i); count+=1
+                      a=max(0,i-1200); b=min(len(src),i+2500)
+                      out.append(f'\n===== KEY={key} POS={i} =====\n'+src[a:b])
+                  start=i+len(key)
+                  if count>=8: break
+          if len(out)==1:
+              out.append('\nFIRST_4000\n'+src[:4000])
           Path('.github/announcement-snippets.txt').write_text('\n'.join(out))
           PY
       - name: Commit snippet file
@@ -36,5 +42,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add .github/announcement-snippets.txt
-          git commit -m 'Add temporary announcement snippets'
+          git commit -m 'Refresh temporary announcement snippets'
           git push
