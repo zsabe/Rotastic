@@ -1,5 +1,8 @@
 name: Inspect announcements
 on:
+  push:
+    paths:
+      - '.github/workflows/inspect-announcements.yml'
   workflow_dispatch:
 jobs:
   inspect:
