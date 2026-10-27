@@ -1,0 +1,27 @@
+name: Apply final status and physician emails
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python .github/scripts/apply_final_status_emails.py
+      - name: Commit index only
+        shell: bash
+        run: |
+          git diff --check
+          if git diff --quiet; then exit 0; fi
+          test "$(git diff --name-only)" = "index.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix compact status strip and add physician emails"
+          git pull --rebase origin main
+          git push origin main
