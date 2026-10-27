@@ -26227,21 +26227,39 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
 })();
 </script>
 
-<style id="rotastic-planner-modern-v2">
-#weeklyLeaveCalendar{display:flex!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:4px 2px 14px!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
-#weeklyLeaveCalendar>.planner-week-day-card{flex:0 0 min(82vw,360px)!important;scroll-snap-align:start;border-radius:16px!important}
-.rotastic-planner-v2-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
-.rotastic-planner-v2-toolbar label{font-size:12px;font-weight:800}
-.rotastic-planner-v2-toolbar select{min-width:130px}
-.rotastic-group-hidden{display:none!important}
-@media(min-width:900px){#weeklyLeaveCalendar>.planner-week-day-card{flex-basis:330px!important}}
+<style id="rotastic-planner-matrix-v3">
+.rotastic-matrix-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.rotastic-matrix-toolbar label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}
+.rotastic-matrix-toolbar select{min-width:128px}
+.rotastic-matrix-wrap{width:100%;overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,255,255,.10);border-radius:16px;background:rgba(255,255,255,.025)}
+.rotastic-matrix{border-collapse:separate;border-spacing:0;min-width:max-content;width:100%;font-size:12px}
+.rotastic-matrix th,.rotastic-matrix td{height:44px;min-width:64px;padding:5px 7px;text-align:center;border-right:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}
+.rotastic-matrix thead th{position:sticky;top:0;z-index:4;background:rgba(20,29,48,.97);font-weight:800}
+.rotastic-matrix .rm-name{position:sticky;left:0;z-index:3;min-width:155px;max-width:190px;text-align:left;background:rgba(20,29,48,.98);font-weight:800;box-shadow:7px 0 12px rgba(0,0,0,.10)}
+.rotastic-matrix thead .rm-name{z-index:6}
+.rotastic-matrix tbody tr:nth-child(even) td:not(.rm-name){background:rgba(255,255,255,.018)}
+.rotastic-matrix .rm-weekend{background:rgba(255,255,255,.035)}
+.rotastic-matrix .rm-today{box-shadow:inset 0 2px 0 rgba(79,172,254,.75),inset 0 -2px 0 rgba(79,172,254,.35)}
+.rotastic-matrix .rm-day{display:block;font-size:10px;opacity:.68;font-weight:700}.rotastic-matrix .rm-date{display:block;font-size:14px;margin-top:2px}
+.rotastic-matrix .rm-shift{display:flex;align-items:center;justify-content:center;min-height:28px;padding:3px 6px;border-radius:8px;font-weight:800;background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.18)}
+.rotastic-matrix .rm-empty{opacity:.28}.rotastic-matrix-empty{padding:18px;text-align:center;opacity:.72}
+#weeklyLeaveCalendar.rotastic-source-hidden{display:none!important}
+@media(max-width:700px){.rotastic-matrix th,.rotastic-matrix td{min-width:58px;height:41px;padding:4px 5px}.rotastic-matrix .rm-name{min-width:132px;max-width:150px}}
 </style>
-<script id="rotastic-planner-modern-v2-js">
+<script id="rotastic-planner-matrix-v3-js">
 (function(){
-  function t(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim()}
-  function apply(c,w){Array.from(c.querySelectorAll('*')).forEach(function(e){var x=t(e),g=/\bGroup\s*1\b/i.test(x)?'1':(/\bGroup\s*2\b/i.test(x)?'2':'');if(!g)return;var b=e.closest('[class*=group],[class*=section],[class*=panel]')||e;if(b!==c&&!b.classList.contains('planner-week-day-card'))b.classList.toggle('rotastic-group-hidden',g!==w)})}
-  function go(){var c=document.getElementById('weeklyLeaveCalendar');if(!c||!c.parentElement)return;var h=c.parentElement;if(!h.querySelector('.rotastic-planner-v2-toolbar')){var b=document.createElement('div');b.className='rotastic-planner-v2-toolbar';var l=document.createElement('label');l.textContent='Display group ';var q=document.createElement('select');q.innerHTML='<option value="1">Group 1</option><option value="2">Group 2</option>';l.appendChild(q);b.appendChild(l);h.insertBefore(b,c);q.onchange=function(){apply(c,q.value)};apply(c,q.value)}var e=document.getElementById('plannerExportScope');if(e){Array.from(e.options).forEach(function(o){if(/group\s*1/i.test(o.text))o.text='Group 1';if(/group\s*2/i.test(o.text))o.text='Group 2'})}}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,50)});else setTimeout(go,50);new MutationObserver(function(){setTimeout(go,30)}).observe(document.documentElement,{childList:true,subtree:true})
+  var busy=false;
+  function txt(e){return String(e&&e.textContent||'').replace(/\s+/g,' ').trim()}
+  function groupOf(e){var n=e;while(n&&n!==document.body){var x=(txt(n)+' '+String(n.className||'')+' '+String(n.id||''));var m=x.match(/\bGroup\s*([12])\b/i);if(m)return m[1];n=n.parentElement}return ''}
+  function dateFromCard(card){var d=card.querySelector('[data-date]');if(d&&d.dataset.date)return new Date(d.dataset.date+'T12:00:00');var all=Array.from(card.querySelectorAll('*')).map(txt).filter(Boolean);for(var i=0;i<all.length;i++){var m=all[i].match(/\b(\d{1,2})\b/);if(m&&/(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/i.test(all[i])){var now=new Date(),z=new Date(now.getFullYear(),now.getMonth(),+m[1],12);return z}}return null}
+  function rowsFromCard(card,want){var candidates=Array.from(card.querySelectorAll('tr,[class*=doctor],[class*=physician],[class*=row],[class*=person],[class*=member]'));var out=[];candidates.forEach(function(r){var g=groupOf(r)||groupOf(card);if(g&&g!==want)return;var nameEl=r.querySelector('[class*=name],[data-doctor],[data-physician]');var name=txt(nameEl)||txt(r).match(/Dr\.?\s+[A-Z][^\n|]{1,35}/i)?.[0]||'';if(!name||!/Dr\.?\s+/i.test(name))return;var val='';var cells=Array.from(r.querySelectorAll('td,[class*=shift],[class*=status],[class*=assignment],[class*=slot]'));for(var j=cells.length-1;j>=0;j--){var q=txt(cells[j]);if(q&&q!==name&&q.length<45){val=q;break}}out.push({name:name.trim(),value:val,source:r})});return out}
+  function build(){if(busy)return;busy=true;try{var src=document.getElementById('weeklyLeaveCalendar');if(!src||!src.parentElement)return;var host=src.parentElement;var old=host.querySelector('.rotastic-matrix-shell');var selected=old&&old.querySelector('select')?old.querySelector('select').value:'1';if(old)old.remove();var cards=Array.from(src.querySelectorAll('.planner-week-day-card'));if(!cards.length)cards=Array.from(src.children).filter(function(x){return x.nodeType===1});if(!cards.length)return;
+    var days=cards.map(function(c,i){return {card:c,date:dateFromCard(c),index:i}});var names=[], map={};days.forEach(function(d){rowsFromCard(d.card,selected).forEach(function(r){if(!map[r.name]){map[r.name]={};names.push(r.name)}map[r.name][d.index]=r})});
+    var shell=document.createElement('div');shell.className='rotastic-matrix-shell';var bar=document.createElement('div');bar.className='rotastic-matrix-toolbar';bar.innerHTML='<label>Display group <select aria-label="Rota Planner group"><option value="1">Group 1</option><option value="2">Group 2</option></select></label><span style="font-size:11px;opacity:.62">Scroll horizontally for more dates</span>';shell.appendChild(bar);var sel=bar.querySelector('select');sel.value=selected;sel.onchange=function(){build()};
+    var wrap=document.createElement('div');wrap.className='rotastic-matrix-wrap';if(!names.length){wrap.innerHTML='<div class="rotastic-matrix-empty">No rota rows found for Group '+selected+'.</div>'}else{var table=document.createElement('table');table.className='rotastic-matrix';var thead=document.createElement('thead'),hr=document.createElement('tr'),hn=document.createElement('th');hn.className='rm-name';hn.textContent='Physician';hr.appendChild(hn);var today=new Date();days.forEach(function(d){var th=document.createElement('th');if(d.date){var wk=d.date.getDay();if(wk===5||wk===6)th.classList.add('rm-weekend');if(d.date.toDateString()===today.toDateString())th.classList.add('rm-today');th.innerHTML='<span class="rm-day">'+d.date.toLocaleDateString(undefined,{weekday:'short'})+'</span><span class="rm-date">'+d.date.getDate()+'</span>'}else th.textContent='Day '+(d.index+1);hr.appendChild(th)});thead.appendChild(hr);table.appendChild(thead);var tb=document.createElement('tbody');names.forEach(function(name){var tr=document.createElement('tr'),tdn=document.createElement('td');tdn.className='rm-name';tdn.textContent=name;tr.appendChild(tdn);days.forEach(function(d){var td=document.createElement('td');if(d.date){var wk=d.date.getDay();if(wk===5||wk===6)td.classList.add('rm-weekend');if(d.date.toDateString()===today.toDateString())td.classList.add('rm-today')}var r=map[name]&&map[name][d.index];if(r&&r.value){var pill=document.createElement('div');pill.className='rm-shift';pill.textContent=r.value;td.appendChild(pill);td.onclick=function(){r.source.click()}}else{td.classList.add('rm-empty');td.textContent='—'}tr.appendChild(td)});tb.appendChild(tr)});table.appendChild(tb);wrap.appendChild(table)}shell.appendChild(wrap);host.insertBefore(shell,src);src.classList.add('rotastic-source-hidden');
+    var ex=document.getElementById('plannerExportScope');if(ex){Array.from(ex.options).forEach(function(o){if(/group\s*1/i.test(o.text))o.text='Group 1';if(/group\s*2/i.test(o.text))o.text='Group 2'})}
+  }finally{busy=false}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(build,150)});else setTimeout(build,150);new MutationObserver(function(m){if(!busy&&m.some(function(x){return x.target&&x.target.closest&&x.target.closest('#weeklyLeaveCalendar')}))setTimeout(build,80)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true})
 })();
 </script>
 </body>
