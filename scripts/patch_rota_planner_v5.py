@@ -8,13 +8,20 @@ s=p.read_text(encoding='utf-8')
 week_block=r'''<div class="mb-3" id="plannerWeekHeading">\s*<div class="flex flex-wrap items-center justify-center gap-2">\s*<button aria-label="Previous week".*?</button>\s*<div class="min-w-\[220px\]">.*?<select[^>]+id="plannerWeekSelect".*?</select>\s*</div>\s*<button aria-label="Next week".*?</button>\s*</div>\s*</div>'''
 s,n=re.subn(week_block,'',s,count=1,flags=re.S)
 if n==0 and 'id="plannerWeekHeading"' in s:
-    # Guarded fallback: remove only the specifically identified planner heading wrapper.
     start=s.find('<div class="mb-3" id="plannerWeekHeading">')
     if start>=0:
         marker='<div class="flex items-center justify-between gap-3 mb-2">'
         end=s.find(marker,start)
         if end<0: raise SystemExit('plannerWeekHeading end anchor missing')
         s=s[:start]+s[end:]
+
+# Remove the old leave day-card calendar from the visible Planner. The schedule matrix
+# remains the Planner display; the old element is retained hidden as a compatibility hook
+# for existing functions/exports that still look it up by id.
+s=s.replace('<div class="leave-date-grid" id="weeklyLeaveCalendar"></div>', '<div class="leave-date-grid hidden" id="weeklyLeaveCalendar" aria-hidden="true"></div>', 1)
+
+# Hide the old weekly group-away summary that belongs to the removed day-card interface.
+s=s.replace('<div class="grid grid-cols-2 gap-2 mb-3" id="plannerGroupWeekSummary">', '<div class="hidden" id="plannerGroupWeekSummary" aria-hidden="true">', 1)
 
 # Add a concise ERP reminder directly under the Request Leave / Report Sick Leave button row.
 needle='''<i class="fa-solid fa-kit-medical mr-1.5"></i>Report Sick Leave
@@ -28,7 +35,8 @@ if 'id="leaveErpReminder"' not in s:
     if needle not in s: raise SystemExit('Request Leave button row anchor missing')
     s=s.replace(needle,reminder,1)
 
-# Defensive cleanup for already-rendered/cached markup: hide the full legacy heading if present.
-s=s.replace("function hideWeek(){var s=document.getElementById('plannerWeekSelect');if(!s)return;var p=s.parentElement;while(p&&p.parentElement&&p.parentElement!==document.body){var t=(p.textContent||'').toUpperCase();if(t.indexOf('WEEK COMMENCING')>=0){p.style.display='none';return}p=p.parentElement}s.style.display='none'}","function hideWeek(){var h=document.getElementById('plannerWeekHeading');if(h){h.style.display='none';return}var s=document.getElementById('plannerWeekSelect');if(s)s.style.display='none'}")
+# Defensive cleanup for cached/older markup. Also keep the obsolete day-card UI hidden
+# if another legacy render function populates it after load.
+s=s.replace("function hideWeek(){var h=document.getElementById('plannerWeekHeading');if(h){h.style.display='none';return}var s=document.getElementById('plannerWeekSelect');if(s)s.style.display='none'}","function hideWeek(){var h=document.getElementById('plannerWeekHeading');if(h)h.style.display='none';var s=document.getElementById('plannerWeekSelect');if(s)s.style.display='none';var c=document.getElementById('weeklyLeaveCalendar');if(c){c.style.display='none';c.setAttribute('aria-hidden','true')}var g=document.getElementById('plannerGroupWeekSummary');if(g){g.style.display='none';g.setAttribute('aria-hidden','true')}}")
 
 p.write_text(s,encoding='utf-8')
