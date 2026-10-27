@@ -1,4 +1,4 @@
-name: Inspect exact Refresh markup
+name: Inspect Refresh button markup only
 on:
   push:
     branches: [main]
@@ -6,24 +6,23 @@ permissions:
   contents: write
 jobs:
   inspect:
-    if: ${{ !contains(github.event.head_commit.message, 'Write exact Refresh snippet') }}
+    if: ${{ !contains(github.event.head_commit.message, 'Write Refresh button markup') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract Refresh vicinity only
-        run: |
+      - run: |
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          i=s.find('refreshLiveRota')
-          if i<0: raise SystemExit('refreshLiveRota not found')
-          Path('refresh-current.txt').write_text(s[max(0,i-2200):min(len(s),i+2600)],encoding='utf-8')
+          needle='onclick="refreshLiveRota()"'
+          i=s.find(needle)
+          if i<0: raise SystemExit('Refresh button markup not found')
+          Path('refresh-button-current.txt').write_text(s[max(0,i-1200):min(len(s),i+1600)],encoding='utf-8')
           PY
-      - name: Commit snippet
-        run: |
+      - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add refresh-current.txt
-          git commit -m "Write exact Refresh snippet"
+          git add refresh-button-current.txt
+          git commit -m "Write Refresh button markup"
           git pull --rebase origin main
           git push origin HEAD:main
