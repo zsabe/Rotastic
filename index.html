@@ -6162,6 +6162,16 @@ button,input,select,textarea{font-size:max(16px,1em);}
 }
 </style>
 
+<style id="rotastic-equal-mobile-nav">
+@media(max-width:767px){
+nav.mobile-nav-bar{justify-content:space-evenly!important;gap:0!important;padding-left:6px!important;padding-right:6px!important}
+nav.mobile-nav-bar>button{flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important;padding:0 1px!important;align-items:center!important;text-align:center!important;justify-content:center!important}
+nav.mobile-nav-bar>button>span{font-family:inherit!important;font-size:9px!important;font-weight:500!important;letter-spacing:-.25px!important;line-height:1.25!important;white-space:nowrap!important;text-align:center!important}
+nav.mobile-nav-bar>button>i{font-size:16px!important;margin-bottom:2px!important}
+nav.mobile-nav-bar>button[data-rotastic-tab="schedule"]>span{font-weight:600!important}
+}
+@media(max-width:390px){nav.mobile-nav-bar>button>span{font-size:8px!important;letter-spacing:-.35px!important}}
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
