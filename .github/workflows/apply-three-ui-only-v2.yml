@@ -1,0 +1,70 @@
+name: Apply three UI amendments only v2
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply exact three requested UI changes') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact old-view amendments only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          original=s
+
+          for x in ['id="topActionGrid"','id="topExportCard"','onclick="refreshLiveRota()"','id="rotasticLiveMini"','class="live-rota-meta-row w-full"','personal-poster-card','id="rotaZoomBtn"','onclick="openSwapRequestModal()"','id="scheduleMatrixContainer"']:
+              if x not in s: raise SystemExit('Missing expected old-view anchor: '+x)
+
+          live_block='''<div class="rotastic-live-mini" id="rotasticLiveMini">\n<span class="relative flex h-1.5 w-1.5 flex-shrink-0">\n  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>\n  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>\n</span>\n<span class="rotastic-live-mini-label">LIVE</span>\n<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>\n</div>'''
+          if s.count(live_block)!=1: raise SystemExit('LIVE exact block count not 1')
+          s=s.replace(live_block+'\n','',1)
+
+          export_card_re=r'<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu\(\)" type="button" aria-label="Export rota">.*?</button>\n'
+          s,n=re.subn(export_card_re,'',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('Could not remove exactly one top export card')
+
+          row_open='<div class="live-rota-meta-row w-full">\n'
+          if s.count(row_open)!=1: raise SystemExit('Meta row opening count not 1')
+          s=s.replace(row_open,row_open+live_block+'\n',1)
+
+          refresh_re=r'<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-\[11px\] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota\(\)" type="button">\n<i class="fa-solid fa-rotate text-\[12px\]"></i><span>Refresh</span>\n</button>'
+          export_action='''<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportCard" onclick="toggleRotaExportMenu()" type="button">\n<i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] opacity-70"></i>\n</button>'''
+          s,n=re.subn(refresh_re,export_action,s,count=1)
+          if n!=1: raise SystemExit('Refresh action was not replaced exactly once')
+
+          # Add final narrowly-scoped overrides only. No other CSS/JS/markup changes.
+          override='''\n<style id="rotastic-three-requested-overrides">\n.live-rota-meta-row{display:grid!important;grid-template-columns:auto minmax(82px,1fr) auto!important;align-items:center!important;gap:5px!important}\n.live-rota-meta-row .rotastic-live-mini{height:24px!important;min-height:24px!important;padding:0 5px!important;margin:0!important;align-self:center!important}\n.live-drive-slot{height:24px!important;min-height:24px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:transparent!important;border:0!important;box-shadow:none!important}\n.live-drive-slot #driveTimeBtn{display:inline-flex!important;width:auto!important;min-width:0!important;max-width:none!important;height:24px!important;min-height:24px!important;padding:0 3px!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;gap:3px!important;font-size:10px!important}\n.live-drive-slot #driveTimeBtnText{font-size:10px!important;line-height:1!important;white-space:nowrap!important}\n.live-drive-slot #driveTimeBtnSub{display:none!important}\n#weatherBadge{display:inline-flex!important;height:24px!important;min-height:24px!important;max-height:24px!important;padding:0 3px!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;font-size:10px!important}\n.personal-poster-card,.personal-poster-content{min-height:520px!important}\n@media (orientation:landscape) and (max-height:700px){.personal-poster-card,.personal-poster-content{min-height:285px!important}}\n</style>\n'''
+          if '</head>' not in s: raise SystemExit('head close missing')
+          s=s.replace('</head>',override+'</head>',1)
+
+          # Workability safeguards.
+          if s.count('id="topExportCard"')!=1: raise SystemExit('topExportCard count not 1')
+          if s.count('id="rotasticLiveMini"')!=1: raise SystemExit('LIVE count not 1')
+          if s.find('id="rotasticLiveMini"') > s.find('id="driveTimeBtn"') or s.find('id="driveTimeBtn"') > s.find('id="weatherBadge"'):
+              raise SystemExit('LIVE ETA weather order wrong')
+          for x in ['id="rotaZoomBtn"','onclick="openSwapRequestModal()"','onclick="toggleRotaExportMenu()"','id="scheduleMatrixContainer"','toggleLiveRotaUpdatedDetail()']:
+              if x not in s: raise SystemExit('Lost core interaction anchor: '+x)
+          # Refresh function remains elsewhere; only its visible button is replaced.
+          if 'refreshLiveRota' not in s: raise SystemExit('Refresh function unexpectedly removed')
+          # No service-worker or splash edits are made by this workflow; only index.html is written.
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify only index changed and commit
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr -d '\r')" = "index.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Apply exact three requested UI changes"
+          git pull --rebase origin main
+          git push origin HEAD:main
