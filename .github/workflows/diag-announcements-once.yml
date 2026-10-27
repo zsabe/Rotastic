@@ -3,13 +3,13 @@ on:
   push:
     branches: [main]
 permissions:
-  contents: read
+  contents: write
 jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Locate announcement code
+      - name: Capture announcement code
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -20,13 +20,21 @@ jobs:
               low=line.lower()
               if any(t.lower() in low for t in terms):
                   hits.append(i)
-          seen=set()
+          ranges=[]
           for i in hits:
-              a=max(1,i-5); b=min(len(s),i+10)
-              key=(a,b)
-              if key in seen: continue
-              seen.add(key)
-              print(f'--- lines {a}-{b} ---')
-              for n in range(a,b+1):
-                  print(f'{n}: {s[n-1]}')
+              a=max(1,i-12); b=min(len(s),i+18)
+              if ranges and a <= ranges[-1][1] + 2:
+                  ranges[-1]=(ranges[-1][0],max(ranges[-1][1],b))
+              else:
+                  ranges.append((a,b))
+          out=[]
+          for a,b in ranges:
+              out.append(f'--- lines {a}-{b} ---')
+              for n in range(a,b+1): out.append(f'{n}: {s[n-1]}')
+          Path('.diag-announcements.txt').write_text('\n'.join(out),encoding='utf-8')
           PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .diag-announcements.txt
+          git commit -m "Capture announcement diagnostics" || exit 0
+          git push
