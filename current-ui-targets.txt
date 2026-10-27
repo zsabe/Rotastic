@@ -1,19 +1,16 @@
 
 ===== topActionGrid count=1 =====
---- 1 @ 844483 ---
-ck="saveInlineProfile()" type="button">
-<i class="fa-solid fa-check"></i>
-<span>Save &amp; Set Profile</span>
-</button>
-</div>
-<div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
-<div class="w-full space-y-1.5">
+--- 1 @ 846905 ---
+1.5">
 <div class="live-rota-meta-row w-full">
-<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
-<i class="fa-solid fa-arrow-up-from-bracket"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
-</button>
+<div class="rotastic-live-mini" id="rotasticLiveMini">
+<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+</span>
+<span class="rotastic-live-mini-label">LIVE</span>
+<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
+</div>
 <div class="live-drive-slot">
 <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
 <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
@@ -37,76 +34,7 @@ ck="saveInlineProfile()" type="button">
 <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
 <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
 </button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
-<i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
-</button>
-</div>
-</div>
-<div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
-<div class="flex items-center justify-between gap-4">
-<div class="min-w-0">
-<div class="text-[9px] sm:text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Your room today</div>
-<div class="text-[10px] sm:text-xs text-slate-400 mt-1" id="mainRoomHeroContext">Your current rota allocation</div>
-</div>
-<div class="flex items-baseline gap-2 flex-shrink-0">
-<span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Room</span>
-<span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
-</div>
-</div>
-</div>
-<div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
-<div class="relative flex items-center justify-end gap-2">
-<button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
-<i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
-</button>
-<div class="flex items-center space-x-2" id="rotaExportActions">
-<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToImageReport()" type="button">
-<i class="fa-regular fa-image text-[10px]"></i>
-<span>Export Image (PNG)</span>
-</button>
-<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToPDFReport()" type="button">
-<i class="fa-solid fa-file-pdf text-[10px]"></i>
-<span>Export PDF</span>
-</button>
-<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToXLSReport()" type="button">
-<i class="fa-solid fa-file-excel text-[10px]"></i>
-<span>Export XLSX</span>
-</button>
-</div>
-</div>
-</div>
-<div class="rotastic-live-mini" id="rotasticLiveMini">
-<span class="re
 
-===== refreshLiveRota count=4 =====
---- 1 @ 845528 ---
-_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
-<i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
-<span class="drive-time-copy">
-<span class="truncate" id="driveTimeBtnText">ETA --</span>
-<span class="truncate" id="driveTimeBtnSub">to Abu Nakhla</span>
-</span>
-</a>
-</div>
-<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[9px] font-semibold text-slate-300 h-[24px] flex-shrink-0" id="weatherBadge">
-<span id="weatherEmoji">🌤️</span>
-<span id="weatherTemp">Weather</span>
-<span class="hidden sm:inline text-slate-500 max-w-[55px] truncate" id="weatherCondition"></span>
-</span>
-</div>
-</div>
-<div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">
-<button aria-pressed="false" class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-sky-300 transition flex items-center gap-2" data-rotastic-rota-toggle="1" id="rotaZoomBtn" title="Switch between your personal view and the full rota" type="button">
-<i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
-</button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
-<i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
-</button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
-<i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
-</button>
 </div>
 </div>
 <div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
@@ -144,19 +72,13 @@ _blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
 </div>
 </div>
 </div>
-<div class="rotastic-live-mini" id="rotasticLiveMini">
-<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
-  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
-  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-</span>
-<span class="rotastic-live-mini-label">LIVE</span>
-<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
-</div>
+
 <div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
 <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(1)" type="button">Mon</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" oncl
---- 2 @ 1123985 ---
+<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border bord
+
+===== refreshLiveRota count=3 =====
+--- 1 @ 1125560 ---
 chedule || []);
   } catch (e) {
     return '';
@@ -341,7 +263,7 @@ function getRotasticGreetingContext(profileName) {
       : greeting + ', ' + doctor,
     holiday: holiday
   }
---- 3 @ 1124103 ---
+--- 2 @ 1125678 ---
 taUpdatedDetail() {
   rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
   setLiveRotaUpdatedStamp();
@@ -523,7 +445,7 @@ function getRotasticGreetingContext(profileName) {
 function getSplashShiftNote() {
   const profile = activeUserDocName || getSplashDoctorName();
   const day = getT
---- 4 @ 1126080 ---
+--- 3 @ 1127655 ---
 veCalendar();
     renderRecentLeaveSubmissions();
 
@@ -705,35 +627,37 @@ function updateOpeningSplashName() {
   const dateEl = document.ge
 
 ===== rotasticLiveMini count=1 =====
---- 1 @ 847949 ---
-king-wider text-slate-500 font-bold">Room</span>
-<span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
+--- 1 @ 845187 ---
+te text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400" id="inlineDocSelect" onchange="checkInlineAdminSelection()">
+<option value="">-- Please choose doctor --</option>
+</select>
+</div>
+<div id="inlinePinWrapper" style="display:none;">
+<label class="block text-[10px] font-bold text-teal-300 uppercase tracking-wider mb-1">
+            Verification PIN <span class="text-rose-400">*</span>
+</label>
+<input class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400" id="inlineAdminPin" inputmode="numeric" placeholder="Enter security PIN" type="password"/>
 </div>
 </div>
-</div>
-<div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
-<div class="relative flex items-center justify-end gap-2">
-<button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[11px] font-bold transition items-center gap-1.5" id="rotaExportToggleBtn" onclick="toggleRotaExportMenu()" type="button">
-<i class="fa-solid fa-arrow-up-from-bracket text-[10px] text-teal-300"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down text-[8px] text-slate-500"></i>
+<label class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/55 border border-sky-500/20 cursor-pointer">
+<input checked="" class="mt-0.5 h-4 w-4 accent-sky-500 flex-shrink-0" id="inlineEnableGps" type="checkbox"/>
+<span class="min-w-0">
+<span class="block text-[11px] font-extrabold text-sky-200">
+<i class="fa-solid fa-location-dot mr-1.5 text-sky-300"></i>Enable GPS location
+          </span>
+<span class="block text-[9px] text-slate-500 mt-0.5 leading-relaxed">
+            Used to estimate your drive time to Abu Nakhla Health Centre and open driving navigation.
+          </span>
+</span>
+</label>
+<button class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center space-x-2" onclick="saveInlineProfile()" type="button">
+<i class="fa-solid fa-check"></i>
+<span>Save &amp; Set Profile</span>
 </button>
-<div class="flex items-center space-x-2" id="rotaExportActions">
-<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToImageReport()" type="button">
-<i class="fa-regular fa-image text-[10px]"></i>
-<span>Export Image (PNG)</span>
-</button>
-<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToPDFReport()" type="button">
-<i class="fa-solid fa-file-pdf text-[10px]"></i>
-<span>Export PDF</span>
-</button>
-<button class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-[11px] font-medium transition flex items-center space-x-1" onclick="exportToXLSReport()" type="button">
-<i class="fa-solid fa-file-excel text-[10px]"></i>
-<span>Export XLSX</span>
-</button>
 </div>
-</div>
-</div>
+<div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
+<div class="w-full space-y-1.5">
+<div class="live-rota-meta-row w-full">
 <div class="rotastic-live-mini" id="rotasticLiveMini">
 <span class="relative flex h-1.5 w-1.5 flex-shrink-0">
   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
@@ -742,45 +666,49 @@ king-wider text-slate-500 font-bold">Room</span>
 <span class="rotastic-live-mini-label">LIVE</span>
 <button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
 </div>
-<div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(1)" type="button">Mon</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(2)" type="button">Tue</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(3)" type="button">Wed</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(4)" type="button">Thu</button>
-<button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(-1)" type="button">All Week</button>
+<div class="live-drive-slot">
+<a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
+<i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
+<span class="drive-time-copy">
+<span class="truncate" id="driveTimeBtnText">ETA --</span>
+<span class="truncate" id="driveTimeBtnSub">to Abu Nakhla</span>
+</span>
+</a>
 </div>
-<div class="space-y-4" id="scheduleMatrixContainer"></div>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[9px] font-semibold text-slate-300 h-[24px] flex-shrink-0" id="weatherBadge">
+<span id="weatherEmoji">🌤️</span>
+<span id="weatherTemp">Weather</span>
+<span class="hidden sm:inline text-slate-500 max-w-[55px] truncate" id="weatherCondition"></span>
+</span>
 </div>
-<!-- LEAVES: legacy compatibility container; leave actions now live with the planner -->
-<div class="hidden" id="tabLeaves"></div>
-<!-- PLANNER -->
-<div class="hidden space-y-4" id="tabLeavePlanner">
-<div class="clean-card rounded-2xl p-5">
-<div class="pb-4 border-b border-slate-800">
-<div>
-<h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
-<i class="fa-solid fa-calendar-week text-emerald-400 mr-2"></i>Live Leave Planner
-          </h2>
-<div class="text-[9px] text-emerald-400/70 mt-1" id="plannerLiveUpdatedAt">Live</div>
-<p class="text-xs text-slate-400 mt-0.5">
-            Approved leave planner. Sick leave stays private.
-          </p>
-<details class="planner-export-tree mt-3 rounded-xl border border-slate-700/70 bg-slate-950/45 overflow-hidden" id="plannerExportTree">
-<summary class="cursor-pointer select-none px-3 py-2.5 text-[10px] font-black uppercase tracking-wider text-teal-300 flex items-center justify-between">
-<span><i class="fa-solid fa-download mr-1.5"></i>Export Planner</span><span class="text-slate-500 normal-case font-semibold">Monthly or Annual</span>
-</summary>
-<div class="px-3 pb-3 pt-1 border-t border-slate-800/80 space-y-2">
-<div class="grid grid-cols-2 gap-2">
-<label class="text-[9px] text-slate-400 font-bold">Scope
-<select aria-label="Planner export scope" class="mt-1 w-full bg-slate-900 text-white text-[10px] px-3 py-2 rounded-lg border border-slate-700 outline-none" id="plannerExportScope" onchange="updatePlannerExportPeriodControls()">
-<option value="month">Monthly</option>
-<option value="year">Annual</option>
-</select></label>
-<label class="text-[9px] text-slate-400 font-bold">Year
-<select aria-label="Planner export year" class="mt-1 w-full bg-slate-900 text-white text-[10
+</div>
+<div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">
+<button aria-pressed="false" class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-sky-300 transition flex items-center gap-2" data-rotastic-rota-toggle="1" id="rotaZoomBtn" title="Switch between your personal view and the full rota" type="button">
+<i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
+</button>
+<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
+<i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
+</button>
 
-===== driveTimeBtn count=51 =====
+</div>
+</div>
+<div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
+<div class="flex items-center justify-between gap-4">
+<div class="min-w-0">
+<div class="text-[9px] sm:text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Your room today</div>
+<div class="text-[10px] sm:text-xs text-slate-400 mt-1" id="mainRoomHeroContext">Your current rota allocation</div>
+</div>
+<div class="flex items-baseline gap-2 flex-shrink-0">
+<span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Room</span>
+<span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
+<div class="relative flex items-center justify-end gap-2">
+<button class="hidden px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate
+
+===== driveTimeBtn count=54 =====
 --- 1 @ 49977 ---
 tic-splash-room strong {
       color: #e0f2fe;
@@ -1627,7 +1555,7 @@ ticker-sick-flash {
     /* v154 — personal opening rota briefing */
     #swapsNewsTicker.ticker-personal-rota-brief
 
-===== weatherBadge count=16 =====
+===== weatherBadge count=17 =====
 --- 1 @ 50457 ---
 #fff;
       background:
@@ -2310,7 +2238,7 @@ inmax(150px,1fr) minmax(150px,.8fr) minmax(120px,.7fr)!important}}
     .personal-poster-content {
 
 
-===== personal-poster-card count=15 =====
+===== personal-poster-card count=17 =====
 --- 1 @ 112833 ---
 8px;
     }
@@ -2782,87 +2710,8 @@ html,body{max-width:100%;overflow-x:hidden}.mobile-nav-bar{pointer-events:auto!i
       .rota-action-btn {
        
 
-===== topExportCard count=2 =====
---- 1 @ 843005 ---
-s px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400" id="inlineDocSelect" onchange="checkInlineAdminSelection()">
-<option value="">-- Please choose doctor --</option>
-</select>
-</div>
-<div id="inlinePinWrapper" style="display:none;">
-<label class="block text-[10px] font-bold text-teal-300 uppercase tracking-wider mb-1">
-            Verification PIN <span class="text-rose-400">*</span>
-</label>
-<input class="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-teal-400" id="inlineAdminPin" inputmode="numeric" placeholder="Enter security PIN" type="password"/>
-</div>
-</div>
-<label class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/55 border border-sky-500/20 cursor-pointer">
-<input checked="" class="mt-0.5 h-4 w-4 accent-sky-500 flex-shrink-0" id="inlineEnableGps" type="checkbox"/>
-<span class="min-w-0">
-<span class="block text-[11px] font-extrabold text-sky-200">
-<i class="fa-solid fa-location-dot mr-1.5 text-sky-300"></i>Enable GPS location
-          </span>
-<span class="block text-[9px] text-slate-500 mt-0.5 leading-relaxed">
-            Used to estimate your drive time to Abu Nakhla Health Centre and open driving navigation.
-          </span>
-</span>
-</label>
-<button class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center space-x-2" onclick="saveInlineProfile()" type="button">
-<i class="fa-solid fa-check"></i>
-<span>Save &amp; Set Profile</span>
-</button>
-</div>
-<div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
-<div class="w-full space-y-1.5">
-<div class="live-rota-meta-row w-full">
-<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
-<i class="fa-solid fa-arrow-up-from-bracket"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
-</button>
-<div class="live-drive-slot">
-<a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
-<i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
-<span class="drive-time-copy">
-<span class="truncate" id="driveTimeBtnText">ETA --</span>
-<span class="truncate" id="driveTimeBtnSub">to Abu Nakhla</span>
-</span>
-</a>
-</div>
-<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[9px] font-semibold text-slate-300 h-[24px] flex-shrink-0" id="weatherBadge">
-<span id="weatherEmoji">🌤️</span>
-<span id="weatherTemp">Weather</span>
-<span class="hidden sm:inline text-slate-500 max-w-[55px] truncate" id="weatherCondition"></span>
-</span>
-</div>
-</div>
-<div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">
-<button aria-pressed="false" class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-sky-300 transition flex items-center gap-2" data-rotastic-rota-toggle="1" id="rotaZoomBtn" title="Switch between your personal view and the full rota" type="button">
-<i class="fa-solid fa-table-list text-[12px]"></i><span>Rota View</span>
-</button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
-<i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
-</button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
-<i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
-</button>
-</div>
-</div>
-<div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
-<div class="flex items-center justify-between gap-4">
-<div class="min-w-0">
-<div class="text-[9px] sm:text-[10px] uppercase tracking-[.16em] text-sky-300 font-black">Your room today</div>
-<div class="text-[10px] sm:text-xs text-slate-400 mt-1" id="mainRoomHeroContext">Your current rota allocation</div>
-</div>
-<div class="flex items-baseline gap-2 flex-shrink-0">
-<span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Room</span>
-<span class="room-hero-number text-4xl sm:text-5xl font-black text-sky-300 leading-none" id="mainRoomHeroNumber">—</span>
-</div>
-</div>
-</div>
-<div class="flex items-center justify-start gap-3 pt-1 pb-1" id="rotaSecondaryTools">
-<div class="relative flex items-center justify-end gap-2">
-<button class="hidd
---- 2 @ 1803089 ---
+===== topExportCard count=1 =====
+--- 1 @ 1804664 ---
 t" id="rotaFocusOverlay">
 <div class="min-h-screen flex flex-col">
 <div class="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 bg-[#07111f]/95 backdrop-blur border-b border-slate-800">
