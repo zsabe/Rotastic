@@ -6181,6 +6181,85 @@ button,input,select,textarea{font-size:max(16px,1em);}
 }
 </style>
 
+
+<style id="requested-ui-only-20261027">
+/* Only the requested LIVE / ETA / temperature strip and personal poster size. */
+.live-rota-meta-row {
+  grid-template-columns: auto minmax(76px, 1fr) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+.live-rota-meta-row .rotastic-live-mini {
+  min-height: 24px !important;
+  height: 24px !important;
+  padding: 0 6px !important;
+  margin: 0 !important;
+  align-self: center !important;
+}
+.live-rota-meta-row .live-drive-slot {
+  min-height: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.live-rota-meta-row #driveTimeBtn {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 2px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  gap: 4px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+.live-rota-meta-row #driveTimeBtnText {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+.live-rota-meta-row #driveTimeBtnSub {
+  display: none !important;
+}
+.live-rota-meta-row #weatherBadge {
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 24px !important;
+  height: 24px !important;
+  max-height: 24px !important;
+  padding: 0 2px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+.live-rota-meta-row #weatherCondition {
+  display: none !important;
+}
+.personal-poster-card,
+.personal-poster-content {
+  min-height: clamp(520px, calc(100svh - 310px), 650px) !important;
+}
+@media (orientation: landscape) and (max-height: 700px) {
+  .personal-poster-card,
+  .personal-poster-content {
+    min-height: 285px !important;
+  }
+}
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
@@ -6394,11 +6473,14 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <div class="flex items-center justify-between flex-wrap gap-1.5 -mt-3 px-1">
 <div class="w-full space-y-1.5">
 <div class="live-rota-meta-row w-full">
-<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu()" type="button" aria-label="Export rota">
-<i class="fa-solid fa-arrow-up-from-bracket"></i>
-<span>Export</span>
-<i class="fa-solid fa-chevron-down rotastic-top-export-chevron"></i>
-</button>
+<div class="rotastic-live-mini" id="rotasticLiveMini">
+<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
+  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+</span>
+<span class="rotastic-live-mini-label">LIVE</span>
+<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
+</div>
 <div class="live-drive-slot">
 <a aria-label="Open Google Maps driving directions to Abu Nakhla Health Centre" class="hidden inline-flex items-center justify-center gap-2 max-w-[58%] px-2.5 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/5 text-[9px] font-extrabold text-sky-300 hover:bg-sky-500/10 transition" href="https://www.google.com/maps/dir/?api=1&amp;destination=25.18239%2C51.37947&amp;travelmode=driving&amp;dir_action=navigate" id="driveTimeBtn" rel="noopener" target="_blank" title="Open Google Maps driving directions to Abu Nakhla Health Centre">
 <i class="fa-solid fa-location-arrow text-[14px] opacity-90"></i>
@@ -6422,9 +6504,7 @@ button,input,select,textarea{font-size:max(16px,1em);}
 <button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-amber-300 transition flex items-center gap-2" onclick="openSwapRequestModal()" type="button">
 <i class="fa-solid fa-arrow-right-arrow-left text-[12px]"></i><span>Request Swap</span>
 </button>
-<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" onclick="refreshLiveRota()" type="button">
-<i class="fa-solid fa-rotate text-[12px]"></i><span>Refresh</span>
-</button>
+
 </div>
 </div>
 <div class="hidden room-hero-card rounded-2xl px-4 py-3 sm:px-5 sm:py-4" id="mainRoomHero">
@@ -6462,14 +6542,7 @@ button,input,select,textarea{font-size:max(16px,1em);}
 </div>
 </div>
 </div>
-<div class="rotastic-live-mini" id="rotasticLiveMini">
-<span class="relative flex h-1.5 w-1.5 flex-shrink-0">
-  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-60"></span>
-  <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-</span>
-<span class="rotastic-live-mini-label">LIVE</span>
-<button id="liveRotaUpdatedAt" onclick="toggleLiveRotaUpdatedDetail()" title="Tap to show full update time" type="button">Updated (--:--)</button>
-</div>
+
 <div class="flex items-center justify-between space-x-1.5 overflow-x-auto no-scrollbar py-1" id="rotaDaySelector">
 <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30" onclick="filterDay(0)" type="button">Sun</button>
 <button class="day-pill px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-transparent" onclick="filterDay(1)" type="button">Mon</button>
