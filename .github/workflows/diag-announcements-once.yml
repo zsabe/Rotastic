@@ -13,22 +13,20 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          raw=p.read_text(encoding='utf-8')
-          low=raw.lower()
-          terms=['announcement','ticker','prayer','diabetes','obesity','swapsnewsticker','tickercontent','medical','health','cpd']
-          out=[f'bytes={len(raw.encode("utf-8"))}',f'chars={len(raw)}',f'lines={len(raw.splitlines())}',f'prefix={raw[:220]!r}']
-          for t in terms: out.append(f'{t}={low.count(t)}')
-          for t in terms:
-              pos=low.find(t)
+          raw=Path('index.html').read_text(encoding='utf-8')
+          needles=['ROTASTIC_CURATED_CLINICAL_UPDATES','regularTickerDeck','function buildRegularTickerDeck','function renderTicker','prayerTickerIndex','ticker-prayer','tickerContent.innerHTML','tickerContent','rotasticClinical']
+          out=[]
+          for needle in needles:
+              pos=raw.find(needle)
+              out.append(f'=== {needle} @ {pos} ===')
               if pos>=0:
-                  a=max(0,pos-900); b=min(len(raw),pos+1800)
-                  out.append(f'--- around {t} at {pos} ---\n{raw[a:b]}')
+                  a=max(0,pos-2500); b=min(len(raw),pos+6500)
+                  out.append(raw[a:b])
           Path('.diag-announcements.txt').write_text('\n'.join(out),encoding='utf-8')
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .diag-announcements.txt
-          git commit -m "Capture announcement diagnostics" || exit 0
+          git commit -m "Capture ticker renderer diagnostics" || exit 0
           git pull --rebase origin main
           git push
