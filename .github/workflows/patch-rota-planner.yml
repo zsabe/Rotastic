@@ -1,4 +1,4 @@
-name: Remove Rota Planner week commencing control
+name: Fix Rota Planner visibility and export presentation
 
 on:
   push:
@@ -15,35 +15,78 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Hide Week Commencing control in Rota Planner only
+      - name: Fix planner visibility and export styling only
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          marker='rotastic-hide-week-commencing-v1'
+
+          # Remove only the faulty Week Commencing runtime patch.
+          s=re.sub(r'\s*<style id="rotastic-hide-week-commencing-v1">.*?</style>\s*<script id="rotastic-hide-week-commencing-v1-js">.*?</script>\s*', '\n', s, flags=re.S)
+
+          marker='rotastic-planner-fix-export-v4'
           if marker in s:
               raise SystemExit(0)
+
           patch=r'''
-          <style id="rotastic-hide-week-commencing-v1">
-          .rotastic-week-commencing-hidden{display:none!important}
+          <style id="rotastic-planner-fix-export-v4">
+          /* Planner: preserve matrix + group selector; hide Week Commencing control only. */
+          .rotastic-planner-week-only-hidden{display:none!important}
+          /* Print/export presentation: clean magazine-style matrix arranged by selected group. */
+          @media print{
+            body.rotastic-planner-exporting{background:#fff!important;color:#172033!important}
+            body.rotastic-planner-exporting *{box-shadow:none!important;text-shadow:none!important}
+            body.rotastic-planner-exporting .rotastic-matrix-shell{display:block!important;background:#fff!important;color:#172033!important;padding:18px!important;border-radius:0!important}
+            body.rotastic-planner-exporting .rotastic-matrix-toolbar{margin-bottom:18px!important;color:#172033!important}
+            body.rotastic-planner-exporting .rotastic-matrix-toolbar select{border:1px solid #dbe3ee!important;background:#fff!important;color:#172033!important;border-radius:10px!important;padding:7px 10px!important}
+            body.rotastic-planner-exporting .rotastic-matrix-wrap{overflow:visible!important;border:1px solid #e5eaf1!important;border-radius:18px!important;background:#fff!important}
+            body.rotastic-planner-exporting .rotastic-matrix{font-size:10px!important;color:#172033!important;background:#fff!important}
+            body.rotastic-planner-exporting .rotastic-matrix th,body.rotastic-planner-exporting .rotastic-matrix td{height:38px!important;min-width:42px!important;padding:4px 5px!important;border-color:#e8edf3!important;background:#fff!important;color:#172033!important}
+            body.rotastic-planner-exporting .rotastic-matrix thead th{background:#f7f9fc!important;color:#172033!important}
+            body.rotastic-planner-exporting .rotastic-matrix .rm-name{position:static!important;min-width:118px!important;background:#fff!important;color:#172033!important;font-weight:800!important}
+            body.rotastic-planner-exporting .rotastic-matrix tbody tr:nth-child(even) td{background:#fafbfd!important}
+            body.rotastic-planner-exporting .rotastic-matrix .rm-weekend{background:#f4f6f9!important}
+            body.rotastic-planner-exporting .rotastic-matrix .rm-shift{min-height:24px!important;border-radius:10px!important;background:#e8f6ff!important;border:1px solid #cdeeff!important;color:#174d6b!important;font-weight:800!important}
+            body.rotastic-planner-exporting .rotastic-matrix .rm-today{box-shadow:inset 0 2px 0 #63c7ed,inset 0 -2px 0 #63c7ed!important}
+          }
           </style>
-          <script id="rotastic-hide-week-commencing-v1-js">
+          <script id="rotastic-planner-fix-export-v4-js">
           (function(){
             function text(e){return String(e&&e.textContent||'').replace(/\s+/g,' ').trim()}
-            function hide(){
+            function plannerRoot(){var cal=document.getElementById('weeklyLeaveCalendar');return cal&&(cal.closest('.clean-card')||cal.parentElement)}
+            function keepPlannerVisible(){
               var cal=document.getElementById('weeklyLeaveCalendar');
               if(!cal)return;
-              var root=cal.closest('.clean-card')||cal.parentElement;
-              if(!root)return;
-              Array.from(root.querySelectorAll('label,div,span,p')).forEach(function(e){
-                if(!/^Week\s+Commencing\b/i.test(text(e)))return;
-                var box=e.closest('label')||e;
-                if(box.querySelector('select')||box.nextElementSibling&&box.nextElementSibling.tagName==='SELECT')box.classList.add('rotastic-week-commencing-hidden');
+              /* The source calendar may stay hidden only when the visible matrix exists. */
+              var root=cal.parentElement, matrix=root&&root.querySelector('.rotastic-matrix-shell');
+              if(!matrix)cal.classList.remove('rotastic-source-hidden');
+              var pr=plannerRoot();if(!pr)return;
+              Array.from(pr.querySelectorAll('label')).forEach(function(l){
+                var own=Array.from(l.childNodes).filter(function(n){return n.nodeType===3}).map(function(n){return n.textContent}).join(' ').trim();
+                if(/^Week\s+Commencing\b/i.test(own))l.classList.add('rotastic-planner-week-only-hidden');
               });
             }
-            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(hide,100)});else setTimeout(hide,100);
-            new MutationObserver(function(){setTimeout(hide,50)}).observe(document.documentElement,{childList:true,subtree:true});
+            function selectedGroup(){var s=document.querySelector('.rotastic-matrix-toolbar select');return s?s.value:'1'}
+            function prepExport(){
+              var ex=document.getElementById('plannerExportScope');
+              if(ex){var g=selectedGroup();Array.from(ex.options).forEach(function(o){if(new RegExp('group\\s*'+g,'i').test(o.text))ex.value=o.value})}
+              document.body.classList.add('rotastic-planner-exporting');
+              setTimeout(function(){document.body.classList.remove('rotastic-planner-exporting')},2500);
+            }
+            function wireExport(){
+              var pr=plannerRoot();if(!pr)return;
+              Array.from(pr.querySelectorAll('button,a')).forEach(function(b){
+                var x=text(b);if(!/(export|pdf|png|image)/i.test(x)||b.dataset.rotasticExportWired)return;
+                b.dataset.rotasticExportWired='1';b.addEventListener('click',prepExport,true);
+              });
+            }
+            function go(){keepPlannerVisible();wireExport()}
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,150)});else setTimeout(go,150);
+            new MutationObserver(function(){setTimeout(go,80)}).observe(document.documentElement,{childList:true,subtree:true});
+            window.addEventListener('beforeprint',prepExport);
+            window.addEventListener('afterprint',function(){document.body.classList.remove('rotastic-planner-exporting')});
           })();
           </script>
           '''
@@ -52,12 +95,12 @@ jobs:
           s=s[:pos]+patch+s[pos:]
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit surgical change
+      - name: Commit planner fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           git diff --cached --check
           git diff --cached --quiet && exit 0
-          git commit -m "Remove Rota Planner Week Commencing dropdown"
+          git commit -m "Restore planner selector and polish planner export"
           git push origin HEAD:main
