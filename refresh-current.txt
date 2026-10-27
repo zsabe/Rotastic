@@ -1,0 +1,167 @@
+mer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementById('liveRotaUpdatedAt');
+  if (stamp) {
+    const now = new Date();
+    stamp.textContent = rotasticLiveUpdatedExpanded
+      ? 'Updated (' + new Intl.DateTimeFormat('en-GB', {
+          timeZone:'Asia/Qatar',
+          weekday:'short',
+          day:'2-digit',
+          month:'short',
+          hour:'2-digit',
+          minute:'2-digit'
+        }).format(now) + ')'
+      : 'Updated (' + formatRotaUpdatedTime(now) + ')';
+    stamp.title = rotasticLiveUpdatedExpanded
+      ? 'Tap to show time only'
+      : 'Tap to show full update date and time';
+  }
+}
+
+function triggerRotaChangeAlert() {
+  const message = 'Rota updated — please review your latest duties.';
+  Storage.setJSON('rotastic_rota_change_alert', {
+    message: message,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + (20 * 60 * 1000)
+  });
+
+  // Show it immediately in the same top news ticker.
+  renderTickerCard('rota', message, 8500);
+}
+
+function detectRotaChangeAndAlert() {
+  const fingerprint = getRotaFingerprint();
+  if (!fingerprint) return false;
+
+  if (!rotasticLastScheduleFingerprint) {
+    rotasticLastScheduleFingerprint = fingerprint;
+    return false;
+  }
+
+  if (fingerprint !== rotasticLastScheduleFingerprint) {
+    rotasticLastScheduleFingerprint = fingerprint;
+    triggerRotaChangeAlert();
+    return true;
+  }
+
+  return false;
+}
+
+async function refreshLiveRota(options) {
+  const opts = options || {};
+  const buttonIcon = document.querySelector('button[onclick="refreshLiveRota()"] i');
+  if (buttonIcon && !opts.silent) buttonIcon.classList.add('fa-spin');
+
+  try {
+    renderScheduleView();
+    renderTodayBriefing();
+    renderAnnualLeaveCalendar();
+    renderRecentLeaveSubmissions();
+
+    if (typeof refreshLiveClinicalUpdates === 'function') {
+      await refreshLiveClinicalUpdates();
+    }
+    if (typeof refreshQatarAchievements === 'function') {
+      try { await refreshQatarAchievements(); } catch (e) {}
+    }
+
+    detectRotaChangeAndAlert();
+    setLiveRotaUpdatedStamp();
+
+    if (typeof startSwapsNewsTicker === 'function' && !opts.silent) {
+      startSwapsNewsTicker();
+    }
+  } finally {
+    if (buttonIcon && !opts.silent) {
+      setTimeout(function(){ buttonIcon.classList.remove('fa-spin'); }, 450);
+    }
+  }
+}
+
+
+async function refreshRotaWithoutAnnouncements() {
+  // Pull DOWN or pull UP refreshes the Rota only.
+  // It never advances, rewinds, resets, or restarts the announcement ticker.
+  // No page reload and no Feedback/Settings refresh.
+  renderScheduleView();
+  updateRotaChromeVisibility();
+  setLiveRotaUpdatedStamp();
+
+  const jobs = [];
+
+  if (typeof updateAbuNakhlaWeather === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      return updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+   
