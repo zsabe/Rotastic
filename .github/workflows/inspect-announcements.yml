@@ -1,0 +1,21 @@
+name: Inspect announcements
+on:
+  workflow_dispatch:
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find announcement code
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          terms=['announcement','prayer','diabetes','obesity','ticker','adhan','salah']
+          lines=s.splitlines()
+          for i,line in enumerate(lines,1):
+            if any(t in line.lower() for t in terms):
+              a=max(1,i-4); b=min(len(lines),i+8)
+              print(f'--- {a}:{b} ---')
+              for n in range(a,b+1): print(f'{n}: {lines[n-1]}')
+          PY
