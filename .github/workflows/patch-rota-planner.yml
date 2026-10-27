@@ -21,80 +21,65 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          marker='rotastic-planner-modern-v1'
-          if marker in s:
+          if 'rotastic-planner-modern-v1' in s:
               raise SystemExit(0)
-          # Identify the existing planner container from its heading; do not alter any other tab.
-          m=re.search(r'(<[^>]+[^>]*(?:id|class)=["\'][^"\']*(?:planner|Planner)[^"\']*["\'][^>]*>[\s\S]{0,12000}?Rota Planner[\s\S]{0,12000}?</[^>]+>)',s,re.I)
-          # We intentionally use a scoped enhancement rather than replacing the existing planner renderer.
           patch=r'''
-<style id="rotastic-planner-modern-v1">
-/* Rota Planner only: preserve ROTASTIC palette/controls; modernise timeline layout */
-#rotaPlanner .rotastic-planner-toolbar,#rotaPlannerView .rotastic-planner-toolbar,[data-rota-planner] .rotastic-planner-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
-#rotaPlanner .rotastic-planner-group,#rotaPlannerView .rotastic-planner-group,[data-rota-planner] .rotastic-planner-group{min-width:132px}
-#rotaPlanner table,#rotaPlannerView table,[data-rota-planner] table{border-collapse:separate;border-spacing:0;min-width:max-content}
-#rotaPlanner .planner-scroll,#rotaPlannerView .planner-scroll,[data-rota-planner] .planner-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-#rotaPlanner table th:first-child,#rotaPlanner table td:first-child,#rotaPlannerView table th:first-child,#rotaPlannerView table td:first-child,[data-rota-planner] table th:first-child,[data-rota-planner] table td:first-child{position:sticky;left:0;z-index:3;min-width:150px;max-width:190px;backdrop-filter:blur(14px)}
-#rotaPlanner table thead th,#rotaPlannerView table thead th,[data-rota-planner] table thead th{position:sticky;top:0;z-index:2;white-space:nowrap}
-#rotaPlanner table thead th:first-child,#rotaPlannerView table thead th:first-child,[data-rota-planner] table thead th:first-child{z-index:4}
-#rotaPlanner table td:not(:first-child),#rotaPlanner table th:not(:first-child),#rotaPlannerView table td:not(:first-child),#rotaPlannerView table th:not(:first-child),[data-rota-planner] table td:not(:first-child),[data-rota-planner] table th:not(:first-child){min-width:74px;text-align:center}
-#rotaPlanner table tbody td,#rotaPlannerView table tbody td,[data-rota-planner] table tbody td{height:54px}
-#rotaPlanner table tbody td:not(:first-child)>*,#rotaPlannerView table tbody td:not(:first-child)>*,[data-rota-planner] table tbody td:not(:first-child)>*{border-radius:10px}
-</style>
-<script id="rotastic-planner-modern-v1-js">
-(function(){
-  function txt(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim();}
-  function plannerRoot(){
-    var direct=document.querySelector('#rotaPlanner,#rotaPlannerView,[data-rota-planner]');
-    if(direct)return direct;
-    var h=Array.from(document.querySelectorAll('h1,h2,h3,h4')).find(function(x){return /Rota Planner/i.test(txt(x));});
-    return h&&(h.closest('.clean-card,.tab-content,.tab-pane,.view,.section')||h.parentElement);
-  }
-  function inferGroup(name){
-    var n=String(name||'').trim();
-    try{
-      if(typeof getDoctorGroup==='function')return String(getDoctorGroup(n)||'').replace(/[^12]/g,'');
-      if(typeof getPhysicianGroup==='function')return String(getPhysicianGroup(n)||'').replace(/[^12]/g,'');
-    }catch(e){}
-    return '';
-  }
-  function enhance(){
-    var root=plannerRoot(); if(!root)return;
-    if(root.dataset.rotasticModernPlanner==='1')return;
-    root.dataset.rotasticModernPlanner='1';
-    var table=root.querySelector('table');
-    if(table&&!table.parentElement.classList.contains('planner-scroll')){
-      var wrap=document.createElement('div'); wrap.className='planner-scroll';
-      table.parentNode.insertBefore(wrap,table); wrap.appendChild(table);
-    }
-    var toolbar=document.createElement('div'); toolbar.className='rotastic-planner-toolbar';
-    var label=document.createElement('label'); label.textContent='Display group';
-    var sel=document.createElement('select'); sel.className='rotastic-planner-group'; sel.setAttribute('aria-label','Rota Planner group');
-    sel.innerHTML='<option value="1">Group 1</option><option value="2">Group 2</option>';
-    label.appendChild(sel); toolbar.appendChild(label);
-    var heading=Array.from(root.querySelectorAll('h1,h2,h3,h4')).find(function(x){return /Rota Planner/i.test(txt(x));});
-    if(heading)heading.insertAdjacentElement('afterend',toolbar);else root.insertBefore(toolbar,root.firstChild);
-    function filter(){
-      var t=root.querySelector('table'); if(!t)return;
-      var wanted=sel.value;
-      Array.from(t.querySelectorAll('tbody tr')).forEach(function(row){
-        var name=txt(row.cells&&row.cells[0]); var g=inferGroup(name);
-        if(g)row.style.display=(g===wanted?'':'none');
-      });
-    }
-    sel.addEventListener('change',filter); filter();
-    // Re-enhance safely if the existing planner renderer replaces its table.
-    new MutationObserver(function(){var t=root.querySelector('table');if(t&&!t.parentElement.classList.contains('planner-scroll')){root.dataset.rotasticModernPlanner='';enhance();}}).observe(root,{childList:true,subtree:true});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
-  document.addEventListener('click',function(e){if(e.target&&/Rota Planner/i.test(txt(e.target)))setTimeout(enhance,50);},true);
-})();
-</script>
-'''
-          # Put the scoped enhancement immediately before the final body close only; it affects planner selectors exclusively.
+          <style id="rotastic-planner-modern-v1">
+          #rotaPlanner .rotastic-planner-toolbar,#rotaPlannerView .rotastic-planner-toolbar,[data-rota-planner] .rotastic-planner-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+          #rotaPlanner .rotastic-planner-group,#rotaPlannerView .rotastic-planner-group,[data-rota-planner] .rotastic-planner-group{min-width:132px}
+          #rotaPlanner table,#rotaPlannerView table,[data-rota-planner] table{border-collapse:separate;border-spacing:0;min-width:max-content}
+          #rotaPlanner .planner-scroll,#rotaPlannerView .planner-scroll,[data-rota-planner] .planner-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+          #rotaPlanner table th:first-child,#rotaPlanner table td:first-child,#rotaPlannerView table th:first-child,#rotaPlannerView table td:first-child,[data-rota-planner] table th:first-child,[data-rota-planner] table td:first-child{position:sticky;left:0;z-index:3;min-width:150px;max-width:190px;backdrop-filter:blur(14px)}
+          #rotaPlanner table thead th,#rotaPlannerView table thead th,[data-rota-planner] table thead th{position:sticky;top:0;z-index:2;white-space:nowrap}
+          #rotaPlanner table thead th:first-child,#rotaPlannerView table thead th:first-child,[data-rota-planner] table thead th:first-child{z-index:4}
+          #rotaPlanner table td:not(:first-child),#rotaPlanner table th:not(:first-child),#rotaPlannerView table td:not(:first-child),#rotaPlannerView table th:not(:first-child),[data-rota-planner] table td:not(:first-child),[data-rota-planner] table th:not(:first-child){min-width:74px;text-align:center}
+          #rotaPlanner table tbody td,#rotaPlannerView table tbody td,[data-rota-planner] table tbody td{height:54px}
+          #rotaPlanner table tbody td:not(:first-child)>*,#rotaPlannerView table tbody td:not(:first-child)>*,[data-rota-planner] table tbody td:not(:first-child)>*{border-radius:10px}
+          </style>
+          <script id="rotastic-planner-modern-v1-js">
+          (function(){
+            function txt(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim();}
+            function plannerRoot(){
+              var direct=document.querySelector('#rotaPlanner,#rotaPlannerView,[data-rota-planner]');
+              if(direct)return direct;
+              var h=Array.from(document.querySelectorAll('h1,h2,h3,h4')).find(function(x){return /Rota Planner/i.test(txt(x));});
+              return h&&(h.closest('.clean-card,.tab-content,.tab-pane,.view,.section')||h.parentElement);
+            }
+            function inferGroup(name){
+              try{
+                if(typeof getDoctorGroup==='function')return String(getDoctorGroup(name)||'').replace(/[^12]/g,'');
+                if(typeof getPhysicianGroup==='function')return String(getPhysicianGroup(name)||'').replace(/[^12]/g,'');
+              }catch(e){}
+              return '';
+            }
+            function enhance(){
+              var root=plannerRoot(); if(!root)return;
+              var table=root.querySelector('table');
+              if(table&&!table.parentElement.classList.contains('planner-scroll')){
+                var wrap=document.createElement('div');wrap.className='planner-scroll';table.parentNode.insertBefore(wrap,table);wrap.appendChild(table);
+              }
+              if(!root.querySelector('.rotastic-planner-toolbar')){
+                var toolbar=document.createElement('div');toolbar.className='rotastic-planner-toolbar';
+                var label=document.createElement('label');label.textContent='Display group ';
+                var sel=document.createElement('select');sel.className='rotastic-planner-group';sel.setAttribute('aria-label','Rota Planner group');
+                sel.innerHTML='<option value="1">Group 1</option><option value="2">Group 2</option>';label.appendChild(sel);toolbar.appendChild(label);
+                var heading=Array.from(root.querySelectorAll('h1,h2,h3,h4')).find(function(x){return /Rota Planner/i.test(txt(x));});
+                if(heading)heading.insertAdjacentElement('afterend',toolbar);else root.insertBefore(toolbar,root.firstChild);
+                sel.addEventListener('change',function(){filter(root,sel.value);});filter(root,sel.value);
+              }
+            }
+            function filter(root,wanted){
+              var t=root.querySelector('table');if(!t)return;
+              Array.from(t.querySelectorAll('tbody tr')).forEach(function(row){var g=inferGroup(txt(row.cells&&row.cells[0]));if(g)row.style.display=(g===wanted?'':'none');});
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
+            document.addEventListener('click',function(e){if(e.target&&/Rota Planner/i.test(txt(e.target)))setTimeout(enhance,80);},true);
+            new MutationObserver(function(){setTimeout(enhance,20);}).observe(document.documentElement,{childList:true,subtree:true});
+          })();
+          </script>
+          '''
           pos=s.rfind('</body>')
           if pos<0: raise SystemExit('body anchor missing')
           s=s[:pos]+patch+s[pos:]
