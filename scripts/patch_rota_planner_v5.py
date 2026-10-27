@@ -35,6 +35,11 @@ if 'id="leaveErpReminder"' not in s:
     if needle not in s: raise SystemExit('Request Leave button row anchor missing')
     s=s.replace(needle,reminder,1)
 
+# Remove the Planner-only PNG/PDF matrix export controls. Keep unrelated export controls intact.
+s=re.sub(r'<div class="rrm-toolbar-right">\s*<button[^>]*class="rrm-btn"[^>]*>PNG</button>\s*<button[^>]*class="rrm-btn"[^>]*>PDF</button>\s*</div>', '', s, count=1, flags=re.S)
+# Defensive fallback for the current v5 runtime-generated toolbar markup.
+s=re.sub(r"var right=document\.createElement\('div'\);right\.className='rrm-toolbar-right';.*?bar\.appendChild\(right\);", "", s, count=1, flags=re.S)
+
 # Defensive cleanup for cached/older markup. Also keep the obsolete day-card UI hidden
 # if another legacy render function populates it after load.
 s=s.replace("function hideWeek(){var h=document.getElementById('plannerWeekHeading');if(h){h.style.display='none';return}var s=document.getElementById('plannerWeekSelect');if(s)s.style.display='none'}","function hideWeek(){var h=document.getElementById('plannerWeekHeading');if(h)h.style.display='none';var s=document.getElementById('plannerWeekSelect');if(s)s.style.display='none';var c=document.getElementById('weeklyLeaveCalendar');if(c){c.style.display='none';c.setAttribute('aria-hidden','true')}var g=document.getElementById('plannerGroupWeekSummary');if(g){g.style.display='none';g.setAttribute('aria-hidden','true')}}")
