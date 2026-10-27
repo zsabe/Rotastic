@@ -1,4 +1,4 @@
-name: Inspect current three elements
+name: Inspect exact Refresh markup
 on:
   push:
     branches: [main]
@@ -6,27 +6,24 @@ permissions:
   contents: write
 jobs:
   inspect:
-    if: ${{ !contains(github.event.head_commit.message, 'Write current three element snippets') }}
+    if: ${{ !contains(github.event.head_commit.message, 'Write exact Refresh snippet') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract exact snippets
+      - name: Extract Refresh vicinity only
         run: |
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          out=[]
-          for needle,r in [('requested-ui-only-20261027',3500),('live-rota-meta-row w-full',5000),('topActionGrid',4500),('personal-poster-card',2500)]:
-              i=s.find(needle)
-              out.append(f'===== {needle} @ {i} =====\n')
-              if i>=0: out.append(s[max(0,i-r):min(len(s),i+r)]+'\n')
-          Path('three-current.txt').write_text(''.join(out),encoding='utf-8')
+          i=s.find('refreshLiveRota')
+          if i<0: raise SystemExit('refreshLiveRota not found')
+          Path('refresh-current.txt').write_text(s[max(0,i-2200):min(len(s),i+2600)],encoding='utf-8')
           PY
-      - name: Commit snippets
+      - name: Commit snippet
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add three-current.txt
-          git commit -m "Write current three element snippets"
+          git add refresh-current.txt
+          git commit -m "Write exact Refresh snippet"
           git pull --rebase origin main
           git push origin HEAD:main
