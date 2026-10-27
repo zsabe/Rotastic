@@ -1,0 +1,1048 @@
+key=diabetes count=31 positions=[1664301, 1664419, 1664681, 1664986, 1665035, 1665134, 1665231, 1665354, 1665416, 1665514, 1665645, 1665714]
+
+---
+TickerCopy(value, maxWords, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!text || text.includes('…') || text.includes('...')) return '';
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > Number(maxWords || 16)) return '';
+  if (text.length > Number(maxChars || 112)) return '';
+  return text;
+}
+
+function getTickerCopySizeClass(message) {
+  const text = String(message || '').trim();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words <= 8 && text.length <= 58) return 'ticker-copy-short';
+  if (words <= 12 && text.length <= 86) return 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM')
+
+---
+m();
+  if (!text || text.includes('…') || text.includes('...')) return '';
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > Number(maxWords || 16)) return '';
+  if (text.length > Number(maxChars || 112)) return '';
+  return text;
+}
+
+function getTickerCopySizeClass(message) {
+  const text = String(message || '').trim();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words <= 8 && text.length <= 58) return 'ticker-copy-short';
+  if (words <= 12 && text.length <= 86) return 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== 
+
+---
+plit(/\s+/).filter(Boolean);
+  if (words.length > Number(maxWords || 16)) return '';
+  if (text.length > Number(maxChars || 112)) return '';
+  return text;
+}
+
+function getTickerCopySizeClass(message) {
+  const text = String(message || '').trim();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words <= 8 && text.length <= 58) return 'ticker-copy-short';
+  if (words <= 12 && text.length <= 86) return 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== -1 || shift === 'AM') {
+    startMinutes = 7 * 60;          // 07:00
+  } else if (shift.indexOf('
+
+---
+ 112)) return '';
+  return text;
+}
+
+function getTickerCopySizeClass(message) {
+  const text = String(message || '').trim();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words <= 8 && text.length <= 58) return 'ticker-copy-short';
+  if (words <= 12 && text.length <= 86) return 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== -1 || shift === 'AM') {
+    startMinutes = 7 * 60;          // 07:00
+  } else if (shift.indexOf('PM SHIFT') !== -1 || shift === 'PM') {
+    startMinutes = 16 * 60;         // 16:00
+  } else if (shift.indexOf('FULL DAY') 
+
+---
+Class(message) {
+  const text = String(message || '').trim();
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words <= 8 && text.length <= 58) return 'ticker-copy-short';
+  if (words <= 12 && text.length <= 86) return 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== -1 || shift === 'AM') {
+    startMinutes = 7 * 60;          // 07:00
+  } else if (shift.indexOf('PM SHIFT') !== -1 || shift === 'PM') {
+    startMinutes = 16 * 60;         // 16:00
+  } else if (shift.indexOf('FULL DAY') !== -1) {
+    startMinutes = 7 * 60;          // treat full-da
+
+---
+lter(Boolean).length;
+  if (words <= 8 && text.length <= 58) return 'ticker-copy-short';
+  if (words <= 12 && text.length <= 86) return 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== -1 || shift === 'AM') {
+    startMinutes = 7 * 60;          // 07:00
+  } else if (shift.indexOf('PM SHIFT') !== -1 || shift === 'PM') {
+    startMinutes = 16 * 60;         // 16:00
+  } else if (shift.indexOf('FULL DAY') !== -1) {
+    startMinutes = 7 * 60;          // treat full-day alert as starting with AM shift
+  }
+
+  if (startMinutes === null) {
+    return {active:false, re
+
+---
+turn 'ticker-copy-medium';
+  return 'ticker-copy-long';
+}
+
+function conciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== -1 || shift === 'AM') {
+    startMinutes = 7 * 60;          // 07:00
+  } else if (shift.indexOf('PM SHIFT') !== -1 || shift === 'PM') {
+    startMinutes = 16 * 60;         // 16:00
+  } else if (shift.indexOf('FULL DAY') !== -1) {
+    startMinutes = 7 * 60;          // treat full-day alert as starting with AM shift
+  }
+
+  if (startMinutes === null) {
+    return {active:false, reason:'unknown-shift'};
+  }
+
+  const now = getQatarClock();
+
+  // Priority applies only on the affected date.
+  if (now.isoDate !== 
+
+---
+onciseTickerText(value, maxChars) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const max = Math.max(58, Number(maxChars || 92));
+  if (text.length <= max) return text;
+  return '';
+}
+
+function getPrayerTickerMessage(prayerTimes) {
+  return choosePrayerMessage(prayerTimes) || '';
+}
+
+const ROTASTIC_MEDICAL_STATS = [
+  {country:'Qatar',weight:16,text:'🇶🇦 In Qatar, diabetes affects 24.6% of adults.'},
+  {country:'Qatar',weight:16,text:'🇶🇦 Qatar has about 409,300 adults living with diabetes.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 Adult obesity prevalence in Qatar is about 41.5%.'},
+  {country:'Qatar',weight:15,text:'🇶🇦 PHCC data reported hypertension prevalence of 12.6%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported type 2 diabetes prevalence of 11.4%.'},
+  {country:'Qatar',weight:14,text:'🇶🇦 PHCC data reported obesity prevalence of 39.3%.'},
+  {country:'Qatar',weight:13,text:'🇶🇦 PHCC recorded 3.31 million family-medicine visits in 2025.'},
+  {country:'MENA',weight:13,text:'🌍 MENA has about 84.7 million adults living with diabetes.'},
+  {country:'MENA',weight:12,text:'🌍 Diabetes prevalence across MENA is estimated at 17.6%.'},
+  {country:'MENA',weight:12,text:'🌍 MENA diabetes cases may reach 163 million by 2050.'},
+  {country:'GCC',weight:12,text:'🇸🇦 Saudi adult diabetes prevalence is estimated at 23.1%.'},
+  {country:'GCC',weight:12,text:'🇸🇦 About 5.3 million Saudi adults live with diabetes.'},
+  {country:'GCC',weight:11,text:'🇰🇼 Kuwait adult diabetes prevalence is estimated at 25.6%.'},
+  {country:'Jordan',weight:11,text:'🇯🇴 Jordan adult diabetes prevalence is estimated at 20.5%.'},
+  {country:'Jordan',weight:10,text:'🇯🇴 About 1.09 million Jordanian adults live with diabetes.'},
+  {country:'Pakistan',weight:10,text:'🇵🇰 Pakistan adult diabetes prevalence is estimated at 31.4%.'}
+];
+
+const ROTASTIC_QATAR_FUN_FACTS = [
+  '🇶🇦 Doha is Qatar’s capital and largest city.',
+  '🇶🇦 Qatar is a peninsula extending into the Arabian Gulf.',
+  '🇶🇦 Qatar National Day is celebrated on 18 December.',
+  '🇶🇦 The Qatari riyal is the national currency.',
+  '🇶🇦 Arabic is Qatar’s official language.',
+  '🇶🇦 Qatar hosted the FIFA World Cup in 2022.',
+  '🇶🇦 Qatar was the first Middle Eastern country to host a FIFA World Cup.',
+  '🇶🇦 The 2006 Asian Games were hosted in Doha.',
+  '🇶🇦 Khor Al Adaid is known as Qatar’s Inland Sea.',
+  '🇶🇦 Qatar has no permanent natural rivers.',
+  '🇶🇦 Doha’s Corniche stretches along the city’s waterfront.',
+  '🇶🇦 The oryx is an important national symbol in Qatar.'
+];
+
+let rotasticQatarFactIndex = Math.floor(Math.random() * ROTASTIC_QATAR_FUN_FACTS.length);
+let rotasticMedicalStatCycleCount = 0;
+
+function nextQatarFunFact() {
+  const value = ROTASTIC_QATAR_FUN_FACTS[rotasticQatarFactIndex % ROTASTIC_QATAR_FUN_FACTS.length];
+  rotasticQatarFactIndex = (rotasticQatarFactIndex + 1) % ROTASTIC_QATAR_FUN_FACTS.length;
+  return value;
+}
+
+function getInjectedRegionalMedicalStats() {
+  return Array.isArray(window.ROTASTIC_REGIONAL_MEDICAL_STATS)
+    ? window.ROTASTIC_REGIONAL_MEDICAL_STATS.filter(function(x){ return x && x.text; })
+    : [];
+}
+
+function chooseWeightedMedicalStat() {
+  const regional = getInjectedRegionalMedicalStats().map(function(x) {
+    const country = String(x.country || '').trim();
+    let weight = Number(x.weight || 1);
+    if (/qatar/i.test(country)) weight = Math.max(weight, 8);
+    else if (/saudi|uae|oman|kuwait|bahrain|jordan|lebanon|syria|iraq|pakistan/i.test(country)) weight = Math.max(weight, 3);
+    else if (/uk|united kingdom|england/i.test(country)) weight = Math.max(weight, 2);
+    return {country:country, weight:weight, text:String(x.text)};
+  });
+
+  const sourcePool = ROTASTIC_MEDICAL_STATS.concat(regional).filter(function(item){
+    return item && String(item.text || '').trim();
+  });
+  if (!sourcePool.length) return '';
+
+  // Build a fresh weighted shuffle bag only after the previous one is exhausted.
+  if (!rotasticMedicalStatBag.length) {
+    const weighted = [];
+    sourcePool.forEach(function(item, sourceIndex) {
+      for (let i=0; i<Math.max(1, Math.round(item.weight || 1)); i++) weighted.push(sourceIndex);
+    });
+    for (let i=weighted.length-1; i>0; i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=weighted[i]; weighted[i]=weighted[j]; weighted[j]=tmp;
+    }
+    // De-duplicate adjacent copies caused by weighting while preserving weighting overall.
+    const ordered=[];
+    weighted.forEach(function(idx){
+      if (!ordered.length || ordered[ordered.length-1] !== idx) ordered.push(idx);
+    });
+    // Ensure every unique stat gets a chance before repeats dominate.
+    const uniques=sourcePool.map(function(_,i){return i;}).filter(function(i){return !ordered.includes(i);});
+    rotasticMedicalStatBag = ordered.concat(uniques);
+  }
+
+  const index = rotasticMedicalStatBag.shift();
+  return String(sourcePool[index] && sourcePool[index].text || '').trim();
+}
+
+function getSickAlertPriorityWindow(meta) {
+  if (!meta || meta.kind !== 'sick' || !meta.date || !meta.shift) {
+    return {active:false, reason:'not-sick'};
+  }
+
+  const shift = String(meta.shift || '').toUpperCase();
+
+  let startMinutes = null;
+
+  if (shift.indexOf('TWILIGHT AM') !== -1) {
+    startMinutes = 9 * 60;          // 09:00
+  } else if (shift.indexOf('TWILIGHT PM') !== -1) {
+    startMinutes = 14 * 60;         // 14:00
+  } else if (shift.indexOf('AM SHIFT') !== -1 || shift === 'AM') {
+    startMinutes = 7 * 60;          // 07:00
+  } else if (shift.indexOf('PM SHIFT') !== -1 || shift === 'PM') {
+    startMinutes = 16 * 60;         // 16:00
+  } else if (shift.indexOf('FULL DAY') !== -1) {
+    startMinutes = 7 * 60;          // treat full-day alert as starting with AM shift
+  }
+
+  if (startMinutes === null) {
+    return {active:false, reason:'unknown-shift'};
+  }
+
+  const now = getQatarClock();
+
+  // Priority applies only on the affected date.
+  if (now.isoDate !== meta.date) {
+    return {active:false, reason:'different-date'};
+  }

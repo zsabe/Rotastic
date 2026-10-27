@@ -1,0 +1,1553 @@
+key=prayer count=115 positions=[1696429, 1696449, 1696563, 1696584, 1696876, 1698365, 1698384, 1698404, 1698426, 1698467, 1698494, 1717258]
+
+---
+LocalTrafficUpdate(),
+    refreshExternalHeadlineFeeds()
+  ]);
+  const prayerTimes = tickerFetches[0] && tickerFetches[0].status === 'fulfilled'
+    ? tickerFetches[0].value
+    : null;
+
+  tickerSlotCounter += 1;
+
+  const rawItem = String(Storage.get('rotastic_breaking_news_item', '') || '').trim();
+  const meta = getActiveTickerMeta();
+
+  // Live rota changes are highlighted in the same top ticker with a distinct style.
+  const rotaAlert = Storage.getJSON('rotastic_rota_change_alert', null);
+  if (rotaAlert && rotaAlert.message && Number(rotaAlert.expiresAt || 0) > Date.now()) {
+    if (tickerSlotCounter % 3 === 1) {
+      renderTickerCard('rota', rotaAlert.message, 8500);
+      return;
+    }
+  }
+
+  // In the final 30 minutes, insert a concise, positive personal message plus
+  // tomorrow's rota note without stopping the existing ticker/news rotation.
+  const lastThirtyMessage = getLastThirtyMinuteTickerMessage();
+  if (lastThirtyMessage && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('general', lastThirtyMessage, getTickerDisplayDuration(lastThirtyMessage, 7200));
+    return;
+  }
+  const sickPriority = getSickAlertPriorityWindow(meta);
+  const isSickPriorityActive = rawItem && meta.kind === 'sick' && sickPriority.active;
+  const isAdminNotice = rawItem && meta.kind === 'admin';
+
+  const prayerMoment = getPrayerMomentAlert(prayerTimes);
+  if (prayerMoment && tickerSlotCounter % 2 === 1 && !isSickPriorityActive) {
+    renderFullWidthTickerTakeover(
+      'prayerMoment',
+      prayerMoment.message,
+      6500
+    );
+    return;
+  }
+
+  // Normal stream: fixed category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = 
+
+---
+ayerMoment',
+      prayerMoment.message,
+      6500
+    );
+    return;
+  }
+
+  // Normal stream: fixed category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.
+
+---
+prayerMoment.message,
+      6500
+    );
+    return;
+  }
+
+  // Normal stream: fixed category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  },
+
+---
+,
+      6500
+    );
+    return;
+  }
+
+  // Normal stream: fixed category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+con
+
+---
+  return;
+  }
+
+  // Normal stream: fixed category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISH
+
+---
+category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth s
+
+---
+ntent inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today
+
+---
+ction startOpeningTickerSequence() {
+  if (rotasticActiveTab !== 'schedule') return;
+
+  if (rotasticLaunchNotificationQueue.length) {
+    Promise.resolve(renderNextTickerSlot()).catch(function(e) {
+      console.warn('ROTASTIC launch notification ticker:', e);
+    });
+    return;
+  }
+
+  if (!profileSetupIsComplete()) {
+    rotasticOpeningTickerActive = true;
+    renderPersistentFirstSetupTicker();
+    return;
+  }
+
+  if (rotasticOpeningSequenceHasRun) {
+    if (!headlineTickerTimer && !rotasticOpeningTickerActive) {
+      Promise.resolve(renderNextTickerSlot()).catch(function(e) {
+        console.warn('ROTASTIC ticker resume:', e);
+      });
+    }
+    return;
+  }
+
+  if (rotasticOpeningTickerActive) return;
+
+  rotasticOpeningSequenceHasRun = true;
+  rotasticOpeningTickerActive = true;
+
+  if (headlineTickerTimer) {
+    clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = null;
+  }
+  if (rotasticOpeningHardHandoffTimer) {
+    clearTimeout(rotasticOpeningHardHandoffTimer);
+    rotasticOpeningHardHandoffTimer = null;
+  }
+
+  const data = getOpeningBriefingData();
+
+  try {
+    renderOpeningTypewriterBriefing(data, 5000, false, true);
+  } catch (e) {
+    renderOpeningTypewriterBriefing(getOpeningBriefingData(), 5000, false, true);
+  }
+
+  rotasticOpeningHardHandoffTimer = setTimeout(function() {
+    if (rotasticActiveTab !== 'schedule') return;
+
+    if (headlineTickerTimer) {
+      clearTimeout(headlineTickerTimer);
+      headlineTickerTimer = null;
+    }
+
+    rotasticOpeningTickerActive = false;
+    rotasticContentCycleIndex = 1;
+    renderCentreIdentityCard();
+    rotasticOpeningHardHandoffTimer = null;
+  }, 5300);
+}
+
+function checkAndRenderBreakingNews() {
+  // Unified priority stream:
+  // During the first hour of an affected shift:
+  // sick leave every 2 messages > prayer every 5 messages > admin notices > clinical/general.
+  // After that first hour the sick alert loses ticker priority and normal rotation resumes.
+  // Normal content follows the exact 11-step cycle defined in renderNextTickerSlot().
+  if (headlineTickerTimer) {
+    clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = null;
+  }
+  renderNextTickerSlot();
+}
+
+function getApprovedRotaMonthLabel() {
+  try {
+    const first = (currentSchedule || [])[0];
+    const raw = first && (first.date || first.isoDate || first.dayDate);
+    if (raw) {
+      return new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Qatar', month:'long', year:'numeric'}).format(new Date(raw));
+    }
+  } catch(e) {}
+  return new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Qatar', month:'long', year:'numeric'}).format(new Date());
+}
+
+function showMoursiApprovalExportPopup() {
+  let modal = document.getElementById('moursiApprovalExportModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'moursiApprovalExportModal';
+    modal.className = 'fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4';
+    modal.innerHTML = `
+      <div class="w-full max-w-sm rounded-2xl border border-emerald-500/30 bg-slate-900 p-5 shadow-2xl">
+        <div class="flex items-start gap-3">
+          <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-300"><i class="fa-solid fa-check-double"></i></div>
+          <div>
+            <h3 class="text-sm font-black text-white">Rota approved</h3>
+            <p class="mt-1 text-[11px] leading-relaxed text-slate-400">The rota is now released to colleagues and they have been notified. Would you like to export the approved rota?</p>
+          </div>
+        </div>
+        <div class="mt-5 grid grid-cols-2 gap-2">
+          <button class="rounded-xl bg-rose-600 px-3 py-3 text-xs font-black text-white hover:bg-rose-500" onclick="completeMoursiApprovalExport('pdf')"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button>
+          <button class="rounded-xl bg-cyan-600 px-3 py-3 text-xs font-black text-white hover:bg-cyan-500" onclick="completeMoursiApprovalExport('png')"><i class="fa-regular fa-image mr-1.5"></i>PNG</button>
+        </div>
+        <button class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-300 hover:bg-slate-700" onclick="completeMoursiApprovalExport('none')">Not now</button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function completeMoursiApprovalExport(kind) {
+  const modal = document.getElementById('moursiApprovalExportModal');
+  if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  try {
+    if (kind === 'pdf') exportToPDFReport();
+    if (kind === 'png') exportToImageReport();
+  } catch(e) { console.warn('Approved rota export:', e); }
+  setTimeout(function() {
+    const assign = confirm('Do you want to assign shift leads?');
+    if (assign) {
+      Storage.set('rotastic_shift_lead_assignment_after_approval', 'true');
+      switchTab('generator');
+      setTimeout(function() {
+        const target = document.getElementById('assignShiftLeadAM');
+        if (target) { target.scrollIntoView({behavior:'smooth', block:'center'}); target.focus(); }
+      }, 180);
+    } else {
+      Storage.set('rotastic_shift_lead_assignment_after_approval', 'false');
+    }
+  }, 250);
+}
+
+async function notifyEveryoneRotaApproved(workflow) {
+  const uniqueDoctors = Array.from(new Set((DOCTORS || []).map(function(d){ return d.name; }).filter(Boolean)));
+  const message = 'The physician rota for ' + getApprovedRotaMonthLabel() + ' has been approved by the Clinical Lead and is now available in your Rota view.';
+  uniqueDoctors.forEach(function(name) {
+    queueInAppNotification(name, message, 'rota-approved', {workflowId:workflow.id, action:'rota-approved'});
+  });
+  requestBrowserNotificationPermission();
+  if (ROTASTIC_PUSH_BROADCAST_ENDPOINT) {
+    try {
+      await rotasticPushBackendFetch({
+        method:'POST',
+        headers:{'Content-Type':'application/json

@@ -1,0 +1,1442 @@
+key=swapsnewsticker count=54 positions=[1130478, 1135883, 1593752, 1597078, 1681227, 1681365, 1686129, 1689169, 1689306, 1694078, 1706547, 1712210]
+
+---
+unction(p){ return p.type === 'hour'; })?.value || 0);
+  const minute = Number(parts.find(function(p){ return p.type === 'minute'; })?.value || 0);
+  const nowMinutes = hour * 60 + minute;
+
+  return nowMinutes >= startMinutes && nowMinutes < (startMinutes + 60);
+}
+
+function getActiveSickTickerAlert() {
+  const rawItem = String(Storage.get('rotastic_breaking_news_item', '') || '').trim();
+  const meta = getActiveTickerMeta();
+  const priority = getSickAlertPriorityWindow(meta);
+
+  if (!rawItem || meta.kind !== 'sick' || !priority.active) return null;
+
+  if (!isWithinFirstHourOfSickDoctorsShift(meta, rawItem)) return null;
+
+  return {
+    message: formatSickBreakingMessage(rawItem, meta),
+    meta: meta
+  };
+}
+
+function clearSickInterruptTimer() {
+  if (rotasticSickInterruptTimer) {
+    clearTimeout(rotasticSickInterruptTimer);
+    rotasticSickInterruptTimer = null;
+  }
+}
+
+function scheduleSickTakeoverInterrupt() {
+  clearSickInterruptTimer();
+
+  if (rotasticSickTakeoverActive || rotasticActiveTab !== 'schedule') return;
+
+  const alert = getActiveSickTickerAlert();
+  if (!alert) return;
+
+  // Let the current announcement breathe for five seconds, then interrupt it.
+  rotasticSickInterruptTimer = setTimeout(function() {
+    const currentAlert = getActiveSickTickerAlert();
+    if (!currentAlert || rotasticActiveTab !== 'schedule') return;
+
+    rotasticSickTakeoverActive = true;
+
+    if (headlineTickerTimer) {
+      clearTimeout(headlineTickerTimer);
+      headlineTickerTimer = null;
+    }
+
+    renderFullWidthTickerTakeover('sick', currentAlert.message, 5000);
+  }, 5000);
+}
+
+function renderFullWidthTickerTakeover(type, message, durationMs) {
+  rotasticTickerLastRenderAt = Date.now();
+  if (rotasticActiveTab !== 'schedule') {
+    const hiddenTicker = document.getElementById('swapsNewsTicker');
+    if (hiddenTicker) hiddenTicker.classList.add('hidden');
+    return;
+  }
+
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+
+  ticker.classList.remove('ticker-greeting-mode');
+  ticker.classList.remove('hidden');
+  setTickerFullWidthMode(true);
+  content.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'ticker-fullwidth-takeover ' +
+    (type === 'sick'
+      ? 'ticker-fullwidth-sick'
+      : type === 'prayerMoment'
+        ? 'ticker-fullwidth-prayer'
+        : 'ticker-fullwidth-centre');
+
+  if (type === 'sick') {
+    const badge = document.createElement('span');
+    badge.className = 'ticker-breaking-chip';
+    badge.textContent = 'BREAKING';
+
+    const body = document.createElement('span');
+    body.className = 'ticker-breaking-body';
+
+    const sickLines = String(message || '').split('\n').filter(Boolean);
+    if (sickLines.length > 1) {
+      sickLines.forEach(function(line, index) {
+        const lineEl = document.createElement('span');
+        lineEl.className = 'ticker-breaking-line';
+        lineEl.textContent = line;
+        body.appendChild(lineEl);
+      });
+    } else {
+      body.textContent = message;
+    }
+
+    card.appendChild(badge);
+    card.appendChild(body);
+  } else if (type === 'prayerMoment') {
+    const badge = document.createElement('span');
+    badge.className = 'ticker-prayer-moment-chip';
+
+    const logo = document.createElement('img');
+    logo.className = 'ticker-prayer-moment-logo';
+    logo.src = 'https://www.google.com/s2/favicons?domain=aladhan.com&sz=64';
+    logo.alt = 'Prayer time source';
+    logo.referrerPolicy = 'no-referrer';
+
+    const label = document.createElement('span');
+    label.textContent = 'PRAYER TIME';
+
+    badge.appendChild(logo);
+    badge.appendChild(label);
+
+    const body = document.createElement('span');
+    body.className = 'ticker-prayer-moment-body';
+    body.textContent = message;
+
+    card.appendChild(badge);
+    card.appendChild(body);
+  } else {
+    card.textContent = message;
+  }
+
+  content.appendChild(card);
+
+  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+  headlineTickerTimer = setTimeout(function() {
+    if (type === 'sick') {
+      rotasticSickTakeoverActive = false;
+    }
+
+    // Keep the takeover visible until the next message renderer replaces it.
+    renderNextTickerSlot();
+  }, type === 'sick'
+      ? 5000
+      : type === 'prayerMoment'
+        ? (durationMs || 6500)
+        : (durationMs || getTickerDisplayDuration(message, 7000)));
+}
+
+function renderCentreIdentityCard() {
+  if (rotasticActiveTab !== 'schedule') return;
+
+  // Preserve the original majestic slow zoom / letter-spacing animation.
+  rotasticRunTickerTransition(function() {
+    renderFullWidthTickerTakeover(
+      'centre',
+      'Abu Nakhla Health Centre',
+      10000
+    );
+    scheduleSickTakeoverInterrupt();
+  }, false);
+}
+
+const rotasticTickerHistory = [];
+let rotasticTickerHistoryCursor = -1;
+let rotasticTickerHistoryBrowsing = false;
+let rotasticTickerTouchStartX = 0;
+let rotasticTickerTouchStartY = 0;
+
+function rememberRotasticTickerItem(type, message) {
+  if (rotasticTickerHistoryBrowsing) return;
+  const text = String(message || '').trim();
+  if (!text) return;
+
+  const last = rotasticTickerHistory[rotasticTickerHistory.length - 1];
+  if (last && last.type === type && last.message === text) {
+    rotasticTickerHistoryCursor = rotasticTickerHistory.length - 1;
+    return;
+  }
+
+  rotasticTickerHistory.push({
+    type:type || 'general',
+    message:text,
+    medicalLink:type === 'medicalnews' ? rotasticCurrentMedicalLink : ''
+  });
+
+  if (rotasticTickerHistory.length > 30) rotasticTickerHistory.shift();
+  rotasticTickerHistoryCursor = rotasticTickerHistory.length - 1;
+}
+
+function showRotasticTickerHistory(index) {
+  if (!rotasticTickerHistory.length) return;
+
+  const bounded = Math.max(0, Math.min(index, rotasticTickerHistory.length - 1));
+  const item = rotasticTickerHistory[bounded];
+  if (!item) return;
+
+  rotasticTickerHistoryCursor = bounded;
+  rotasticTickerHistoryBrowsing = true;
+
+  if (item.type =
+
+---
+ue || 0);
+  const nowMinutes = hour * 60 + minute;
+
+  return nowMinutes >= startMinutes && nowMinutes < (startMinutes + 60);
+}
+
+function getActiveSickTickerAlert() {
+  const rawItem = String(Storage.get('rotastic_breaking_news_item', '') || '').trim();
+  const meta = getActiveTickerMeta();
+  const priority = getSickAlertPriorityWindow(meta);
+
+  if (!rawItem || meta.kind !== 'sick' || !priority.active) return null;
+
+  if (!isWithinFirstHourOfSickDoctorsShift(meta, rawItem)) return null;
+
+  return {
+    message: formatSickBreakingMessage(rawItem, meta),
+    meta: meta
+  };
+}
+
+function clearSickInterruptTimer() {
+  if (rotasticSickInterruptTimer) {
+    clearTimeout(rotasticSickInterruptTimer);
+    rotasticSickInterruptTimer = null;
+  }
+}
+
+function scheduleSickTakeoverInterrupt() {
+  clearSickInterruptTimer();
+
+  if (rotasticSickTakeoverActive || rotasticActiveTab !== 'schedule') return;
+
+  const alert = getActiveSickTickerAlert();
+  if (!alert) return;
+
+  // Let the current announcement breathe for five seconds, then interrupt it.
+  rotasticSickInterruptTimer = setTimeout(function() {
+    const currentAlert = getActiveSickTickerAlert();
+    if (!currentAlert || rotasticActiveTab !== 'schedule') return;
+
+    rotasticSickTakeoverActive = true;
+
+    if (headlineTickerTimer) {
+      clearTimeout(headlineTickerTimer);
+      headlineTickerTimer = null;
+    }
+
+    renderFullWidthTickerTakeover('sick', currentAlert.message, 5000);
+  }, 5000);
+}
+
+function renderFullWidthTickerTakeover(type, message, durationMs) {
+  rotasticTickerLastRenderAt = Date.now();
+  if (rotasticActiveTab !== 'schedule') {
+    const hiddenTicker = document.getElementById('swapsNewsTicker');
+    if (hiddenTicker) hiddenTicker.classList.add('hidden');
+    return;
+  }
+
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+
+  ticker.classList.remove('ticker-greeting-mode');
+  ticker.classList.remove('hidden');
+  setTickerFullWidthMode(true);
+  content.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'ticker-fullwidth-takeover ' +
+    (type === 'sick'
+      ? 'ticker-fullwidth-sick'
+      : type === 'prayerMoment'
+        ? 'ticker-fullwidth-prayer'
+        : 'ticker-fullwidth-centre');
+
+  if (type === 'sick') {
+    const badge = document.createElement('span');
+    badge.className = 'ticker-breaking-chip';
+    badge.textContent = 'BREAKING';
+
+    const body = document.createElement('span');
+    body.className = 'ticker-breaking-body';
+
+    const sickLines = String(message || '').split('\n').filter(Boolean);
+    if (sickLines.length > 1) {
+      sickLines.forEach(function(line, index) {
+        const lineEl = document.createElement('span');
+        lineEl.className = 'ticker-breaking-line';
+        lineEl.textContent = line;
+        body.appendChild(lineEl);
+      });
+    } else {
+      body.textContent = message;
+    }
+
+    card.appendChild(badge);
+    card.appendChild(body);
+  } else if (type === 'prayerMoment') {
+    const badge = document.createElement('span');
+    badge.className = 'ticker-prayer-moment-chip';
+
+    const logo = document.createElement('img');
+    logo.className = 'ticker-prayer-moment-logo';
+    logo.src = 'https://www.google.com/s2/favicons?domain=aladhan.com&sz=64';
+    logo.alt = 'Prayer time source';
+    logo.referrerPolicy = 'no-referrer';
+
+    const label = document.createElement('span');
+    label.textContent = 'PRAYER TIME';
+
+    badge.appendChild(logo);
+    badge.appendChild(label);
+
+    const body = document.createElement('span');
+    body.className = 'ticker-prayer-moment-body';
+    body.textContent = message;
+
+    card.appendChild(badge);
+    card.appendChild(body);
+  } else {
+    card.textContent = message;
+  }
+
+  content.appendChild(card);
+
+  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+  headlineTickerTimer = setTimeout(function() {
+    if (type === 'sick') {
+      rotasticSickTakeoverActive = false;
+    }
+
+    // Keep the takeover visible until the next message renderer replaces it.
+    renderNextTickerSlot();
+  }, type === 'sick'
+      ? 5000
+      : type === 'prayerMoment'
+        ? (durationMs || 6500)
+        : (durationMs || getTickerDisplayDuration(message, 7000)));
+}
+
+function renderCentreIdentityCard() {
+  if (rotasticActiveTab !== 'schedule') return;
+
+  // Preserve the original majestic slow zoom / letter-spacing animation.
+  rotasticRunTickerTransition(function() {
+    renderFullWidthTickerTakeover(
+      'centre',
+      'Abu Nakhla Health Centre',
+      10000
+    );
+    scheduleSickTakeoverInterrupt();
+  }, false);
+}
+
+const rotasticTickerHistory = [];
+let rotasticTickerHistoryCursor = -1;
+let rotasticTickerHistoryBrowsing = false;
+let rotasticTickerTouchStartX = 0;
+let rotasticTickerTouchStartY = 0;
+
+function rememberRotasticTickerItem(type, message) {
+  if (rotasticTickerHistoryBrowsing) return;
+  const text = String(message || '').trim();
+  if (!text) return;
+
+  const last = rotasticTickerHistory[rotasticTickerHistory.length - 1];
+  if (last && last.type === type && last.message === text) {
+    rotasticTickerHistoryCursor = rotasticTickerHistory.length - 1;
+    return;
+  }
+
+  rotasticTickerHistory.push({
+    type:type || 'general',
+    message:text,
+    medicalLink:type === 'medicalnews' ? rotasticCurrentMedicalLink : ''
+  });
+
+  if (rotasticTickerHistory.length > 30) rotasticTickerHistory.shift();
+  rotasticTickerHistoryCursor = rotasticTickerHistory.length - 1;
+}
+
+function showRotasticTickerHistory(index) {
+  if (!rotasticTickerHistory.length) return;
+
+  const bounded = Math.max(0, Math.min(index, rotasticTickerHistory.length - 1));
+  const item = rotasticTickerHistory[bounded];
+  if (!item) return;
+
+  rotasticTickerHistoryCursor = bounded;
+  rotasticTickerHistoryBrowsing = true;
+
+  if (item.type === 'medicalnews') {
+    rotasticCurrentMedicalLink = item.medicalLink || '';
+  }
+
+  renderTickerCard(item.type, item.message, 15000, true)
+
+---
+alse;
+let rotasticTickerTouchStartX = 0;
+let rotasticTickerTouchStartY = 0;
+
+function rememberRotasticTickerItem(type, message) {
+  if (rotasticTickerHistoryBrowsing) return;
+  const text = String(message || '').trim();
+  if (!text) return;
+
+  const last = rotasticTickerHistory[rotasticTickerHistory.length - 1];
+  if (last && last.type === type && last.message === text) {
+    rotasticTickerHistoryCursor = rotasticTickerHistory.length - 1;
+    return;
+  }
+
+  rotasticTickerHistory.push({
+    type:type || 'general',
+    message:text,
+    medicalLink:type === 'medicalnews' ? rotasticCurrentMedicalLink : ''
+  });
+
+  if (rotasticTickerHistory.length > 30) rotasticTickerHistory.shift();
+  rotasticTickerHistoryCursor = rotasticTickerHistory.length - 1;
+}
+
+function showRotasticTickerHistory(index) {
+  if (!rotasticTickerHistory.length) return;
+
+  const bounded = Math.max(0, Math.min(index, rotasticTickerHistory.length - 1));
+  const item = rotasticTickerHistory[bounded];
+  if (!item) return;
+
+  rotasticTickerHistoryCursor = bounded;
+  rotasticTickerHistoryBrowsing = true;
+
+  if (item.type === 'medicalnews') {
+    rotasticCurrentMedicalLink = item.medicalLink || '';
+  }
+
+  renderTickerCard(item.type, item.message, 15000, true);
+  rotasticTickerHistoryBrowsing = false;
+}
+
+function navigateRotasticTickerHistory(direction) {
+  if (!rotasticTickerHistory.length) return;
+
+  if (direction < 0) {
+    if (rotasticTickerHistoryCursor <= 0) return;
+    showRotasticTickerHistory(rotasticTickerHistoryCursor - 1);
+    return;
+  }
+
+  if (rotasticTickerHistoryCursor < rotasticTickerHistory.length - 1) {
+    showRotasticTickerHistory(rotasticTickerHistoryCursor + 1);
+  } else {
+    renderNextTickerSlot();
+  }
+}
+
+function initializeTickerSwipeHistory() {
+  const ticker = document.getElementById('swapsNewsTicker');
+  if (!ticker || ticker.dataset.swipeHistoryBound === '1') return;
+  ticker.dataset.swipeHistoryBound = '1';
+
+  ticker.addEventListener('touchstart', function(event) {
+    const touch = event.touches && event.touches[0];
+    if (!touch) return;
+    rotasticTickerTouchStartX = touch.clientX;
+    rotasticTickerTouchStartY = touch.clientY;
+  }, {passive:true});
+
+  ticker.addEventListener('touchend', function(event) {
+    const touch = event.changedTouches && event.changedTouches[0];
+    if (!touch) return;
+
+    const dx = touch.clientX - rotasticTickerTouchStartX;
+    const dy = touch.clientY - rotasticTickerTouchStartY;
+
+    // Horizontal swipe only; vertical scrolling/pull-to-refresh remains untouched.
+    if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy) * 1.35) return;
+
+    if (dx > 0) navigateRotasticTickerHistory(-1); // swipe right = previous
+    else navigateRotasticTickerHistory(1);        // swipe left = next/resume
+  }, {passive:true});
+}
+
+
+let rotasticTickerTransitionTimer = null;
+let rotasticTickerTransitioning = false;
+
+function rotasticRunTickerTransition(renderFn, immediate) {
+  const row = document.getElementById('tickerInnerRow');
+  const content = document.getElementById('tickerContent');
+  if (!row || !content || immediate || !String(content.textContent || '').trim()) {
+    renderFn();
+    if (row) {
+      row.classList.remove('rotastic-ticker-fade-out');
+      row.classList.add('rotastic-ticker-fade-in');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { row.classList.remove('rotastic-ticker-fade-in'); });
+      });
+    }
+    return;
+  }
+
+  if (rotasticTickerTransitionTimer) clearTimeout(rotasticTickerTransitionTimer);
+  rotasticTickerTransitioning = true;
+  row.classList.remove('rotastic-ticker-fade-in');
+  row.classList.add('rotastic-ticker-fade-out');
+
+  rotasticTickerTransitionTimer = setTimeout(function() {
+    renderFn();
+    row.classList.remove('rotastic-ticker-fade-out');
+    row.classList.add('rotastic-ticker-fade-in');
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        row.classList.remove('rotastic-ticker-fade-in');
+        rotasticTickerTransitioning = false;
+      });
+    });
+    rotasticTickerTransitionTimer = null;
+  }, 320);
+}
+
+function renderTickerCardNow(type, message, durationMs, fromHistory) {
+  rotasticTickerLastRenderAt = Date.now();
+  message = String(message || '').replace(/\s+/g, ' ').trim();
+  const knowledgeType = ['stat','medicalnews','worldnews','qnanews','alarabiyanews','reutersnews','nhsinfo'].includes(type);
+  if (knowledgeType) message = fitNormalTickerCopy(message, 16, 112);
+  else if (!['sick','centre','greeting','welcome','notification'].includes(type)) message = fitNormalTickerCopy(message, 18, 124) || message;
+  if (!message) {
+    message = nextDoctorEncouragement() || 'Wishing you a smooth and safe shift today.';
+    type = 'encouragement';
+  }
+  if (rotasticActiveTab !== 'schedule') {
+    const hiddenTicker = document.getElementById('swapsNewsTicker');
+    if (hiddenTicker) hiddenTicker.classList.add('hidden');
+    return;
+  }
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+  ticker.classList.remove('ticker-greeting-mode');
+  setTickerFullWidthMode(false);
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+  setTickerBadge(type, message);
+  if (!fromHistory) rememberRotasticTickerItem(type, message);
+  const card = document.createElement('div');
+  const leftAligned = ['safepractice','encouragement','stat','qatar','qnanews','medicalnews','worldnews','alarabiyanews','reutersnews','nhsinfo','prayer','admin','clinical','rota','general','notification'].includes(type);
+  card.className = 'ticker-message-card ' + getTickerCopySizeClass(message) +
+    (type === 'rota' ? ' ticker-rota-change-card' : '') +
+    (leftAligned ? ' ticker-left-card' : '') +
+    (type === 'prayer' ? ' ticker-prayer-card' : '');
+  if (type === 'prayer') {
+    const body = document.createElement('span');
+    body.className = 'ticker-message-text';
+    body.textContent = message;
+    card.
+
+---
+ent');
+  if (!row || !content || immediate || !String(content.textContent || '').trim()) {
+    renderFn();
+    if (row) {
+      row.classList.remove('rotastic-ticker-fade-out');
+      row.classList.add('rotastic-ticker-fade-in');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { row.classList.remove('rotastic-ticker-fade-in'); });
+      });
+    }
+    return;
+  }
+
+  if (rotasticTickerTransitionTimer) clearTimeout(rotasticTickerTransitionTimer);
+  rotasticTickerTransitioning = true;
+  row.classList.remove('rotastic-ticker-fade-in');
+  row.classList.add('rotastic-ticker-fade-out');
+
+  rotasticTickerTransitionTimer = setTimeout(function() {
+    renderFn();
+    row.classList.remove('rotastic-ticker-fade-out');
+    row.classList.add('rotastic-ticker-fade-in');
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        row.classList.remove('rotastic-ticker-fade-in');
+        rotasticTickerTransitioning = false;
+      });
+    });
+    rotasticTickerTransitionTimer = null;
+  }, 320);
+}
+
+function renderTickerCardNow(type, message, durationMs, fromHistory) {
+  rotasticTickerLastRenderAt = Date.now();
+  message = String(message || '').replace(/\s+/g, ' ').trim();
+  const knowledgeType = ['stat','medicalnews','worldnews','qnanews','alarabiyanews','reutersnews','nhsinfo'].includes(type);
+  if (knowledgeType) message = fitNormalTickerCopy(message, 16, 112);
+  else if (!['sick','centre','greeting','welcome','notification'].includes(type)) message = fitNormalTickerCopy(message, 18, 124) || message;
+  if (!message) {
+    message = nextDoctorEncouragement() || 'Wishing you a smooth and safe shift today.';
+    type = 'encouragement';
+  }
+  if (rotasticActiveTab !== 'schedule') {
+    const hiddenTicker = document.getElementById('swapsNewsTicker');
+    if (hiddenTicker) hiddenTicker.classList.add('hidden');
+    return;
+  }
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+  ticker.classList.remove('ticker-greeting-mode');
+  setTickerFullWidthMode(false);
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+  setTickerBadge(type, message);
+  if (!fromHistory) rememberRotasticTickerItem(type, message);
+  const card = document.createElement('div');
+  const leftAligned = ['safepractice','encouragement','stat','qatar','qnanews','medicalnews','worldnews','alarabiyanews','reutersnews','nhsinfo','prayer','admin','clinical','rota','general','notification'].includes(type);
+  card.className = 'ticker-message-card ' + getTickerCopySizeClass(message) +
+    (type === 'rota' ? ' ticker-rota-change-card' : '') +
+    (leftAligned ? ' ticker-left-card' : '') +
+    (type === 'prayer' ? ' ticker-prayer-card' : '');
+  if (type === 'prayer') {
+    const body = document.createElement('span');
+    body.className = 'ticker-message-text';
+    body.textContent = message;
+    card.appendChild(body);
+  } else if ((type === 'medicalnews' && rotasticCurrentMedicalLink) || (['qnanews','worldnews','alarabiyanews','reutersnews'].includes(type) && rotasticCurrentTickerLink)) {
+    const link = document.createElement('a');
+    link.className = 'ticker-medical-link';
+    link.href = type === 'medicalnews' ? rotasticCurrentMedicalLink : rotasticCurrentTickerLink;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = message;
+    link.title = 'Open source';
+    card.appendChild(link);
+  } else {
+    card.textContent = message;
+  }
+  content.appendChild(card);
+  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+  const requestedDuration = Number(durationMs || 0);
+  const comfortableDuration = getTickerDisplayDuration(message, 7800);
+  const finalDuration = Math.max(requestedDuration, comfortableDuration);
+  headlineTickerTimer = setTimeout(function() { renderNextTickerSlot(); }, finalDuration);
+  scheduleSickTakeoverInterrupt();
+}
+
+
+function renderTickerCard(type, message, durationMs, fromHistory) {
+  const immediate = type === 'sick' || type === 'greeting' || type === 'welcome';
+  rotasticRunTickerTransition(function() {
+    renderTickerCardNow(type, message, durationMs, fromHistory);
+  }, immediate);
+}
+
+function choosePrayerMessage(prayerTimes) {
+  const list = getRelevantPrayerMessages(prayerTimes);
+  if (!list.length) return '';
+  const message = list[prayerTickerIndex % list.length];
+  prayerTickerIndex = (prayerTickerIndex + 1) % list.length;
+  return message;
+}
+
+
+
+const ROTASTIC_GREETING_VIBES = [
+  'Hope you have a smooth shift today.',
+  'Wishing you a calm and safe shift.',
+  'Hope today feels steady and manageable.',
+  'Have a good shift and remember to hydrate.',
+  'Wishing you a positive and uncomplicated day.',
+  'Take it one patient at a time today.',
+  'Hope the clinic stays calm and kind to you.',
+  'Remember to pause, hydrate and reset when you can.',
+  'Wishing you clear decisions and an easy workflow.',
+  'Hope you get a few quiet moments between patients.',
+  'Keep it calm, careful and compassionate today.',
+  'Wishing you a safe shift and an easy handover.',
+  'Look after yourself while you look after everyone else.',
+  'Hope today brings more smiles than surprises.',
+  'May your shift be smooth and your coffee stay warm.',
+  'Wishing you a steady pace and a good team around you.',
+  'Stay hydrated and give yourself a moment to breathe.',
+  'Hope the day runs gently from start to finish.',
+  'Wishing you good energy for the whole shift.',
+  'Have a safe shift and be kind to yourself too.'
+];
+
+let rotasticLastGreetingVibe = '';
+
+function nextGreetingVibe() {
+  if (!ROTASTIC_GREETING_VIBES.length) return '';
+
+  let options = ROTASTIC_GREETING_VIBES.filter(function(msg) {
+    return msg !== rotasticLastGreetingVibe;
+  });
+
+  if (!options.length) options = ROTASTIC_GREETING_VIBES.slice();
+
+  const message = options[Math.floor(Math.random() * options.length)];
+  rotasticLastGreetingVibe = message;
+  return messag
+
+---
+List.remove('rotastic-ticker-fade-out');
+      row.classList.add('rotastic-ticker-fade-in');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { row.classList.remove('rotastic-ticker-fade-in'); });
+      });
+    }
+    return;
+  }
+
+  if (rotasticTickerTransitionTimer) clearTimeout(rotasticTickerTransitionTimer);
+  rotasticTickerTransitioning = true;
+  row.classList.remove('rotastic-ticker-fade-in');
+  row.classList.add('rotastic-ticker-fade-out');
+
+  rotasticTickerTransitionTimer = setTimeout(function() {
+    renderFn();
+    row.classList.remove('rotastic-ticker-fade-out');
+    row.classList.add('rotastic-ticker-fade-in');
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        row.classList.remove('rotastic-ticker-fade-in');
+        rotasticTickerTransitioning = false;
+      });
+    });
+    rotasticTickerTransitionTimer = null;
+  }, 320);
+}
+
+function renderTickerCardNow(type, message, durationMs, fromHistory) {
+  rotasticTickerLastRenderAt = Date.now();
+  message = String(message || '').replace(/\s+/g, ' ').trim();
+  const knowledgeType = ['stat','medicalnews','worldnews','qnanews','alarabiyanews','reutersnews','nhsinfo'].includes(type);
+  if (knowledgeType) message = fitNormalTickerCopy(message, 16, 112);
+  else if (!['sick','centre','greeting','welcome','notification'].includes(type)) message = fitNormalTickerCopy(message, 18, 124) || message;
+  if (!message) {
+    message = nextDoctorEncouragement() || 'Wishing you a smooth and safe shift today.';
+    type = 'encouragement';
+  }
+  if (rotasticActiveTab !== 'schedule') {
+    const hiddenTicker = document.getElementById('swapsNewsTicker');
+    if (hiddenTicker) hiddenTicker.classList.add('hidden');
+    return;
+  }
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+  ticker.classList.remove('ticker-greeting-mode');
+  setTickerFullWidthMode(false);
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+  setTickerBadge(type, message);
+  if (!fromHistory) rememberRotasticTickerItem(type, message);
+  const card = document.createElement('div');
+  const leftAligned = ['safepractice','encouragement','stat','qatar','qnanews','medicalnews','worldnews','alarabiyanews','reutersnews','nhsinfo','prayer','admin','clinical','rota','general','notification'].includes(type);
+  card.className = 'ticker-message-card ' + getTickerCopySizeClass(message) +
+    (type === 'rota' ? ' ticker-rota-change-card' : '') +
+    (leftAligned ? ' ticker-left-card' : '') +
+    (type === 'prayer' ? ' ticker-prayer-card' : '');
+  if (type === 'prayer') {
+    const body = document.createElement('span');
+    body.className = 'ticker-message-text';
+    body.textContent = message;
+    card.appendChild(body);
+  } else if ((type === 'medicalnews' && rotasticCurrentMedicalLink) || (['qnanews','worldnews','alarabiyanews','reutersnews'].includes(type) && rotasticCurrentTickerLink)) {
+    const link = document.createElement('a');
+    link.className = 'ticker-medical-link';
+    link.href = type === 'medicalnews' ? rotasticCurrentMedicalLink : rotasticCurrentTickerLink;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = message;
+    link.title = 'Open source';
+    card.appendChild(link);
+  } else {
+    card.textContent = message;
+  }
+  content.appendChild(card);
+  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+  const requestedDuration = Number(durationMs || 0);
+  const comfortableDuration = getTickerDisplayDuration(message, 7800);
+  const finalDuration = Math.max(requestedDuration, comfortableDuration);
+  headlineTickerTimer = setTimeout(function() { renderNextTickerSlot(); }, finalDuration);
+  scheduleSickTakeoverInterrupt();
+}
+
+
+function renderTickerCard(type, message, durationMs, fromHistory) {
+  const immediate = type === 'sick' || type === 'greeting' || type === 'welcome';
+  rotasticRunTickerTransition(function() {
+    renderTickerCardNow(type, message, durationMs, fromHistory);
+  }, immediate);
+}
+
+function choosePrayerMessage(prayerTimes) {
+  const list = getRelevantPrayerMessages(prayerTimes);
+  if (!list.length) return '';
+  const message = list[prayerTickerIndex % list.length];
+  prayerTickerIndex = (prayerTickerIndex + 1) % list.length;
+  return message;
+}
+
+
+
+const ROTASTIC_GREETING_VIBES = [
+  'Hope you have a smooth shift today.',
+  'Wishing you a calm and safe shift.',
+  'Hope today feels steady and manageable.',
+  'Have a good shift and remember to hydrate.',
+  'Wishing you a positive and uncomplicated day.',
+  'Take it one patient at a time today.',
+  'Hope the clinic stays calm and kind to you.',
+  'Remember to pause, hydrate and reset when you can.',
+  'Wishing you clear decisions and an easy workflow.',
+  'Hope you get a few quiet moments between patients.',
+  'Keep it calm, careful and compassionate today.',
+  'Wishing you a safe shift and an easy handover.',
+  'Look after yourself while you look after everyone else.',
+  'Hope today brings more smiles than surprises.',
+  'May your shift be smooth and your coffee stay warm.',
+  'Wishing you a steady pace and a good team around you.',
+  'Stay hydrated and give yourself a moment to breathe.',
+  'Hope the day runs gently from start to finish.',
+  'Wishing you good energy for the whole shift.',
+  'Have a safe shift and be kind to yourself too.'
+];
+
+let rotasticLastGreetingVibe = '';
+
+function nextGreetingVibe() {
+  if (!ROTASTIC_GREETING_VIBES.length) return '';
+
+  let options = ROTASTIC_GREETING_VIBES.filter(function(msg) {
+    return msg !== rotasticLastGreetingVibe;
+  });
+
+  if (!options.length) options = ROTASTIC_GREETING_VIBES.slice();
+
+  const message = options[Math.floor(Math.random() * options.length)];
+  rotasticLastGreetingVibe = message;
+  return message;
+}
+
+function buildRecurringDoctorGreeting() {
+  const doctor = String(activeUserDocName || '').replace(/^Dr\.?\s*/i, '').trim();
+  cons
+
+---
+ou can.',
+  'Wishing you clear decisions and an easy workflow.',
+  'Hope you get a few quiet moments between patients.',
+  'Keep it calm, careful and compassionate today.',
+  'Wishing you a safe shift and an easy handover.',
+  'Look after yourself while you look after everyone else.',
+  'Hope today brings more smiles than surprises.',
+  'May your shift be smooth and your coffee stay warm.',
+  'Wishing you a steady pace and a good team around you.',
+  'Stay hydrated and give yourself a moment to breathe.',
+  'Hope the day runs gently from start to finish.',
+  'Wishing you good energy for the whole shift.',
+  'Have a safe shift and be kind to yourself too.'
+];
+
+let rotasticLastGreetingVibe = '';
+
+function nextGreetingVibe() {
+  if (!ROTASTIC_GREETING_VIBES.length) return '';
+
+  let options = ROTASTIC_GREETING_VIBES.filter(function(msg) {
+    return msg !== rotasticLastGreetingVibe;
+  });
+
+  if (!options.length) options = ROTASTIC_GREETING_VIBES.slice();
+
+  const message = options[Math.floor(Math.random() * options.length)];
+  rotasticLastGreetingVibe = message;
+  return message;
+}
+
+function buildRecurringDoctorGreeting() {
+  const doctor = String(activeUserDocName || '').replace(/^Dr\.?\s*/i, '').trim();
+  const first = doctor.split(/\s+/)[0] || 'Doctor';
+
+  let hour = new Date().getHours();
+  try {
+    hour = parseInt(
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone:'Asia/Qatar',
+        hour:'2-digit',
+        hour12:false
+      }).format(new Date()),
+      10
+    );
+  } catch (e) {}
+
+  const greeting =
+    hour < 12 ? 'Good morning' :
+    hour < 17 ? 'Good afternoon' :
+    'Good evening';
+
+  const wish = nextGreetingVibe();
+  return greeting + ', Dr ' + first + '.\n' + wish;
+}
+
+async function renderNextTickerSlot() {
+  const ticker = document.getElementById('swapsNewsTicker');
+  if (!ticker) return;
+
+  if (rotasticActiveTab !== 'schedule') {
+    ticker.classList.add('hidden');
+    return;
+  }
+
+  if (!profileSetupIsComplete()) {
+    renderPersistentFirstSetupTicker();
+    return;
+  }
+
+  const launchNotification = rotasticTakeLaunchTickerNotification();
+  if (launchNotification) {
+    rotasticMarkNotificationShownOnce(launchNotification);
+    const launchText = '🔔 ' + String(launchNotification.message || 'You have a new ROTASTIC notification.');
+    renderTickerCard('notification', launchText, 15000);
+    return;
+  }
+
+  // After all launch notifications have appeared once, preserve the standard
+  // greeting → centre identity → normal announcement sequence.
+  if (!rotasticOpeningSequenceHasRun && !rotasticOpeningTickerActive) {
+    startOpeningTickerSequence();
+    return;
+  }
+
+  const tickerFetches = await Promise.allSettled([
+    fetchAbuNakhlaPrayerTimes(),
+    refreshLiveClinicalUpdates(),
+    refreshQatarAchievementNews(),
+    refreshLocalTrafficUpdate(),
+    refreshExternalHeadlineFeeds()
+  ]);
+  const prayerTimes = tickerFetches[0] && tickerFetches[0].status === 'fulfilled'
+    ? tickerFetches[0].value
+    : null;
+
+  tickerSlotCounter += 1;
+
+  const rawItem = String(Storage.get('rotastic_breaking_news_item', '') || '').trim();
+  const meta = getActiveTickerMeta();
+
+  // Live rota changes are highlighted in the same top ticker with a distinct style.
+  const rotaAlert = Storage.getJSON('rotastic_rota_change_alert', null);
+  if (rotaAlert && rotaAlert.message && Number(rotaAlert.expiresAt || 0) > Date.now()) {
+    if (tickerSlotCounter % 3 === 1) {
+      renderTickerCard('rota', rotaAlert.message, 8500);
+      return;
+    }
+  }
+
+  // In the final 30 minutes, insert a concise, positive personal message plus
+  // tomorrow's rota note without stopping the existing ticker/news rotation.
+  const lastThirtyMessage = getLastThirtyMinuteTickerMessage();
+  if (lastThirtyMessage && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('general', lastThirtyMessage, getTickerDisplayDuration(lastThirtyMessage, 7200));
+    return;
+  }
+  const sickPriority = getSickAlertPriorityWindow(meta);
+  const isSickPriorityActive = rawItem && meta.kind === 'sick' && sickPriority.active;
+  const isAdminNotice = rawItem && meta.kind === 'admin';
+
+  const prayerMoment = getPrayerMomentAlert(prayerTimes);
+  if (prayerMoment && tickerSlotCounter % 2 === 1 && !isSickPriorityActive) {
+    renderFullWidthTickerTakeover(
+      'prayerMoment',
+      prayerMoment.message,
+      6500
+    );
+    return;
+  }
+
+  // Normal stream: fixed category order, shuffled content inside each category:
+  // Every cycle includes motivational lines and practical clinical advice.
+  // 0 Greeting (brief)
+  // 1 Qatar / PHCC medical statistic
+  // 2 Relevant prayer
+  // 3 Qatar / Arab-region medical news
+  // 4 Positive safe-practice advice
+  // 5 Qatar / PHCC medical statistic
+  // 6 Abu Nakhla identity animation
+  // 7 Greeting (brief, different positive line)
+  // 8 Qatar / Arab-region medical news
+  // 9 Current QNA / Al Jazeera headline
+  // 10 Qatar / PHCC medical statistic
+  // 11 Positive doctor encouragement
+  // 12 Qatar / Arab-region medical news
+  // 13 NHS global/relevant health item
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement',
+
+---
+try for you today. Enjoy the breathing space ☕🙂',
+      room:'',
+      roomNumbers:[],
+      clinics:[],
+      emergency:[],
+      codeBlue:[],
+      shiftLead:'',
+      shiftLabel:'',
+      holiday:context.holiday
+    };
+  }
+
+  const shift = today[timing.period] || {};
+  const emergency = collectEmergencyDuties(shift, profile);
+  const clinics = collectSpecialClinicDuties(shift, profile);
+  const rooms = getRoomAssignmentsForDoctor(shift, profile);
+  const cb = timing.period === 'am' ? today.cbAM : today.cbPM;
+  const codeBlue = collectCodeBlueDuties(cb, profile);
+  const shiftLead = cleanDoctorName(
+    today[timing.period === 'am' ? 'shiftLeadAM' : 'shiftLeadPM'] || ''
+  );
+
+  let assignment = '';
+
+  if (clinics.length) {
+    assignment = 'You are on ' + clinics.join(' and ') + ' today.';
+  } else if (emergency.length) {
+    assignment = 'You are covering ' + emergency.join(' and ') + ' today.';
+  } else {
+    assignment = 'You are on the ' + timing.label + ' shift today.';
+  }
+
+  let room = '';
+  if (rooms.length === 1) {
+    room = 'You are in Room ' + rooms[0] + ' today.';
+  } else if (rooms.length > 1) {
+    room = 'You are in Rooms ' + rooms.join(' and ') + ' today.';
+  }
+
+  return {
+    hasProfile:true,
+    greeting:context.standardGreeting,
+    detail:assignment + ' ' + getRotasticShiftWish(),
+    room:room,
+    roomNumbers:rooms,
+    clinics:clinics,
+    emergency:emergency,
+    codeBlue:codeBlue,
+    shiftLead:shiftLead,
+    shiftLabel:timing.label || '',
+    holiday:context.holiday
+  };
+}
+
+function buildOpeningBriefingMessage() {
+  const data = getOpeningBriefingData();
+  return [data.greeting, data.detail, data.room].filter(Boolean).join(' ');
+}
+
+
+function renderPersonalOpeningRotaBriefing(data, totalDurationMs) {
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content || !data) return false;
+
+  const hasDuty =
+    (data.roomNumbers && data.roomNumbers.length) ||
+    (data.clinics && data.clinics.length) ||
+    (data.emergency && data.emergency.length) ||
+    (data.codeBlue && data.codeBlue.length) ||
+    data.shiftLead ||
+    data.shiftLabel;
+
+  if (!data.hasProfile || !hasDuty) return false;
+
+  setTickerFullWidthMode(false);
+  ticker.classList.add('ticker-greeting-mode', 'ticker-personal-rota-briefing');
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+  setTickerBadge('greeting', data.greeting || 'Your shift');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'opening-rota-briefing';
+
+  const top = document.createElement('div');
+  top.className = 'opening-rota-briefing-top';
+
+  const copy = document.createElement('div');
+  copy.className = 'opening-rota-briefing-copy';
+
+  const greeting = document.createElement('div');
+  greeting.className = 'opening-rota-briefing-greeting';
+  greeting.textContent = data.greeting || 'Good day, Doctor';
+
+  const shift = document.createElement('div');
+  shift.className = 'opening-rota-briefing-shift';
+  shift.textContent = data.shiftLabel
+    ? 'Your ' + data.shiftLabel + ' briefing'
+    : 'Your rota briefing';
+
+  copy.appendChild(greeting);
+  copy.appendChild(shift);
+
+  const roomHero = document.createElement('div');
+  roomHero.className = 'opening-rota-room-hero';
+
+  const roomLabel = document.createElement('div');
+  roomLabel.className = 'opening-rota-room-label';
+
+  const roomValue = document.createElement('div');
+  roomValue.className = 'opening-rota-room-value';
+
+  if (data.roomNumbers && data.roomNumbers.length) {
+    roomLabel.textContent = data.roomNumbers.length === 1 ? 'ROOM' : 'ROOMS';
+    roomValue.textContent = data.roomNumbers.join(' / ');
+  } else if (data.clinics && data.clinics.length) {
+    roomLabel.textContent = 'CLINIC';
+    roomValue.className += ' opening-rota-room-value-clinic';
+    roomValue.textContent = cleanClinicLabelForSentence(data.clinics[0]);
+  } else {
+    roomLabel.textContent = 'TODAY';
+    roomValue.textContent = 'DUTY';
+  }
+
+  roomHero.appendChild(roomLabel);
+  roomHero.appendChild(roomValue);
+
+  top.appendChild(copy);
+  top.appendChild(roomHero);
+  wrap.appendChild(top);
+
+  const details = document.createElement('div');
+  details.className = 'opening-rota-briefing-details';
+
+  function addBriefingItem(iconClass, label, value, accentClass) {
+    if (!value) return;
+    const item = document.createElement('div');
+    item.className = 'opening-rota-detail-item ' + (accentClass || '');
+
+    const icon = document.createElement('i');
+    icon.className = iconClass;
+
+    const body = document.createElement('div');
+    const labelEl = document.createElement('div');
+    labelEl.className = 'opening-rota-detail-label';
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'opening-rota-detail-value';
+    valueEl.textContent = value;
+
+    body.appendChild(labelEl);
+    body.appendChild(valueEl);
+    item.appendChild(icon);
+    item.appendChild(body);
+    details.appendChild(item);
+  }
+
+  addBriefingItem(
+    'fa-solid fa-user-shield',
+    'Shift lead',
+    data.shiftLead || 'Not assigned',
+    'detail-lead'
+  );
+
+  if (data.codeBlue && data.codeBlue.length) {
+    addBriefingItem(
+      'fa-solid fa-heart-pulse',
+      'Code Blue',
+      data.codeBlue.join(' · ').replace(/[💙⚡]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-codeblue'
+    );
+  }
+
+  if (data.emergency && data.emergency.length) {
+    addBriefingItem(
+      'fa-solid fa-truck-medical',
+      'Emergency responsibility',
+      data.emergency.join(' · ').replace(/[🚑🧸]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-emergency'
+    );
+  }
+
+  if (data.clinics && data.clinics.length) {
+    addBriefingItem(
+      'fa-solid fa-stethoscope',
+      'Clinic',
+      data.clinics.join(' · ').replace(/[👶🤰🩺😷👂🚭🌸]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-clinic'
+    );
+  }
+
+  wrap.appendChild(details);
+  content.appendChild(wrap);
+
+  rememberRotasticTickerItem(
+    'greeting',
+   
+
+---
+data.clinics && data.clinics.length) {
+    addBriefingItem(
+      'fa-solid fa-stethoscope',
+      'Clinic',
+      data.clinics.join(' · ').replace(/[👶🤰🩺😷👂🚭🌸]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-clinic'
+    );
+  }
+
+  wrap.appendChild(details);
+  content.appendChild(wrap);
+
+  rememberRotasticTickerItem(
+    'greeting',
+    [
+      data.greeting,
+      data.room,
+      data.codeBlue?.join(' '),
+      data.emergency?.join(' '),
+      data.shiftLead ? 'Shift lead: ' + data.shiftLead : ''
+    ].filter(Boolean).join(' — ')
+  );
+
+  const duration = Math.max(1700, Number(totalDurationMs || 2200));
+  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+  headlineTickerTimer = setTimeout(function() {
+    ticker.classList.remove('ticker-greeting-mode', 'ticker-personal-rota-briefing');
+    renderNextTickerSlot();
+  }, duration);
+
+  scheduleSickTakeoverInterrupt();
+  return true;
+}
+
+function renderOpeningTypewriterBriefing(data, totalDurationMs, recurring, persistent) {
+  rotasticTickerLastRenderAt = Date.now();
+  // On true app opening, show a compact personal rota briefing with a very
+  // prominent room/clinic assignment plus Code Blue, emergency and shift lead.
+  // Recurring greeting slots remain the lighter good-vibes treatment.
+  // Opening sequence uses one typewriter greeting only. Personal duty details remain in Personal View.
+
+
+  if (recurring && data) {
+    const freshVibe = nextGreetingVibe();
+    if ('positiveMessage' in data) data.positiveMessage = freshVibe;
+    if ('wish' in data) data.wish = freshVibe;
+    if ('message' in data && !('positiveMessage' in data) && !('wish' in data)) {
+      data.message = freshVibe;
+    }
+    if ('detail' in data && freshVibe) {
+      data.detail = freshVibe;
+    }
+  }
+
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+
+  setTickerFullWidthMode(false);
+  ticker.classList.add('ticker-greeting-mode');
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+  setTickerBadge('greeting', data.greeting || 'Greeting');
+
+  if (!rotasticTickerHistoryBrowsing) {
+    rememberRotasticTickerItem(
+      'greeting',
+      [data.greeting, data.detail].filter(Boolean).join(' — ')
+    );
+  }
+
+  const hero = document.createElement('div');
+  hero.className = 'ticker-opening-hero';
+
+  const copy = document.createElement('div');
+  copy.className = 'ticker-opening-copy';
+
+  const greeting = document.createElement('div');
+  greeting.className = 'ticker-opening-greeting';
+  greeting.textContent = data.greeting || 'Good day, Doctor';
+
+  const detail = document.createElement('div');
+  detail.className = 'ticker-opening-detail';
+
+  const cursor = document.createElement('span');
+  cursor.className = 'ticker-typewriter-cursor';
+
+  copy.appendChild(greeting);
+  copy.appendChild(detail);
+  hero.appendChild(copy);
+  content.appendChild(hero);
+
+  // Keep the animated line concise enough to fit cleanly in two lines.
+  const detailText = String(data.detail || '').replace(/\s+/g, ' ').trim();
+
+  let index = 0;
+  const chars = Array.from(detailText);
+  const total = Math.max(4200, Number(totalDurationMs || 5000));
+  const typingBudget = Math.min(1150, Math.max(650, chars.length * 14));
+  const delay = chars.length
+    ? Math.max(14, Math.min(38, typingBudget / chars.length))
+    : 20;
+
+  const finishGreeting = function() {
+    if (persistent) return;
+
+    const elapsedTyping = chars.length * delay;
+    const hold = Math.max(900, total - elapsedTyping);
+
+    if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = setTimeout(function() {
+      ticker.classList.remove('ticker-greeting-mode');
+      renderNextTickerSlot();
+    }, hold);
+  };
+
+  const typeNext = function() {
+    if (index >= chars.length) {
+      if (cursor.parentNode) cursor.remove();
+      finishGreeting();
+      return;
+    }
+
+    detail.textContent += chars[index++];
+    detail.appendChild(cursor);
+    headlineTickerTimer = setTimeout(typeNext, delay);
+  };
+
+  if (chars.length) {
+    typeNext();
+  } else {
+    finishGreeting();
+  }
+
+  if (!persistent) {
+    scheduleSickTakeoverInterrupt();
+  }
+}
+let rotasticOpeningTickerActive = false;
+let rotasticOpeningHardHandoffTimer = null;
+
+
+
+function isSchedulablePhysician(name) {
+  return !isDrNabina(name);
+}
+
+function isPrivilegedAdminDoctor(name) {
+  return [
+    'Dr Zaid SE.',
+    'Dr Moursi',
+    'Dr. Moursi',
+    'Dr Mohamed M.',
+    'Dr Nabina',
+    'Dr. Nabina'
+  ].includes(String(name || '').trim());
+}
+
+function isDrNabina(name) {
+  return /Dr\.?\s*Nabina/i.test(String(name || '').trim());
+}
+
+function profileSetupIsComplete() {
+  return Storage.get('rotastic_setup_completed', 'false') === 'true' && !!activeUserDocName;
+}
+
+function renderPersistentFirstSetupTicker() {
+  if (headlineTickerTimer) {
+    clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = null;
+  }
+
+  const data = getOpeningBriefingData();
+  renderOpeningTypewriterBriefing(data, 0, false, true);
+}
+
+async function startOpeningTickerSequence() {
+  if (rotasticActiveTab !== 'schedule') return;
+
+  if (rotasticLaunchNotificationQueue.length) {
+    Promise.resolve(renderNextTickerSlot()).catch(function(e) {
+      console.warn('ROTASTIC launch notification ticker:', e);
+    });
+    return;
+  }
+
+  if (!profileSetupIsComplete()) {
+    rotasticOpeningTickerActive = true;
+    renderPersistentFirstSetupTicker();
+    return;
+  }
+
+  if (rotasticOpeningSequenceHasRun) {
+    if (!headlineTickerTimer && !rotasticOpeningTickerActive) {
+      Promise.resolve(renderNextTickerSlot()).catch(function(e) {
+        console.warn('ROTASTIC ticker resume:', e);
+      });
+    }
+    return;
+  }
+
+  if (rotasticOpeningTickerActive) return;
+
+  rotasticOpeningSequenceHasRun = true;
+  rotasticOpeningTickerActive = true;
+
+  if (headlineTickerTimer) {
+    clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = null;
+  }
+  if (rotasticOpeningHardHandoffTimer) {
+    clearTim

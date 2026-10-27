@@ -1,0 +1,1 @@
+key=tickerprayer count=0 positions=[]

@@ -1,0 +1,1599 @@
+key=medical count=196 positions=[1698145, 1698861, 1698913, 1699042, 1699119, 1699149, 1699177, 1699220, 1699234, 1699333, 1700636, 1710240]
+
+---
+tem
+  // 14 Abu Nakhla identity animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLa
+
+---
+y animation
+  // then repeat.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLaunchWishIndex = Math.floor(Mat
+
+---
+.
+  // This makes public-health statistics and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLaunchWishIndex = Math.floor(Math.random() * ROTASTIC_SHIFT_
+
+---
+and medical news much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLaunchWishIndex = Math.floor(Math.random() * ROTASTIC_SHIFT_WISHES.length);
+
+function getRotasticShiftW
+
+---
+ws much more visible.
+
+  if (isAdminNotice && tickerSlotCounter % 3 === 1) {
+    renderTickerCard('admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLaunchWishIndex = Math.floor(Math.random() * ROTASTIC_SHIFT_WISHES.length);
+
+function getRotasticShiftWish() {
+  retu
+
+---
+admin', conciseTickerText(rawItem, 105), 6500);
+    return;
+  }
+
+  const cycleStep = rotasticContentCycleIndex % 15;
+  rotasticContentCycleIndex = (rotasticContentCycleIndex + 1) % 15;
+
+  if (cycleStep === 0 || cycleStep === 7) {
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5800);
+    return;
+  }
+
+  if (cycleStep === 1 || cycleStep === 5 || cycleStep === 10) {
+    rotasticMedicalStatCycleCount += 1;
+
+    // Keep the stream focused on public-health numbers. Qatar fun facts remain
+    // occasional rather than replacing a quarter of the medical-stat slots.
+    const stat = chooseWeightedMedicalStat();
+    if (stat) {
+      renderTickerCard('stat', stat, 6000);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 2) {
+    const prayerMessage = getPrayerTickerMessage(prayerTimes);
+    if (prayerMessage) {
+      renderTickerCard('prayer', conciseTickerText(prayerMessage, 98), 6000);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 3 || cycleStep === 8 || cycleStep === 12) {
+    rotasticCpdSlotCounter += 1;
+    if (rotasticCpdSlotCounter % 4 === 1) {
+      const cpdEvent = chooseActiveCpdEvent();
+      if (cpdEvent) {
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLaunchWishIndex = Math.floor(Math.random() * ROTASTIC_SHIFT_WISHES.length);
+
+function getRotasticShiftWish() {
+  return ROTASTIC_SHIFT_WISHES[rotasticLaunchWishIndex] ||
+    'Wishing you a safe and smooth shift today
+
+---
+{
+        rotasticCurrentMedicalLink = cpdEvent.link;
+        rotasticCurrentMedicalSourceMeta = {name:'CPD event', domain:(new URL(cpdEvent.link)).hostname.replace(/^www\./,'')};
+        renderTickerCard('medicalnews', cpdEvent.text, 7600);
+        return;
+      }
+    }
+
+    const medicalHeadline = chooseLatestMedicalHeadline();
+
+    if (medicalHeadline) {
+      renderTickerCard('medicalnews', medicalHeadline, 6500);
+      return;
+    }
+
+    // This branch should be rare because chooseLatestMedicalHeadline also has
+    // trusted-source landing-page fallbacks.
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 4) {
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 5600);
+    return;
+  }
+
+  if (cycleStep === 6 || cycleStep === 14) {
+    renderCentreIdentityCard();
+    return;
+  }
+
+  if (cycleStep === 9) {
+    const headline = chooseWorldHeadlineWithSource();
+
+    if (headline) {
+      renderTickerCard(headline.type, headline.text, 6300);
+      return;
+    }
+
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+    return;
+  }
+
+  if (cycleStep === 11) {
+    const weatherUpdate = getActualDohaWeatherTickerText();
+    if (weatherUpdate && tickerSlotCounter % 2 === 0) {
+      rotasticCurrentTickerSourceMeta = {name:'Doha Weather', domain:'open-meteo.com'};
+      renderTickerCard('general', weatherUpdate, 7800);
+      return;
+    }
+    renderTickerCard('encouragement', nextDoctorEncouragement(), 7800);
+    return;
+  }
+
+  if (cycleStep === 13) {
+    const evidenceItem = (tickerSlotCounter % 2 === 0)
+      ? (chooseNiceGuidanceTickerItem() || chooseNhsRelevantHeadline())
+      : (chooseNhsRelevantHeadline() || chooseNiceGuidanceTickerItem());
+    if (evidenceItem) {
+      renderTickerCard('medicalnews', evidenceItem, 8200);
+      return;
+    }
+    renderTickerCard('safepractice', nextSafePracticeAdvice(), 7800);
+    return;
+  }
+
+  renderTickerCard('encouragement', nextDoctorEncouragement(), 5600);
+}
+
+function renderQuietShiftTicker() {
+  renderNextTickerSlot();
+}
+
+let headlineTickerTimer = null;
+let headlineTickerPhase = 'stream';
+
+
+
+
+const ROTASTIC_ROOM_HERO_DURATION_MS = 30 * 60 * 1000;
+const rotasticRoomHeroOpenedAt = Date.now();
+let rotasticRoomHeroTimer = null;
+
+function getTodayRoomInfoForActiveDoctor() {
+  const doctor = activeUserDocName || getSplashDoctorName();
+  const day = getTodayScheduleDay();
+
+  if (!doctor || !day) return null;
+
+  const timing = getDoctorShiftTiming(day, doctor);
+  if (!timing) return null;
+
+  const shift = day[timing.period];
+  if (!shift) return null;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctor);
+  if (!rooms.length) return null;
+
+  return {
+    rooms: rooms,
+    period: timing.period,
+    shiftLabel: timing.label,
+    day: day
+  };
+}
+
+function renderMainRoomHero() {
+  const card = document.getElementById('mainRoomHero');
+  const number = document.getElementById('mainRoomHeroNumber');
+  const context = document.getElementById('mainRoomHeroContext');
+  if (!card || !number || !context) return;
+
+  const remaining = ROTASTIC_ROOM_HERO_DURATION_MS - (Date.now() - rotasticRoomHeroOpenedAt);
+  const info = getTodayRoomInfoForActiveDoctor();
+
+  if (remaining <= 0 || !info) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  number.textContent = info.rooms.join(' / ');
+  context.textContent =
+    info.rooms.length === 1
+      ? info.shiftLabel + ' • keep this room in mind for your first part of the shift'
+      : info.shiftLabel + ' • multiple room allocations today';
+
+  card.classList.remove('hidden');
+
+  if (rotasticRoomHeroTimer) clearTimeout(rotasticRoomHeroTimer);
+  rotasticRoomHeroTimer = setTimeout(function() {
+    card.classList.add('hidden');
+  }, remaining);
+}
+
+
+const ROTASTIC_SHIFT_WISHES = [
+  'Wishing you a safe and smooth shift today.',
+  'Hope today is calm, kind and straightforward.',
+  'Wishing you an easy shift and a good day ahead.',
+  'Hope your shift runs smoothly from start to finish.',
+  'Wishing you a steady shift with plenty of breathing space.',
+  'Hope today brings a calm clinic and a smooth finish.',
+  'Wishing you a safe shift and an easy flow today.',
+  'Hope everything falls nicely into place today.',
+  'Wishing you a good shift with no unnecessary surprises.',
+  'Hope your day is smooth, manageable and rewarding.',
+  'Wishing you a calm start and an even calmer finish.',
+  'Hope today is one of those pleasantly easy shifts.'
+];
+
+const rotasticLaunchWishIndex = Math.floor(Math.random() * ROTASTIC_SHIFT_WISHES.length);
+
+function getRotasticShiftWish() {
+  return ROTASTIC_SHIFT_WISHES[rotasticLaunchWishIndex] ||
+    'Wishing you a safe and smooth shift today.';
+}
+
+function getOpeningBriefingData() {
+  const rotatingGreetingVibe = nextGreetingVibe();
+  const profile = activeUserDocName || getSplashDoctorName();
+  const context = getRotasticGreetingContext(profile);
+  const today = getTodayScheduleDay();
+
+  if (!profile) {
+    return {
+      hasProfile:false,
+      greeting:context.standardGreeting,
+      detail:'Please choose your physician profile below to personalise your rota, drive time and notifications.',
+      room:'',
+      roomNumbers:[],
+      clinics:[],
+      emergency:[],
+      codeBlue:[],
+      shiftLead:'',
+      shiftLabel:'',
+      holiday:context.holiday
+    };
+  }
+
+  if (!today) {
+    return {
+      hasProfile:true,
+      greeting:context.standardGreeting,
+      detail:getRotasticShiftWish(),
+      room:'',
+      roomNumbers:[],
+      clinics:[],
+      emergency:[],
+      codeBlue:[],
+      shiftLead:'',
+      shiftLabel:'',
+      holiday:context.holiday
+    };
+  }
+
+  const timing = getDoctorShiftTiming(today, profile);
+  const briefing = chooseSingleDailyBriefing(today, profile);
+
+  if (!briefing || !timing) {
+    return {
+      hasProfile:true,
+      greeting:context.standardGreeting,
+      detail:'There is no published duty entry for you today. Enjoy the breathing space ☕🙂',
+      room:'',
+      roomNumbers:[],
+  
+
+---
+ else if (data.clinics && data.clinics.length) {
+    roomLabel.textContent = 'CLINIC';
+    roomValue.className += ' opening-rota-room-value-clinic';
+    roomValue.textContent = cleanClinicLabelForSentence(data.clinics[0]);
+  } else {
+    roomLabel.textContent = 'TODAY';
+    roomValue.textContent = 'DUTY';
+  }
+
+  roomHero.appendChild(roomLabel);
+  roomHero.appendChild(roomValue);
+
+  top.appendChild(copy);
+  top.appendChild(roomHero);
+  wrap.appendChild(top);
+
+  const details = document.createElement('div');
+  details.className = 'opening-rota-briefing-details';
+
+  function addBriefingItem(iconClass, label, value, accentClass) {
+    if (!value) return;
+    const item = document.createElement('div');
+    item.className = 'opening-rota-detail-item ' + (accentClass || '');
+
+    const icon = document.createElement('i');
+    icon.className = iconClass;
+
+    const body = document.createElement('div');
+    const labelEl = document.createElement('div');
+    labelEl.className = 'opening-rota-detail-label';
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'opening-rota-detail-value';
+    valueEl.textContent = value;
+
+    body.appendChild(labelEl);
+    body.appendChild(valueEl);
+    item.appendChild(icon);
+    item.appendChild(body);
+    details.appendChild(item);
+  }
+
+  addBriefingItem(
+    'fa-solid fa-user-shield',
+    'Shift lead',
+    data.shiftLead || 'Not assigned',
+    'detail-lead'
+  );
+
+  if (data.codeBlue && data.codeBlue.length) {
+    addBriefingItem(
+      'fa-solid fa-heart-pulse',
+      'Code Blue',
+      data.codeBlue.join(' · ').replace(/[💙⚡]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-codeblue'
+    );
+  }
+
+  if (data.emergency && data.emergency.length) {
+    addBriefingItem(
+      'fa-solid fa-truck-medical',
+      'Emergency responsibility',
+      data.emergency.join(' · ').replace(/[🚑🧸]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-emergency'
+    );
+  }
+
+  if (data.clinics && data.clinics.length) {
+    addBriefingItem(
+      'fa-solid fa-stethoscope',
+      'Clinic',
+      data.clinics.join(' · ').replace(/[👶🤰🩺😷👂🚭🌸]/g, '').replace(/\s+/g, ' ').trim(),
+      'detail-clinic'
+    );
+  }
+
+  wrap.appendChild(details);
+  content.appendChild(wrap);
+
+  rememberRotasticTickerItem(
+    'greeting',
+    [
+      data.greeting,
+      data.room,
+      data.codeBlue?.join(' '),
+      data.emergency?.join(' '),
+      data.shiftLead ? 'Shift lead: ' + data.shiftLead : ''
+    ].filter(Boolean).join(' — ')
+  );
+
+  const duration = Math.max(1700, Number(totalDurationMs || 2200));
+  if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+  headlineTickerTimer = setTimeout(function() {
+    ticker.classList.remove('ticker-greeting-mode', 'ticker-personal-rota-briefing');
+    renderNextTickerSlot();
+  }, duration);
+
+  scheduleSickTakeoverInterrupt();
+  return true;
+}
+
+function renderOpeningTypewriterBriefing(data, totalDurationMs, recurring, persistent) {
+  rotasticTickerLastRenderAt = Date.now();
+  // On true app opening, show a compact personal rota briefing with a very
+  // prominent room/clinic assignment plus Code Blue, emergency and shift lead.
+  // Recurring greeting slots remain the lighter good-vibes treatment.
+  // Opening sequence uses one typewriter greeting only. Personal duty details remain in Personal View.
+
+
+  if (recurring && data) {
+    const freshVibe = nextGreetingVibe();
+    if ('positiveMessage' in data) data.positiveMessage = freshVibe;
+    if ('wish' in data) data.wish = freshVibe;
+    if ('message' in data && !('positiveMessage' in data) && !('wish' in data)) {
+      data.message = freshVibe;
+    }
+    if ('detail' in data && freshVibe) {
+      data.detail = freshVibe;
+    }
+  }
+
+  const ticker = document.getElementById('swapsNewsTicker');
+  const content = document.getElementById('tickerContent');
+  if (!ticker || !content) return;
+
+  setTickerFullWidthMode(false);
+  ticker.classList.add('ticker-greeting-mode');
+  ticker.classList.remove('hidden');
+  content.innerHTML = '';
+  setTickerBadge('greeting', data.greeting || 'Greeting');
+
+  if (!rotasticTickerHistoryBrowsing) {
+    rememberRotasticTickerItem(
+      'greeting',
+      [data.greeting, data.detail].filter(Boolean).join(' — ')
+    );
+  }
+
+  const hero = document.createElement('div');
+  hero.className = 'ticker-opening-hero';
+
+  const copy = document.createElement('div');
+  copy.className = 'ticker-opening-copy';
+
+  const greeting = document.createElement('div');
+  greeting.className = 'ticker-opening-greeting';
+  greeting.textContent = data.greeting || 'Good day, Doctor';
+
+  const detail = document.createElement('div');
+  detail.className = 'ticker-opening-detail';
+
+  const cursor = document.createElement('span');
+  cursor.className = 'ticker-typewriter-cursor';
+
+  copy.appendChild(greeting);
+  copy.appendChild(detail);
+  hero.appendChild(copy);
+  content.appendChild(hero);
+
+  // Keep the animated line concise enough to fit cleanly in two lines.
+  const detailText = String(data.detail || '').replace(/\s+/g, ' ').trim();
+
+  let index = 0;
+  const chars = Array.from(detailText);
+  const total = Math.max(4200, Number(totalDurationMs || 5000));
+  const typingBudget = Math.min(1150, Math.max(650, chars.length * 14));
+  const delay = chars.length
+    ? Math.max(14, Math.min(38, typingBudget / chars.length))
+    : 20;
+
+  const finishGreeting = function() {
+    if (persistent) return;
+
+    const elapsedTyping = chars.length * delay;
+    const hold = Math.max(900, total - elapsedTyping);
+
+    if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
+    headlineTickerTimer = setTimeout(function() {
+      ticker.classList.remove('ticker-greeting-mode');
+      renderNextTickerSlot();
+    }, hold);
+  };
+
+  const typeNext = function() {
+    if (index >= chars.length) {
+      if (cursor.parentNode) cursor.remove();
+      finishGreeting();
+      return;
+    }
+
+    detail.textContent += chars[index++];
+    detail.appendChild(cursor);
+    headlineTickerTimer = setTi
