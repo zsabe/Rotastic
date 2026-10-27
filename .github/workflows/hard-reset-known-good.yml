@@ -1,0 +1,38 @@
+name: Hard reset known-good UI
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hard-reset-known-good.yml'
+permissions:
+  contents: write
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore exact known-good page
+        run: |
+          git checkout 80a30db853656cb21c7a730ff7c54836ca5e43c9 -- index.html
+          test "$(git hash-object index.html)" = "c5617ab18264d274ea4893b8c4cbf19cf64cef3f"
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='<div class="rotastic-splash-date" id="rotasticSplashDate">Today is Monday, 1 January 2026</div>'
+          if old in s:
+              s=s.replace(old,'<div class="rotastic-splash-date" id="rotasticSplashDate">Today</div>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit reset
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr -d '\r')" = "index.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Hard reset page to known-good baseline"
+          git pull --rebase origin main
+          git push origin HEAD:main
