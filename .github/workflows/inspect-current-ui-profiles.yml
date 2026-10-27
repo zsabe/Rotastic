@@ -1,0 +1,39 @@
+name: Inspect live Pages and physician profiles
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect source anchors
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          terms=['Moursi','AlSaudi','Khattak','driveTimeBtn','weatherBadge','rotasticLiveMini','serviceWorker','sw.js','CACHE_NAME']
+          for term in terms:
+              print(f'\n===== {term} =====')
+              start=0; shown=0
+              while shown<8:
+                  i=s.find(term,start)
+                  if i<0: break
+                  a=max(0,i-450); b=min(len(s),i+900)
+                  print(s[a:b].replace('\r',''))
+                  print('\n---')
+                  start=i+len(term); shown+=1
+              if shown==0: print('NOT FOUND')
+          PY
+      - name: Inspect live Pages response
+        shell: bash
+        run: |
+          set -x
+          curl -LIsS --max-time 30 "https://zsabe.github.io/Rotastic/?v=${GITHUB_SHA}" || true
+          curl -LsS --max-time 30 "https://zsabe.github.io/Rotastic/?v=${GITHUB_SHA}" -o /tmp/live.html || true
+          wc -c /tmp/live.html || true
+          for t in topExportCard rotasticLiveMini driveTimeBtn weatherBadge Refresh; do echo "===== LIVE $t ====="; grep -o -m 4 -E ".{0,180}${t}.{0,300}" /tmp/live.html || true; done
