@@ -3,18 +3,21 @@ on:
   push:
     paths:
       - '.github/workflows/inspect-announcements.yml'
-  workflow_dispatch:
 jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show announcement ranges
+      - name: Locate announcement definitions
         run: |
           python - <<'PY'
           from pathlib import Path
           lines=Path('index.html').read_text().splitlines()
-          for a,b in [(9600,10030),(11420,11630)]:
-            print(f'=== {a}:{b} ===')
-            for n in range(a,min(b,len(lines))+1): print(f'{n}: {lines[n-1]}')
+          terms=['announcement','prayer','diabetes','obesity','headline','ticker','adhan','salah','cpd']
+          hits=[]
+          for i,line in enumerate(lines,1):
+            if any(t in line.lower() for t in terms): hits.append(i)
+          print('HITS', hits)
+          for i in hits:
+            print(f'{i}: {lines[i-1][:500]}')
           PY
