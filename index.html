@@ -26262,5 +26262,27 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(build,150)});else setTimeout(build,150);new MutationObserver(function(m){if(!busy&&m.some(function(x){return x.target&&x.target.closest&&x.target.closest('#weeklyLeaveCalendar')}))setTimeout(build,80)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true})
 })();
 </script>
+
+<style id="rotastic-hide-week-commencing-v1">
+.rotastic-week-commencing-hidden{display:none!important}
+</style>
+<script id="rotastic-hide-week-commencing-v1-js">
+(function(){
+  function text(e){return String(e&&e.textContent||'').replace(/\s+/g,' ').trim()}
+  function hide(){
+    var cal=document.getElementById('weeklyLeaveCalendar');
+    if(!cal)return;
+    var root=cal.closest('.clean-card')||cal.parentElement;
+    if(!root)return;
+    Array.from(root.querySelectorAll('label,div,span,p')).forEach(function(e){
+      if(!/^Week\s+Commencing\b/i.test(text(e)))return;
+      var box=e.closest('label')||e;
+      if(box.querySelector('select')||box.nextElementSibling&&box.nextElementSibling.tagName==='SELECT')box.classList.add('rotastic-week-commencing-hidden');
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(hide,100)});else setTimeout(hide,100);
+  new MutationObserver(function(){setTimeout(hide,50)}).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
