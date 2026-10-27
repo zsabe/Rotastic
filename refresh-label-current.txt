@@ -1,0 +1,1926 @@
+===== REFRESH @50806 =====
+: 0 7px !important;
+      border-radius: 7px !important;
+      font-size: 9px !important;
+      line-height: 1 !important;
+      text-decoration: none !important;
+      white-space: nowrap !important;
+      box-sizing: border-box !important;
+    }
+
+    #driveTimeBtnText {
+      font-size: 9px !important;
+      line-height: 1 !important;
+    }
+
+    #weatherBadge {
+      height: 24px !important;
+      min-height: 24px !important;
+      max-height: 24px !important;
+      padding: 0 7px !important;
+      border-radius: 7px !important;
+      box-sizing: border-box !important;
+    }
+      50% { transform: translateX(2px) scale(1.12); opacity:1; }
+    }
+      49%,100% { opacity:0; }
+    }
+    #pullRefreshIndicator {
+      position: fixed;
+      top: max(8px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translate(-50%, -14px);
+      z-index: 12000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.94);
+      border: 1px solid rgba(45,212,191,.24);
+      color: #99f6e4;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .03em;
+      box-shadow: 0 8px 24px rgba(0,0,0,.26);
+    }
+    #pullRefreshIndicator.show { opacity:1; transform:translate(-50%,0); }
+    #pullRefreshIndicator.ready { color:#fde68a; border-color:rgba(251,191,36,.28); }
+
+
+    #driveTimeBtn {
+      min-width: 58px !important;
+      justify-content: center !important;
+      padding: 0 8px !important;
+    }
+
+    .drive-typewriter-text {
+      max-wid
+===== REFRESH @51374 =====
+mportant;
+    }
+      50% { transform: translateX(2px) scale(1.12); opacity:1; }
+    }
+      49%,100% { opacity:0; }
+    }
+    #pullRefreshIndicator {
+      position: fixed;
+      top: max(8px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translate(-50%, -14px);
+      z-index: 12000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.94);
+      border: 1px solid rgba(45,212,191,.24);
+      color: #99f6e4;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .03em;
+      box-shadow: 0 8px 24px rgba(0,0,0,.26);
+    }
+    #pullRefreshIndicator.show { opacity:1; transform:translate(-50%,0); }
+    #pullRefreshIndicator.ready { color:#fde68a; border-color:rgba(251,191,36,.28); }
+
+
+    #driveTimeBtn {
+      min-width: 58px !important;
+      justify-content: center !important;
+      padding: 0 8px !important;
+    }
+
+    .drive-typewriter-text {
+      max-width: 92px !important;
+      text-align: center;
+      font-weight: 850;
+      letter-spacing: .01em;
+    }
+
+
+    .ticker-message-card.ticker-left-card {
+      justify-content: flex-start;
+      align-items: flex-start;
+      text-align: left;
+      padding-left: .75rem;
+      padding-right: .75rem;
+    }
+
+
+    .ticker-fullwidth-sick {
+      gap: .65rem;
+      justify-content: flex-start;
+      text-align: left;
+      padding-left: .7rem;
+      padding-right: .8rem;
+    }
+
+    .ticker-fullwidth-sick::before {
+      display:none !important;
+    }
+
+    .ticker-break
+===== REFRESH @51449 =====
+:1; }
+    }
+      49%,100% { opacity:0; }
+    }
+    #pullRefreshIndicator {
+      position: fixed;
+      top: max(8px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translate(-50%, -14px);
+      z-index: 12000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.94);
+      border: 1px solid rgba(45,212,191,.24);
+      color: #99f6e4;
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .03em;
+      box-shadow: 0 8px 24px rgba(0,0,0,.26);
+    }
+    #pullRefreshIndicator.show { opacity:1; transform:translate(-50%,0); }
+    #pullRefreshIndicator.ready { color:#fde68a; border-color:rgba(251,191,36,.28); }
+
+
+    #driveTimeBtn {
+      min-width: 58px !important;
+      justify-content: center !important;
+      padding: 0 8px !important;
+    }
+
+    .drive-typewriter-text {
+      max-width: 92px !important;
+      text-align: center;
+      font-weight: 850;
+      letter-spacing: .01em;
+    }
+
+
+    .ticker-message-card.ticker-left-card {
+      justify-content: flex-start;
+      align-items: flex-start;
+      text-align: left;
+      padding-left: .75rem;
+      padding-right: .75rem;
+    }
+
+
+    .ticker-fullwidth-sick {
+      gap: .65rem;
+      justify-content: flex-start;
+      text-align: left;
+      padding-left: .7rem;
+      padding-right: .8rem;
+    }
+
+    .ticker-fullwidth-sick::before {
+      display:none !important;
+    }
+
+    .ticker-breaking-chip {
+      display:inline-flex;
+      align-items:center;
+      justi
+===== REFRESH @897674 =====
+ng-wider text-slate-500 font-bold">Group 1 Shifts</span>
+<div class="text-2xl font-extrabold text-violet-300 mt-1" id="metricGroup1Shifts">0</div>
+</div>
+<div class="clean-card rounded-2xl p-4">
+<span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Group 2 Shifts</span>
+<div class="text-2xl font-extrabold text-amber-300 mt-1" id="metricGroup2Shifts">0</div>
+</div>
+</div>
+<div class="clean-card rounded-2xl p-4 sm:p-5">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+<div>
+<h2 class="text-sm font-bold text-white uppercase tracking-wider">Leave Balance KPIs</h2>
+<p class="text-[10px] text-slate-500 mt-0.5">Saved physician leave balances. Refreshes automatically while admin Metrics is open.</p>
+</div>
+<div class="text-[9px] text-slate-500" id="leaveBalanceKpiUpdatedAt">Updated —</div>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3">
+<div class="text-[9px] uppercase tracking-wider font-bold text-slate-500">Balances Submitted</div>
+<div class="text-xl font-black text-white mt-1" id="metricLeaveBalanceDoctors">0</div>
+</div>
+<div class="rounded-xl bg-emerald-950/20 border border-emerald-500/20 p-3">
+<div class="text-[9px] uppercase tracking-wider font-bold text-emerald-300">Annual Remaining</div>
+<div class="text-xl font-black text-emerald-200 mt-1" id="metricAnnualLeaveRemaining">0</div>
+</div>
+<div class="rounded-xl bg-amber-950/20 border border-amber-500/20 p-3">
+<div class="text-[9px] uppercase tracking-wider font-bold text-amber-300">Casual R
+===== REFRESH @933256 =====
+ork. On a fast app launch it can
+  // arrive a fraction later than ROTASTIC's own bootstrap. Wait briefly before
+  // deciding that an already-activated device needs registration again.
+  if (!window.supabase || !window.supabase.createClient) {
+    for (let i = 0; i < 10; i++) {
+      await new Promise(function(resolve){ setTimeout(resolve, 150); });
+      if (window.supabase && window.supabase.createClient) break;
+    }
+  }
+  if (!window.supabase || !window.supabase.createClient) return null;
+
+  if (!rotasticBackendClient) {
+    rotasticBackendClient = window.supabase.createClient(
+      ROTASTIC_SUPABASE_URL,
+      ROTASTIC_SUPABASE_PUBLISHABLE_KEY,
+      { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storageKey:'rotastic-auth-session-v1' } }
+    );
+  }
+
+  // getSession reads the persisted refresh/access session from this device.
+  // Do not show the activation gate until this restoration attempt has finished.
+  const existing = await rotasticBackendClient.auth.getSession();
+  const session = existing?.data?.session || null;
+  rotasticBackendUser = session?.user || null;
+  return rotasticBackendUser;
+}
+
+async function rotasticBackendSyncProfile() {
+  if (!rotasticBackendClient || !rotasticBackendUser) return;
+  // Physician identity is now created/bound only through the verified-email
+  // registration RPC. Do not overwrite it from editable localStorage.
+  const identityResult = await rotasticBackendClient.rpc('rotastic_registration_identity');
+  if (identityResult.error) return;
+  const identity = Array.isArray(identityResult.data) ? identi
+===== REFRESH @1000123 =====
+ns,50); }
+    else if (tab === 'feedback') renderShiftFeedbackView();
+    else if (tab === 'usersettings') { renderTempAdminCodeManager(); renderAdminGrantList(); syncSettingsAnnouncementCount(); loadLeaveBalanceSettings(); renderNotificationPreferences(); populateSettingsProfileDropdown(); rotasticUpdateNotificationPermissionUI(); }
+    else if (tab === 'metrics' && adminMode) renderMetricsView();
+    else if (tab === 'announcements' && adminMode) renderAnnouncementAdminView();
+    else if (tab === 'generator' && adminMode) { renderPhysicianManagement(); initializeAutoRotaRuleSettings(); renderSmartRotaRules(); renderRotaApprovalWorkflow(); renderScheduleAmendmentAssistantAccess(); rotasticRefreshGenerationLock(); }
+  } catch (e) { console.warn('ROTASTIC tab initialization recovered:', tab, e); }
+  try { updateTickerVisibilityForTab(tab); } catch (e) {}
+  try { rotasticUpdateBottomNavState(tab); } catch (e) {}
+  setTimeout(runRotasticPublishReadinessAudit, 0);
+}
+
+
+const rotasticOriginalSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+if (rotasticOriginalSwitchTab) {
+  switchTab = function(tab) {
+    let result;
+    const wasAlreadySchedule = tab === 'schedule' && rotasticActiveTab === 'schedule';
+    try {
+      result = rotasticOriginalSwitchTab.apply(this, arguments);
+    } finally {
+      if (tab === 'schedule') {
+        rotasticHandleRotaPressFocus(wasAlreadySchedule);
+      } else if (tab === 'leaveplanner') {
+        setTimeout(function() {
+          try {
+            if (typeof populatePlannerWeekSelect === 'function') populatePlannerWeekSelect();
+  
+===== REFRESH @1096642 =====
+onEl.innerText = '';
+  }
+
+  const sources = [
+    fetchLocalWeatherOpenMeteo,
+    fetchLocalWeatherMetNo,
+    fetchLocalWeatherWttr
+  ];
+
+  let live = null;
+  for (const source of sources) {
+    try {
+      live = await source();
+      if (live) break;
+    } catch (e) {}
+  }
+
+  if (live) {
+    writeCachedDohaWeather(live);
+    paintLocalWeather(live, false);
+    return;
+  }
+
+  // Never replace the bubble with a location label or "unavailable".
+  // Keep a previous successful reading; otherwise quietly keep retrying.
+  if (cached) {
+    paintLocalWeather(cached, true);
+  } else {
+    emojiEl.innerText = '↻';
+    tempEl.innerText = 'Weather';
+    conditionEl.innerText = '';
+    badge.title = 'Refreshing local weather';
+  }
+}
+
+function getBriefingPriority(scheduleDay, doctorName, period) {
+  const shift = scheduleDay && scheduleDay[period];
+  if (!shift) return -1;
+
+  let score = 0;
+
+  if (doctorMatches(shift.timed1Doc, doctorName)) score += 100;
+  if (doctorMatches(shift.timed2Doc, doctorName)) score += 90;
+
+  if (doctorMatches(shift.med, doctorName)) score += 80;
+  if (doctorMatches(shift.fed, doctorName)) score += 80;
+  if (doctorMatches(shift.ped, doctorName)) score += 85;
+
+  const special = collectSpecialClinicDuties(shift, doctorName);
+  score += special.length * 70;
+
+  const rooms = getRoomAssignmentsForDoctor(shift, doctorName);
+  score += rooms.length * 45;
+
+  const cb = period === 'am' ? scheduleDay.cbAM : scheduleDay.cbPM;
+  if (cb) {
+    if (doctorMatches(cb.tl, doctorName)) score += 40;
+    if (doctorMatches(cb.tm2, doctorName) || doctorMatches(cb.tm3, doctorName)
+===== REFRESH @1123262 =====
+16*60, end:22*60, label:'PM shift 16:00–22:00'};
+  }
+  return null;
+}
+
+function setRotasticTextSize(size) {
+  const root = document.documentElement;
+  root.classList.remove('rotastic-text-large', 'rotastic-text-xlarge');
+
+  if (size === 'large') root.classList.add('rotastic-text-large');
+  if (size === 'xlarge') root.classList.add('rotastic-text-xlarge');
+
+  Storage.set('rotastic_text_size', size || 'normal');
+
+  const select = document.getElementById('rotasticTextSizeSelect');
+  if (select && select.value !== size) select.value = size;
+}
+
+function initializeRotasticTextSize() {
+  const saved = Storage.get('rotastic_text_size', 'normal');
+  setRotasticTextSize(saved);
+}
+
+
+let rotasticWeatherRefreshTimer = null;
+
+function startAutomaticDohaWeatherRefresh() {
+  if (rotasticWeatherRefreshTimer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRot
+===== REFRESH @1123318 =====
+eturn null;
+}
+
+function setRotasticTextSize(size) {
+  const root = document.documentElement;
+  root.classList.remove('rotastic-text-large', 'rotastic-text-xlarge');
+
+  if (size === 'large') root.classList.add('rotastic-text-large');
+  if (size === 'xlarge') root.classList.add('rotastic-text-xlarge');
+
+  Storage.set('rotastic_text_size', size || 'normal');
+
+  const select = document.getElementById('rotasticTextSizeSelect');
+  if (select && select.value !== size) select.value = size;
+}
+
+function initializeRotasticTextSize() {
+  const saved = Storage.get('rotastic_text_size', 'normal');
+  setRotasticTextSize(saved);
+}
+
+
+let rotasticWeatherRefreshTimer = null;
+
+function startAutomaticDohaWeatherRefresh() {
+  if (rotasticWeatherRefreshTimer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementByI
+===== REFRESH @1123351 =====
+icTextSize(size) {
+  const root = document.documentElement;
+  root.classList.remove('rotastic-text-large', 'rotastic-text-xlarge');
+
+  if (size === 'large') root.classList.add('rotastic-text-large');
+  if (size === 'xlarge') root.classList.add('rotastic-text-xlarge');
+
+  Storage.set('rotastic_text_size', size || 'normal');
+
+  const select = document.getElementById('rotasticTextSizeSelect');
+  if (select && select.value !== size) select.value = size;
+}
+
+function initializeRotasticTextSize() {
+  const saved = Storage.get('rotastic_text_size', 'normal');
+  setRotasticTextSize(saved);
+}
+
+
+let rotasticWeatherRefreshTimer = null;
+
+function startAutomaticDohaWeatherRefresh() {
+  if (rotasticWeatherRefreshTimer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementById('liveRotaUpdatedAt');
+  if (sta
+===== REFRESH @1123394 =====
+documentElement;
+  root.classList.remove('rotastic-text-large', 'rotastic-text-xlarge');
+
+  if (size === 'large') root.classList.add('rotastic-text-large');
+  if (size === 'xlarge') root.classList.add('rotastic-text-xlarge');
+
+  Storage.set('rotastic_text_size', size || 'normal');
+
+  const select = document.getElementById('rotasticTextSizeSelect');
+  if (select && select.value !== size) select.value = size;
+}
+
+function initializeRotasticTextSize() {
+  const saved = Storage.get('rotastic_text_size', 'normal');
+  setRotasticTextSize(saved);
+}
+
+
+let rotasticWeatherRefreshTimer = null;
+
+function startAutomaticDohaWeatherRefresh() {
+  if (rotasticWeatherRefreshTimer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementById('liveRotaUpdatedAt');
+  if (stamp) {
+    const now = new Date();
+    stamp
+===== REFRESH @1123480 =====
+);
+
+  if (size === 'large') root.classList.add('rotastic-text-large');
+  if (size === 'xlarge') root.classList.add('rotastic-text-xlarge');
+
+  Storage.set('rotastic_text_size', size || 'normal');
+
+  const select = document.getElementById('rotasticTextSizeSelect');
+  if (select && select.value !== size) select.value = size;
+}
+
+function initializeRotasticTextSize() {
+  const saved = Storage.get('rotastic_text_size', 'normal');
+  setRotasticTextSize(saved);
+}
+
+
+let rotasticWeatherRefreshTimer = null;
+
+function startAutomaticDohaWeatherRefresh() {
+  if (rotasticWeatherRefreshTimer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementById('liveRotaUpdatedAt');
+  if (stamp) {
+    const now = new Date();
+    stamp.textContent = rotasticLiveUpdatedExpanded
+      ? 'Updated (' + new Intl.DateTimeForm
+===== REFRESH @1123622 =====
+ Storage.set('rotastic_text_size', size || 'normal');
+
+  const select = document.getElementById('rotasticTextSizeSelect');
+  if (select && select.value !== size) select.value = size;
+}
+
+function initializeRotasticTextSize() {
+  const saved = Storage.get('rotastic_text_size', 'normal');
+  setRotasticTextSize(saved);
+}
+
+
+let rotasticWeatherRefreshTimer = null;
+
+function startAutomaticDohaWeatherRefresh() {
+  if (rotasticWeatherRefreshTimer) clearInterval(rotasticWeatherRefreshTimer);
+  updateAbuNakhlaWeather();
+  updateDriveTimeLine();
+
+  rotasticWeatherRefreshTimer = setInterval(function() {
+    updateAbuNakhlaWeather();
+    updateDriveTimeLine(false);
+  }, 60 * 1000);
+}
+
+let rotasticLiveRotaRefreshTimer = null;
+let rotasticLastScheduleFingerprint = '';
+
+function getRotaFingerprint() {
+  try {
+    return JSON.stringify(currentSchedule || []);
+  } catch (e) {
+    return '';
+  }
+}
+
+
+let rotasticLiveUpdatedExpanded = false;
+
+function toggleLiveRotaUpdatedDetail() {
+  rotasticLiveUpdatedExpanded = !rotasticLiveUpdatedExpanded;
+  setLiveRotaUpdatedStamp();
+}
+
+function formatRotaUpdatedTime(dateObj) {
+  const d = dateObj || new Date();
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setLiveRotaUpdatedStamp() {
+  const stamp = document.getElementById('liveRotaUpdatedAt');
+  if (stamp) {
+    const now = new Date();
+    stamp.textContent = rotasticLiveUpdatedExpanded
+      ? 'Updated (' + new Intl.DateTimeFormat('en-GB', {
+          timeZone:'Asia/Qatar',
+          weekday:'short',
+          day:'2-digit',
+          month:'short',
+          hour:'2-
+===== REFRESH @1127295 =====
+, or restarts the announcement ticker.
+  // No page reload and no Feedback/Settings refresh.
+  renderScheduleView();
+  updateRotaChromeVisibility();
+  setLiveRotaUpdatedStamp();
+
+  const jobs = [];
+
+  if (typeof updateAbuNakhlaWeather === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      return updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline
+===== REFRESH @1127329 =====
+ker.
+  // No page reload and no Feedback/Settings refresh.
+  renderScheduleView();
+  updateRotaChromeVisibility();
+  setLiveRotaUpdatedStamp();
+
+  const jobs = [];
+
+  if (typeof updateAbuNakhlaWeather === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      return updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline.value) || (prefs && prefs.value) 
+===== REFRESH @1127373 =====
+tings refresh.
+  renderScheduleView();
+  updateRotaChromeVisibility();
+  setLiveRotaUpdatedStamp();
+
+  const jobs = [];
+
+  if (typeof updateAbuNakhlaWeather === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      return updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline.value) || (prefs && prefs.value) || '').trim();
+  }
+
+  return profile;
+}
+
+
+fu
+===== REFRESH @1127568 =====
+e.resolve().then(function() {
+      return updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline.value) || (prefs && prefs.value) || '').trim();
+  }
+
+  return profile;
+}
+
+
+function getRotasticGreetingContext(profileName) {
+  const now = new Date();
+  const qatarHour = parseInt(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      hour: '2-digit'
+===== REFRESH @1127611 =====
+updateAbuNakhlaWeather();
+    }).catch(function(){}));
+  }
+
+  if (typeof updateDriveTimeLine === 'function') {
+    jobs.push(Promise.resolve().then(function() {
+      // Force a fresh device-location attempt for the ETA.
+      return updateDriveTimeLine(true);
+    }).catch(function(){}));
+  }
+
+  await Promise.all(jobs);
+  setLiveRotaUpdatedStamp();
+}
+function startAutomaticLiveRotaRefresh() {
+  if (rotasticLiveRotaRefreshTimer) clearInterval(rotasticLiveRotaRefreshTimer);
+
+  // Baseline current rota so opening the app does not create a false "change" alert.
+  rotasticLastScheduleFingerprint = getRotaFingerprint();
+  setLiveRotaUpdatedStamp();
+
+  // Refresh every 3 minutes.
+  rotasticLiveRotaRefreshTimer = setInterval(function() {
+    refreshLiveRota({silent:true});
+  }, 3 * 60 * 1000);
+}
+
+function getSplashDoctorName() {
+  // Prefer the live profile, then the saved profile, then any selected profile control.
+  let profile = String(activeUserDocName || '').trim();
+
+  if (!profile) {
+    try { profile = String(Storage.get('rotastic_user_doc_name', '') || '').trim(); } catch (e) {}
+  }
+
+  if (!profile) {
+    const inline = document.getElementById('inlineDocSelect');
+    const prefs = document.getElementById('userPrefDocSelect');
+    profile = String((inline && inline.value) || (prefs && prefs.value) || '').trim();
+  }
+
+  return profile;
+}
+
+
+function getRotasticGreetingContext(profileName) {
+  const now = new Date();
+  const qatarHour = parseInt(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Qatar',
+      hour: '2-digit',
+      hour12: false
+    }).format(now),
+ 
+===== REFRESH @1253169 =====
+ue;
+}
+
+function clearMoursiShiftOverride() {
+  const daySelect = document.getElementById('moursiShiftDay');
+  const isoDate = daySelect ? daySelect.value : '';
+  if (!isoDate) {
+    showMoursiShiftStatus('Choose a rota date first.', false);
+    if (daySelect) openNativeDatePicker(daySelect);
+    return false;
+  }
+  const overrides = Storage.getJSON('rotastic_moursi_shift_overrides', {});
+  delete overrides[isoDate];
+  Storage.setJSON('rotastic_moursi_shift_overrides', overrides);
+  generateDutySchedule();
+  showMoursiShiftStatus('Dr Mohamed M. override cleared for ' + isoDate + '. Base rota restored for that day.', true);
+}
+
+async function generateDutyScheduleFromPlanner() {
+  await rotasticRefreshGenerationLock();
+  if (!rotasticGuardNewGeneration(true)) return false;
+  const weekSelect = document.getElementById('cycleStartDate');
+  const weekISO = weekSelect ? weekSelect.value : '';
+
+  if (!weekISO) {
+    alert('Please choose the week commencing Sunday.');
+    if (weekSelect) weekSelect.focus();
+    return false;
+  }
+
+  Storage.set('rotastic_selected_week_commencing', weekISO);
+
+  const input = document.getElementById('wednesdayAMOBGroup');
+  const group = getWednesdayAMOBGroupValue();
+
+  if (!group) {
+    if (input) {
+      input.focus();
+      input.classList.add('ring-2','ring-rose-500/70','rounded');
+      setTimeout(function() { input.classList.remove('ring-2','ring-rose-500/70','rounded'); }, 1800);
+    }
+    alert('Please select or enter which group is on AM on Wednesday before generating the schedule.');
+    return false;
+  }
+
+  Storage.set('rotastic_wednesday_am_
+===== REFRESH @1269896 =====
+Laith A.',24:'Dr Abdulrashid S.',25:'Dr Oula T.',26:'Dr Tayseer A.',27:'Dr Saima N. P'} },
+      cbAM:{tl:'Dr Fazila K.',tm2:'Dr Shadi T',tm3:'Dr Faisal C.'},
+      cbPM:{tl:'Dr Abdulrashid S.',tm2:'Dr Oula T.',tm3:'Dr Bilal C.'},
+      leaves:[]
+    }
+  ];
+
+  applySelectedWeekDates();
+  applyAutomaticRotaPopulation();
+  applyWednesdayAMGroupAnchor();
+  applyStoredMoursiShiftOverrides();
+  enforcePhysicianDutyExemptions();
+  applyStoredSmartRuleActions();
+  enforceFinalTwilightAssignments();
+  rotasticApplyPersistentScheduleAmendments();
+  populateMoursiShiftDayOptions();
+  renderScheduleView();
+  renderTodayBriefing();
+  if (isAdminViewActive()) renderMetricsView();
+  startAutomaticLiveRotaRefresh();
+  startAutomaticDohaWeatherRefresh();
+}
+
+
+let rotasticRotaMutationCheckTimer = null;
+function scheduleRotaMutationCheck() {
+  if (rotasticRotaMutationCheckTimer) clearTimeout(rotasticRotaMutationCheckTimer);
+  rotasticRotaMutationCheckTimer = setTimeout(function() {
+    detectRotaChangeAndAlert();
+  }, 350);
+}
+
+
+let rotasticRotaDisplayMode = 'myshift';
+let rotasticRotaUserToggled = false;
+
+function getCurrentRotaDisplayMode() {
+  // Dr Nabina has no clinical shifts, so her useful default is the full rota.
+  if (typeof isDrNabina === 'function' && isDrNabina(activeUserDocName)) {
+    return rotasticRotaDisplayMode === 'myshift' ? 'rota' : rotasticRotaDisplayMode;
+  }
+  return rotasticRotaDisplayMode;
+}
+
+function getMyShiftDay() {
+  const todayISO = getQatarTodayISO();
+
+  // Personal View is about TODAY, not whichever rota day happens to be selected.
+  const exact = Array.isArra
+===== REFRESH @1269934 =====
+r Oula T.',26:'Dr Tayseer A.',27:'Dr Saima N. P'} },
+      cbAM:{tl:'Dr Fazila K.',tm2:'Dr Shadi T',tm3:'Dr Faisal C.'},
+      cbPM:{tl:'Dr Abdulrashid S.',tm2:'Dr Oula T.',tm3:'Dr Bilal C.'},
+      leaves:[]
+    }
+  ];
+
+  applySelectedWeekDates();
+  applyAutomaticRotaPopulation();
+  applyWednesdayAMGroupAnchor();
+  applyStoredMoursiShiftOverrides();
+  enforcePhysicianDutyExemptions();
+  applyStoredSmartRuleActions();
+  enforceFinalTwilightAssignments();
+  rotasticApplyPersistentScheduleAmendments();
+  populateMoursiShiftDayOptions();
+  renderScheduleView();
+  renderTodayBriefing();
+  if (isAdminViewActive()) renderMetricsView();
+  startAutomaticLiveRotaRefresh();
+  startAutomaticDohaWeatherRefresh();
+}
+
+
+let rotasticRotaMutationCheckTimer = null;
+function scheduleRotaMutationCheck() {
+  if (rotasticRotaMutationCheckTimer) clearTimeout(rotasticRotaMutationCheckTimer);
+  rotasticRotaMutationCheckTimer = setTimeout(function() {
+    detectRotaChangeAndAlert();
+  }, 350);
+}
+
+
+let rotasticRotaDisplayMode = 'myshift';
+let rotasticRotaUserToggled = false;
+
+function getCurrentRotaDisplayMode() {
+  // Dr Nabina has no clinical shifts, so her useful default is the full rota.
+  if (typeof isDrNabina === 'function' && isDrNabina(activeUserDocName)) {
+    return rotasticRotaDisplayMode === 'myshift' ? 'rota' : rotasticRotaDisplayMode;
+  }
+  return rotasticRotaDisplayMode;
+}
+
+function getMyShiftDay() {
+  const todayISO = getQatarTodayISO();
+
+  // Personal View is about TODAY, not whichever rota day happens to be selected.
+  const exact = Array.isArray(currentSchedule)
+    ? currentSchedu
+===== REFRESH @1492959 =====
+    <td class="p-2 text-center text-emerald-300">${formatLeaveBalanceValue(row.annual)}</td>
+              <td class="p-2 text-center text-amber-300">${formatLeaveBalanceValue(row.casual)}</td>
+              <td class="p-2 text-center text-rose-300">${formatLeaveBalanceValue(row.sick)}</td>
+              <td class="p-2 text-center text-slate-500">${row.yearStart || '—'}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="5" class="p-4 text-center text-slate-500">No saved leave balances yet.</td></tr>';
+  }
+
+  if (updated) {
+    updated.textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+let leaveBalanceMetricsRefreshTimer = null;
+
+function startLeaveBalanceMetricsRefresh() {
+  if (leaveBalanceMetricsRefreshTimer) clearInterval(leaveBalanceMetricsRefreshTimer);
+
+  leaveBalanceMetricsRefreshTimer = setInterval(function() {
+    if (typeof rotasticActiveTab !== 'undefined' && rotasticActiveTab === 'metrics' && isAdminViewActive()) {
+      renderLeaveBalanceMetrics();
+    }
+  }, 60000);
+}
+
+window.addEventListener('storage', function(event) {
+  if (event.key === 'rotastic_leave_balances_v2') {
+    renderLeaveBalanceSummary();
+    if (isAdminViewActive()) renderLeaveBalanceMetrics();
+  }
+});
+
+function renderMetricsView() {
+  if (!isAdminViewActive()) return;
+
+  const stats = buildDutyStats();
+  const active = stats.filter(r => r.shifts > 0);
+
+  document.getElementById('metricActiveDoctors').innerText = active.length;
+  document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s
+===== REFRESH @1493014 =====
+atLeaveBalanceValue(row.annual)}</td>
+              <td class="p-2 text-center text-amber-300">${formatLeaveBalanceValue(row.casual)}</td>
+              <td class="p-2 text-center text-rose-300">${formatLeaveBalanceValue(row.sick)}</td>
+              <td class="p-2 text-center text-slate-500">${row.yearStart || '—'}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="5" class="p-4 text-center text-slate-500">No saved leave balances yet.</td></tr>';
+  }
+
+  if (updated) {
+    updated.textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+let leaveBalanceMetricsRefreshTimer = null;
+
+function startLeaveBalanceMetricsRefresh() {
+  if (leaveBalanceMetricsRefreshTimer) clearInterval(leaveBalanceMetricsRefreshTimer);
+
+  leaveBalanceMetricsRefreshTimer = setInterval(function() {
+    if (typeof rotasticActiveTab !== 'undefined' && rotasticActiveTab === 'metrics' && isAdminViewActive()) {
+      renderLeaveBalanceMetrics();
+    }
+  }, 60000);
+}
+
+window.addEventListener('storage', function(event) {
+  if (event.key === 'rotastic_leave_balances_v2') {
+    renderLeaveBalanceSummary();
+    if (isAdminViewActive()) renderLeaveBalanceMetrics();
+  }
+});
+
+function renderMetricsView() {
+  if (!isAdminViewActive()) return;
+
+  const stats = buildDutyStats();
+  const active = stats.filter(r => r.shifts > 0);
+
+  document.getElementById('metricActiveDoctors').innerText = active.length;
+  document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s + r.shifts, 0);
+  document.getElementById('metricAMShi
+===== REFRESH @1493051 =====
+
+              <td class="p-2 text-center text-amber-300">${formatLeaveBalanceValue(row.casual)}</td>
+              <td class="p-2 text-center text-rose-300">${formatLeaveBalanceValue(row.sick)}</td>
+              <td class="p-2 text-center text-slate-500">${row.yearStart || '—'}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="5" class="p-4 text-center text-slate-500">No saved leave balances yet.</td></tr>';
+  }
+
+  if (updated) {
+    updated.textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+let leaveBalanceMetricsRefreshTimer = null;
+
+function startLeaveBalanceMetricsRefresh() {
+  if (leaveBalanceMetricsRefreshTimer) clearInterval(leaveBalanceMetricsRefreshTimer);
+
+  leaveBalanceMetricsRefreshTimer = setInterval(function() {
+    if (typeof rotasticActiveTab !== 'undefined' && rotasticActiveTab === 'metrics' && isAdminViewActive()) {
+      renderLeaveBalanceMetrics();
+    }
+  }, 60000);
+}
+
+window.addEventListener('storage', function(event) {
+  if (event.key === 'rotastic_leave_balances_v2') {
+    renderLeaveBalanceSummary();
+    if (isAdminViewActive()) renderLeaveBalanceMetrics();
+  }
+});
+
+function renderMetricsView() {
+  if (!isAdminViewActive()) return;
+
+  const stats = buildDutyStats();
+  const active = stats.filter(r => r.shifts > 0);
+
+  document.getElementById('metricActiveDoctors').innerText = active.length;
+  document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s + r.shifts, 0);
+  document.getElementById('metricAMShifts').innerText = active.reduce((s,r)
+===== REFRESH @1493098 =====
+amber-300">${formatLeaveBalanceValue(row.casual)}</td>
+              <td class="p-2 text-center text-rose-300">${formatLeaveBalanceValue(row.sick)}</td>
+              <td class="p-2 text-center text-slate-500">${row.yearStart || '—'}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="5" class="p-4 text-center text-slate-500">No saved leave balances yet.</td></tr>';
+  }
+
+  if (updated) {
+    updated.textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+let leaveBalanceMetricsRefreshTimer = null;
+
+function startLeaveBalanceMetricsRefresh() {
+  if (leaveBalanceMetricsRefreshTimer) clearInterval(leaveBalanceMetricsRefreshTimer);
+
+  leaveBalanceMetricsRefreshTimer = setInterval(function() {
+    if (typeof rotasticActiveTab !== 'undefined' && rotasticActiveTab === 'metrics' && isAdminViewActive()) {
+      renderLeaveBalanceMetrics();
+    }
+  }, 60000);
+}
+
+window.addEventListener('storage', function(event) {
+  if (event.key === 'rotastic_leave_balances_v2') {
+    renderLeaveBalanceSummary();
+    if (isAdminViewActive()) renderLeaveBalanceMetrics();
+  }
+});
+
+function renderMetricsView() {
+  if (!isAdminViewActive()) return;
+
+  const stats = buildDutyStats();
+  const active = stats.filter(r => r.shifts > 0);
+
+  document.getElementById('metricActiveDoctors').innerText = active.length;
+  document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s + r.shifts, 0);
+  document.getElementById('metricAMShifts').innerText = active.reduce((s,r) => s + r.amShifts, 0);
+  document.getElementBy
+===== REFRESH @1493135 =====
+row.casual)}</td>
+              <td class="p-2 text-center text-rose-300">${formatLeaveBalanceValue(row.sick)}</td>
+              <td class="p-2 text-center text-slate-500">${row.yearStart || '—'}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="5" class="p-4 text-center text-slate-500">No saved leave balances yet.</td></tr>';
+  }
+
+  if (updated) {
+    updated.textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+let leaveBalanceMetricsRefreshTimer = null;
+
+function startLeaveBalanceMetricsRefresh() {
+  if (leaveBalanceMetricsRefreshTimer) clearInterval(leaveBalanceMetricsRefreshTimer);
+
+  leaveBalanceMetricsRefreshTimer = setInterval(function() {
+    if (typeof rotasticActiveTab !== 'undefined' && rotasticActiveTab === 'metrics' && isAdminViewActive()) {
+      renderLeaveBalanceMetrics();
+    }
+  }, 60000);
+}
+
+window.addEventListener('storage', function(event) {
+  if (event.key === 'rotastic_leave_balances_v2') {
+    renderLeaveBalanceSummary();
+    if (isAdminViewActive()) renderLeaveBalanceMetrics();
+  }
+});
+
+function renderMetricsView() {
+  if (!isAdminViewActive()) return;
+
+  const stats = buildDutyStats();
+  const active = stats.filter(r => r.shifts > 0);
+
+  document.getElementById('metricActiveDoctors').innerText = active.length;
+  document.getElementById('metricTotalShifts').innerText = active.reduce((s,r) => s + r.shifts, 0);
+  document.getElementById('metricAMShifts').innerText = active.reduce((s,r) => s + r.amShifts, 0);
+  document.getElementById('metricPMShifts').innerText = acti
+===== REFRESH @1559021 =====
+day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(iso)) + ' Qatar time';
+  } catch(e) { return 'Wednesday at 22:00 Qatar time'; }
+}
+
+function rotasticRenderGenerationLock() {
+  const info = rotasticGenerationLockInfo();
+  const btn = document.querySelector('button[onclick="generateDutyScheduleFromPlanner()"]');
+  if (!btn) return;
+  btn.disabled = !!info.locked;
+  btn.classList.toggle('opacity-50', !!info.locked);
+  btn.classList.toggle('cursor-not-allowed', !!info.locked);
+  btn.title = info.locked ? ('Approved rota locked until ' + rotasticFormatGenerationUnlock(info.unlock_at) + '. Use Smart Amendment for changes.') : '';
+}
+
+async function rotasticRefreshGenerationLock() {
+  try {
+    if (rotasticBackendClient && rotasticBackendReady) {
+      const result = await rotasticBackendClient.rpc('rotastic_rota_generation_lock_status');
+      if (!result.error && result.data) rotasticGenerationLockCache = result.data;
+    }
+  } catch(e) { console.warn('ROTASTIC generation lock check:', e); }
+  rotasticRenderGenerationLock();
+  return rotasticGenerationLockInfo();
+}
+
+function rotasticGuardNewGeneration(showAlert) {
+  const info = rotasticGenerationLockInfo();
+  if (!info.locked) return true;
+  if (showAlert !== false) {
+    alert('This approved rota is locked. A new rota cannot be generated until ' + rotasticFormatGenerationUnlock(info.unlock_at) + '. Use the Smart Amendment box for changes to the current rota.');
+  }
+  return false;
+}
+
+function formatWorkflowTime(iso) {
+  if (!iso) return '';
+  try {
+    return new Intl.DateTimeFormat('en
+===== REFRESH @1563832 =====
+.getUTCDate()).padStart(2,'0')
+  ].join('-');
+
+  return {
+    key:wedISO,
+    targetSunday:sundayISO
+  };
+}
+
+function renderAutoGenerationStatus() {
+  const el = document.getElementById('autoGenerationStatus');
+  if (!el) return;
+
+  const draft = Storage.getJSON('rotastic_auto_generated_draft', null);
+
+  if (draft && draft.weekStart) {
+    el.textContent =
+      'Latest automatic draft: week commencing ' +
+      formatWeekCommencingLabel(draft.weekStart) +
+      ' • generated ' +
+      formatWorkflowTime(draft.generatedAt);
+  } else {
+    el.textContent = 'Next automatic draft is due Wednesday at 22:00 Qatar time.';
+  }
+}
+
+async function generateAutomaticWeeklyDraftIfDue() {
+  await rotasticRefreshGenerationLock();
+  if (!rotasticGuardNewGeneration(false)) { renderAutoGenerationStatus(); return false; }
+  const due = getMostRecentWednesday2200Qatar();
+  const todayISO = getQatarTodayISO();
+
+  // Do not create a draft for a Sunday that has already passed.
+  if (!due.targetSunday || due.targetSunday < todayISO) {
+    renderAutoGenerationStatus();
+    return false;
+  }
+
+  const lastKey = Storage.get(ROTASTIC_AUTO_GENERATION_KEY, '');
+  if (lastKey === due.key) {
+    renderAutoGenerationStatus();
+    return false;
+  }
+
+  populateWeekCommencingSundayOptions(due.targetSunday);
+
+  const weekSelect = document.getElementById('cycleStartDate');
+  if (weekSelect) weekSelect.value = due.targetSunday;
+
+  const recommended = getRecommendedWednesdayAMGroupForWeek(due.targetSunday);
+  const group = document.getElementById('wednesdayAMOBGroup');
+
+  if (group) {
+    group.value = recommended
+===== REFRESH @1605941 =====
+{
+    return {text:item.trim(), phase:phase || '', source:''};
+  }
+
+  const text = String(item.text || item.summary || item.message || '').trim();
+  const source = String(item.source || '').trim();
+  const delayMinutes = Number(item.delayMinutes || item.delay || 0);
+
+  if (!text) return null;
+
+  return {
+    text:text,
+    phase:phase || String(item.phase || ''),
+    source:source,
+    delayMinutes:isNaN(delayMinutes) ? 0 : delayMinutes
+  };
+}
+
+async function refreshLocalTrafficUpdate() {
+  const trafficWindow = getTrafficWindowForCurrentUser();
+
+  if (!trafficWindow) {
+    rotasticTrafficUpdate = null;
+    rotasticTrafficLastPhase = '';
+    return null;
+  }
+
+  const now = Date.now();
+
+  // Refresh every 10 minutes while in an arrival/departure window.
+  if (
+    rotasticTrafficUpdate &&
+    rotasticTrafficLastPhase === trafficWindow.phase &&
+    now - rotasticTrafficFetchedAt < 10 * 60 * 1000
+  ) {
+    return rotasticTrafficUpdate;
+  }
+
+  rotasticTrafficFetchedAt = now;
+  rotasticTrafficLastPhase = trafficWindow.phase;
+
+  const endpoint = window.ROTASTIC_TRAFFIC_ENDPOINT || '';
+
+  if (!endpoint) {
+    // No fake traffic data. The app simply omits traffic messages until a live
+    // Qatar traffic/maps backend is connected.
+    rotasticTrafficUpdate = null;
+    return null;
+  }
+
+  try {
+    const url = new URL(endpoint, window.location.href);
+    url.searchParams.set('location', 'Abu Nakhla Health Centre, Qatar');
+    url.searchParams.set('phase', trafficWindow.phase);
+    url.searchParams.set('shift', trafficWindow.shiftLabel);
+    url.searchParams.set('qatarTime', getQata
+===== REFRESH @1789223 =====
+enLeaveBalanceModal(pair[1]);
+    };
+
+    btn.addEventListener('click', handler);
+    btn.addEventListener('touchend', handler, {passive:false});
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(bindLeaveBalanceCardButtons, 300);
+});
+
+
+document.addEventListener('click', function(event) {
+  const target = event.target && event.target.closest
+    ? event.target.closest('[data-leave-balance-category]')
+    : null;
+
+  if (!target) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  openLeaveBalanceModal(target.getAttribute('data-leave-balance-category'));
+}, true);
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  startLeaveBalanceMetricsRefresh();
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderMainRoomHero, 500);
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(startDriveWindowWatcher, 900);
+
+  setTimeout(function() {
+    updateDriveTimeLine(false);
+  }, 500);
+});
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    setTimeout(function() { updateDriveTimeLine(false); }, 250);
+  }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderNotificationPreferences, 750);
+});
+
+
+
+(function initRotasticPullToRefresh(){
+  let startY = null;
+  let mode = null; // 'down' at top, 'up' at bottom
+  let ready = false;
+  const threshold = 62;
+
+  function indicator() {
+    return document.getElementById('pullRefreshIndicator');
+  }
+
+  function atTop() {
+    return window.scrollY <= 2;
+  }
+
+  function atBot
+===== REFRESH @1789829 =====
+rue);
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  startLeaveBalanceMetricsRefresh();
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderMainRoomHero, 500);
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(startDriveWindowWatcher, 900);
+
+  setTimeout(function() {
+    updateDriveTimeLine(false);
+  }, 500);
+});
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    setTimeout(function() { updateDriveTimeLine(false); }, 250);
+  }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderNotificationPreferences, 750);
+});
+
+
+
+(function initRotasticPullToRefresh(){
+  let startY = null;
+  let mode = null; // 'down' at top, 'up' at bottom
+  let ready = false;
+  const threshold = 62;
+
+  function indicator() {
+    return document.getElementById('pullRefreshIndicator');
+  }
+
+  function atTop() {
+    return window.scrollY <= 2;
+  }
+
+  function atBottom() {
+    return Math.ceil(window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 2);
+  }
+
+  function resetPull() {
+    startY = null;
+    mode = null;
+    ready = false;
+    const el = indicator();
+    if (el) {
+      el.classList.remove('show','ready');
+      el.textContent = 'Pull to refresh';
+    }
+  }
+
+  async function performRefresh() {
+    const el = indicator();
+    if (el) {
+      el.classList.add('show');
+      el.classList.remove('ready');
+      el.textContent = 'Refreshing rota, weather & drive time…';
+    }
+
+    try {
+      await refreshRotaWithoutAnnouncemen
+===== REFRESH @1790024 =====
+oomHero, 500);
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(startDriveWindowWatcher, 900);
+
+  setTimeout(function() {
+    updateDriveTimeLine(false);
+  }, 500);
+});
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    setTimeout(function() { updateDriveTimeLine(false); }, 250);
+  }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(renderNotificationPreferences, 750);
+});
+
+
+
+(function initRotasticPullToRefresh(){
+  let startY = null;
+  let mode = null; // 'down' at top, 'up' at bottom
+  let ready = false;
+  const threshold = 62;
+
+  function indicator() {
+    return document.getElementById('pullRefreshIndicator');
+  }
+
+  function atTop() {
+    return window.scrollY <= 2;
+  }
+
+  function atBottom() {
+    return Math.ceil(window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 2);
+  }
+
+  function resetPull() {
+    startY = null;
+    mode = null;
+    ready = false;
+    const el = indicator();
+    if (el) {
+      el.classList.remove('show','ready');
+      el.textContent = 'Pull to refresh';
+    }
+  }
+
+  async function performRefresh() {
+    const el = indicator();
+    if (el) {
+      el.classList.add('show');
+      el.classList.remove('ready');
+      el.textContent = 'Refreshing rota, weather & drive time…';
+    }
+
+    try {
+      await refreshRotaWithoutAnnouncements();
+    } catch (e) {
+      console.warn('Rota refresh failed:', e);
+    }
+
+    setTimeout(resetPull, 650);
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    if (rotasticActiveTa
+===== REFRESH @1790484 =====
+es, 750);
+});
+
+
+
+(function initRotasticPullToRefresh(){
+  let startY = null;
+  let mode = null; // 'down' at top, 'up' at bottom
+  let ready = false;
+  const threshold = 62;
+
+  function indicator() {
+    return document.getElementById('pullRefreshIndicator');
+  }
+
+  function atTop() {
+    return window.scrollY <= 2;
+  }
+
+  function atBottom() {
+    return Math.ceil(window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 2);
+  }
+
+  function resetPull() {
+    startY = null;
+    mode = null;
+    ready = false;
+    const el = indicator();
+    if (el) {
+      el.classList.remove('show','ready');
+      el.textContent = 'Pull to refresh';
+    }
+  }
+
+  async function performRefresh() {
+    const el = indicator();
+    if (el) {
+      el.classList.add('show');
+      el.classList.remove('ready');
+      el.textContent = 'Refreshing rota, weather & drive time…';
+    }
+
+    try {
+      await refreshRotaWithoutAnnouncements();
+    } catch (e) {
+      console.warn('Rota refresh failed:', e);
+    }
+
+    setTimeout(resetPull, 650);
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    if (rotasticActiveTab !== 'schedule') return;
+    if (!e.touches || e.touches.length !== 1) return;
+
+    if (atTop()) mode = 'down';
+    else if (atBottom()) mode = 'up';
+    else mode = null;
+
+    if (!mode) return;
+
+    startY = e.touches[0].clientY;
+    ready = false;
+  }, {passive:true});
+
+  document.addEventListener('touchmove', function(e) {
+    if (!mode || startY === null || rotasticActiveTab !== 'schedule') return;
+    if (!e.touches || e.touches.length !== 1) return
+===== REFRESH @1790630 =====
+se;
+  const threshold = 62;
+
+  function indicator() {
+    return document.getElementById('pullRefreshIndicator');
+  }
+
+  function atTop() {
+    return window.scrollY <= 2;
+  }
+
+  function atBottom() {
+    return Math.ceil(window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 2);
+  }
+
+  function resetPull() {
+    startY = null;
+    mode = null;
+    ready = false;
+    const el = indicator();
+    if (el) {
+      el.classList.remove('show','ready');
+      el.textContent = 'Pull to refresh';
+    }
+  }
+
+  async function performRefresh() {
+    const el = indicator();
+    if (el) {
+      el.classList.add('show');
+      el.classList.remove('ready');
+      el.textContent = 'Refreshing rota, weather & drive time…';
+    }
+
+    try {
+      await refreshRotaWithoutAnnouncements();
+    } catch (e) {
+      console.warn('Rota refresh failed:', e);
+    }
+
+    setTimeout(resetPull, 650);
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    if (rotasticActiveTab !== 'schedule') return;
+    if (!e.touches || e.touches.length !== 1) return;
+
+    if (atTop()) mode = 'down';
+    else if (atBottom()) mode = 'up';
+    else mode = null;
+
+    if (!mode) return;
+
+    startY = e.touches[0].clientY;
+    ready = false;
+  }, {passive:true});
+
+  document.addEventListener('touchmove', function(e) {
+    if (!mode || startY === null || rotasticActiveTab !== 'schedule') return;
+    if (!e.touches || e.touches.length !== 1) return;
+
+    const currentY = e.touches[0].clientY;
+    const delta = currentY - startY;
+
+    const distance = mode === 'down' ? delta : -delta;
+    if 
+===== REFRESH @1792192 =====
+e === 'down' ? delta : -delta;
+    if (distance <= 8) return;
+
+    // Prevent native overscroll from swallowing the refresh gesture.
+    if (e.cancelable) e.preventDefault();
+
+    const el = indicator();
+    if (!el) return;
+
+    el.classList.add('show');
+    ready = distance >= threshold;
+    el.classList.toggle('ready', ready);
+
+    if (mode === 'down') {
+      el.textContent = ready ? 'Release to refresh' : 'Pull down to refresh';
+    } else {
+      el.textContent = ready ? 'Release to refresh' : 'Pull up to refresh';
+    }
+  }, {passive:false});
+
+  document.addEventListener('touchend', function() {
+    if (!mode) return;
+
+    if (ready && rotasticActiveTab === 'schedule') {
+      performRefresh();
+      return;
+    }
+
+    resetPull();
+  }, {passive:true});
+
+  document.addEventListener('touchcancel', resetPull, {passive:true});
+})();
+
+
+
+window.addEventListener('storage', function(event) {
+  if (event.key !== ROTASTIC_ADMIN_GRANTS_KEY) return;
+
+  renderAdminGrantList();
+  renderAdminVisibility();
+
+  if (!isCurrentUserAdmin() && currentViewMode === 'admin') {
+    currentViewMode = 'doctor';
+    Storage.set('rotastic_view_mode', 'doctor');
+    renderAll();
+  }
+});
+
+
+
+window.addEventListener('storage', function(event) {
+  if (event.key === 'rotastic_leave_submissions') {
+    refreshLeavePlannerLive();
+  }
+});
+
+
+window.addEventListener('online', function() {
+  if (rotasticBackendReady) rotasticBackendScheduleHydrate();
+  else setTimeout(initRotasticBackend, 300);
+});
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    if (rotasticBackendR
