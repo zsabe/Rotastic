@@ -1,4 +1,4 @@
-name: Inspect second Refresh markup occurrence
+name: Inspect visible Refresh label markup
 on:
   push:
     branches: [main]
@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   inspect:
-    if: ${{ !contains(github.event.head_commit.message, 'Write second Refresh markup') }}
+    if: ${{ !contains(github.event.head_commit.message, 'Write visible Refresh label markup') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,16 +14,23 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          needle='onclick="refreshLiveRota()"'
-          first=s.find(needle)
-          second=s.find(needle, first+1) if first>=0 else -1
-          if second<0: raise SystemExit('Second Refresh occurrence not found')
-          Path('refresh-button-current.txt').write_text(s[max(0,second-1200):min(len(s),second+1800)],encoding='utf-8')
+          positions=[]
+          start=0
+          while True:
+              i=s.find('Refresh',start)
+              if i<0: break
+              positions.append(i)
+              start=i+1
+          if not positions: raise SystemExit('No Refresh text found')
+          out=[]
+          for i in positions:
+              out.append(f'===== REFRESH @{i} =====\n'+s[max(0,i-700):min(len(s),i+900)]+'\n')
+          Path('refresh-label-current.txt').write_text(''.join(out),encoding='utf-8')
           PY
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add refresh-button-current.txt
-          git commit -m "Write second Refresh markup"
+          git add refresh-label-current.txt
+          git commit -m "Write visible Refresh label markup"
           git pull --rebase origin main
           git push origin HEAD:main
