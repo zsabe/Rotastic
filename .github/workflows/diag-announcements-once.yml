@@ -9,24 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Capture announcement code
+      - name: Capture focused ticker code
         run: |
           python - <<'PY'
           from pathlib import Path
           raw=Path('index.html').read_text(encoding='utf-8')
-          needles=['ROTASTIC_CURATED_CLINICAL_UPDATES','regularTickerDeck','function buildRegularTickerDeck','function renderTicker','prayerTickerIndex','ticker-prayer','tickerContent.innerHTML','tickerContent','rotasticClinical']
+          needles=['getRegularTickerMessages','getNextShuffledRegularMessage','checkAndRenderBreakingNews','renderTicker','tickerContent.innerHTML','ticker-prayer']
           out=[]
           for needle in needles:
               pos=raw.find(needle)
               out.append(f'=== {needle} @ {pos} ===')
-              if pos>=0:
-                  a=max(0,pos-2500); b=min(len(raw),pos+6500)
-                  out.append(raw[a:b])
+              if pos>=0: out.append(raw[max(0,pos-1200):min(len(raw),pos+4200)])
           Path('.diag-announcements.txt').write_text('\n'.join(out),encoding='utf-8')
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .diag-announcements.txt
-          git commit -m "Capture ticker renderer diagnostics" || exit 0
+          git commit -m "Capture focused ticker diagnostics" || exit 0
           git pull --rebase origin main
           git push
