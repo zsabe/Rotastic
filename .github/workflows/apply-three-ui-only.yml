@@ -1,0 +1,93 @@
+name: Apply three UI amendments only
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply only Refresh ETA weather poster changes') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch only requested UI elements
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          before=s
+
+          required=['id="topActionGrid"','id="rotasticLiveMini"','id="driveTimeBtn"','id="weatherBadge"','onclick="refreshLiveRota()"','personal-poster-card','id="scheduleMatrixContainer"','onclick="openSwapRequestModal()"','id="rotaZoomBtn"']
+          for x in required:
+              if x not in s: raise SystemExit('Missing expected anchor: '+x)
+
+          # Preserve splash/date source exactly.
+          splash_markers=['rotasticOpeningSplash','rotastic-splash-date','startOpeningSplash','getQatarTodayISO']
+          splash_before={m: before.count(m) for m in splash_markers}
+
+          # Move existing LIVE block into the existing metadata row only if it is outside it.
+          live_re=re.compile(r'<div class="rotastic-live-mini" id="rotasticLiveMini">.*?</div>',re.S)
+          lm=live_re.search(s)
+          if not lm: raise SystemExit('LIVE block not found')
+          live=lm.group(0)
+          row_start=s.find('<div class="live-rota-meta-row w-full">')
+          if row_start<0: raise SystemExit('meta row not found')
+          row_end=s.find('</div>\n</div>',row_start)
+          # If LIVE is not already inside the metadata row, remove and insert first.
+          if not (row_start < lm.start() < row_end):
+              s=s[:lm.start()]+s[lm.end():]
+              row_open='<div class="live-rota-meta-row w-full">\n'
+              if s.count(row_open)!=1: raise SystemExit('meta row opening count not 1')
+              s=s.replace(row_open,row_open+live+'\n',1)
+
+          # Remove a top Export card from the metadata row if present there; Export belongs in action row.
+          row_start=s.find('<div class="live-rota-meta-row w-full">')
+          top_grid=s.find('<div class="grid grid-cols-3 gap-2.5 w-full" id="topActionGrid">')
+          if row_start<0 or top_grid<0: raise SystemExit('layout anchors missing')
+          segment=s[row_start:top_grid]
+          exp_re=re.compile(r'<button class="rotastic-top-export-card" id="topExportCard" onclick="toggleRotaExportMenu\(\)".*?</button>\n?',re.S)
+          segment2,n=exp_re.subn('',segment,count=1)
+          if n:
+              s=s[:row_start]+segment2+s[top_grid:]
+
+          # Replace only Refresh action with Export, preserving other action buttons/handlers.
+          refresh_re=re.compile(r'<button[^>]*onclick="refreshLiveRota\(\)"[^>]*>\s*<i[^>]*fa-rotate[^>]*></i><span>Refresh</span>\s*</button>',re.S)
+          export_action='''<button class="rota-action-btn w-full justify-center px-3 py-2 rounded-xl bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-[11px] sm:text-xs font-bold text-teal-300 transition flex items-center gap-2" id="topExportCard" onclick="toggleRotaExportMenu()" type="button">\n<i class="fa-solid fa-arrow-up-from-bracket text-[12px]"></i><span>Export</span><i class="fa-solid fa-chevron-down text-[8px] opacity-70"></i>\n</button>'''
+          s,n=refresh_re.subn(export_action,s,count=1)
+          if n!=1: raise SystemExit(f'Refresh action replacements={n}')
+
+          # Compact, borderless LIVE / ETA / weather strip. Do not alter handlers or hrefs.
+          style='''\n<style id="rotastic-three-ui-only">\n.live-rota-meta-row{display:grid!important;grid-template-columns:auto minmax(88px,1fr) auto!important;align-items:center!important;gap:6px!important}\n.live-rota-meta-row .rotastic-live-mini{min-height:24px!important;height:24px!important;padding:0 5px!important;margin:0!important;align-self:center!important}\n.live-drive-slot{min-height:24px!important;height:24px!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;background:transparent!important;border:0!important;box-shadow:none!important}\n.live-drive-slot #driveTimeBtn{display:inline-flex!important;width:auto!important;min-width:0!important;max-width:none!important;height:24px!important;min-height:24px!important;padding:0 4px!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;gap:4px!important;font-size:10px!important}\n.live-drive-slot #driveTimeBtnText{font-size:10px!important;line-height:1!important;white-space:nowrap!important}\n.live-drive-slot #driveTimeBtnSub{display:none!important}\n#weatherBadge{display:inline-flex!important;height:24px!important;min-height:24px!important;max-height:24px!important;padding:0 4px!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;font-size:10px!important}\n.personal-poster-card,.personal-poster-content{min-height:520px!important}\n@media (min-width:768px){.personal-poster-card,.personal-poster-content{min-height:520px!important}}\n@media (orientation:landscape) and (max-height:700px){.personal-poster-card,.personal-poster-content{min-height:285px!important}}\n</style>\n'''
+          if 'id="rotastic-three-ui-only"' in s:
+              s=re.sub(r'\n<style id="rotastic-three-ui-only">.*?</style>\n',style,s,count=1,flags=re.S)
+          else:
+              if '</head>' not in s: raise SystemExit('head close missing')
+              s=s.replace('</head>',style+'</head>',1)
+
+          # Safety: exact requested state + preserve core workability anchors.
+          if 'onclick="refreshLiveRota()"' in s[s.find('id="topActionGrid"')-1500:s.find('id="topActionGrid"')+4000]:
+              raise SystemExit('Refresh button still in action grid')
+          if s.count('id="topExportCard"')!=1: raise SystemExit('topExportCard count != 1')
+          for x in ['id="rotaZoomBtn"','onclick="openSwapRequestModal()"','onclick="toggleRotaExportMenu()"','id="scheduleMatrixContainer"','id="rotasticLiveMini"','id="driveTimeBtn"','id="weatherBadge"']:
+              if x not in s: raise SystemExit('Lost workability anchor: '+x)
+          if s.find('id="rotasticLiveMini"') > s.find('id="driveTimeBtn"') or s.find('id="driveTimeBtn"') > s.find('id="weatherBadge"'):
+              raise SystemExit('LIVE/ETA/weather order incorrect')
+          for m,c in splash_before.items():
+              if s.count(m)!=c: raise SystemExit('Splash/date marker changed: '+m)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify and commit
+        run: |
+          git diff --check
+          test "$(git diff --name-only | tr -d '\r')" = "index.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Apply only Refresh ETA weather poster changes"
+          git pull --rebase origin main
+          git push origin HEAD:main
