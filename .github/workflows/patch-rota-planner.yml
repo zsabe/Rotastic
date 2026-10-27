@@ -15,70 +15,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch actual Rota Planner
+        with:
+          fetch-depth: 0
+      - name: Patch Rota Planner only
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          if 'rotastic-planner-modern-v2' in s: raise SystemExit(0)
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'rotastic-planner-modern-v2' in s:
+              raise SystemExit(0)
           patch=r'''
-<style id="rotastic-planner-modern-v2">
-/* Surgical styling for the existing weeklyLeaveCalendar only */
-#weeklyLeaveCalendar{display:flex!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:4px 2px 14px!important;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
-#weeklyLeaveCalendar>.planner-week-day-card{flex:0 0 min(82vw,360px)!important;scroll-snap-align:start;border-radius:16px!important}
-#weeklyLeaveCalendar .planner-day-header{position:sticky;top:0;z-index:2}
-#weeklyLeaveCalendar [class*="physician"],#weeklyLeaveCalendar [class*="doctor"]{border-radius:10px}
-#weeklyLeaveCalendar.rotastic-group-filtered .rotastic-group-hidden{display:none!important}
-.rotastic-planner-v2-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
-.rotastic-planner-v2-toolbar label{font-size:12px;font-weight:800;letter-spacing:.02em}
-.rotastic-planner-v2-toolbar select{min-width:130px}
-@media(min-width:900px){#weeklyLeaveCalendar>.planner-week-day-card{flex-basis:330px!important}}
-</style>
-<script id="rotastic-planner-modern-v2-js">
-(function(){
- function text(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim();}
- function groupOf(el){
-   var t=text(el);
-   if(/\bGroup\s*1\b/i.test(t))return '1';
-   if(/\bGroup\s*2\b/i.test(t))return '2';
-   return '';
- }
- function applyGroup(cal,wanted){
-   cal.classList.add('rotastic-group-filtered');
-   Array.from(cal.querySelectorAll('*')).forEach(function(el){
-     if(el.children.length>12)return;
-     var g=groupOf(el);
-     if(!g)return;
-     var block=el.closest('[class*="group"],[class*="section"],[class*="panel"],[class*="card"]')||el;
-     if(block===cal||block.classList.contains('planner-week-day-card'))return;
-     block.classList.toggle('rotastic-group-hidden',g!==wanted);
-   });
- }
- function enhance(){
-   var cal=document.getElementById('weeklyLeaveCalendar');if(!cal)return;
-   var host=cal.parentElement;if(!host)return;
-   if(!host.querySelector('.rotastic-planner-v2-toolbar')){
-     var bar=document.createElement('div');bar.className='rotastic-planner-v2-toolbar';
-     var label=document.createElement('label');label.textContent='Display group ';
-     var sel=document.createElement('select');sel.setAttribute('aria-label','Display planner group');
-     sel.innerHTML='<option value="1">Group 1</option><option value="2">Group 2</option>';
-     label.appendChild(sel);bar.appendChild(label);host.insertBefore(bar,cal);
-     sel.addEventListener('change',function(){applyGroup(cal,sel.value)});
-     applyGroup(cal,sel.value);
-   }
-   var exportSel=document.getElementById('plannerExportScope');
-   if(exportSel){
-     Array.from(exportSel.options).forEach(function(o){if(/group\s*1/i.test(o.text))o.text='Group 1';if(/group\s*2/i.test(o.text))o.text='Group 2';});
-   }
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(enhance,50)});else setTimeout(enhance,50);
- new MutationObserver(function(){setTimeout(enhance,30)}).observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-'''
+          <style id="rotastic-planner-modern-v2">
+          #weeklyLeaveCalendar{display:flex!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:4px 2px 14px!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+          #weeklyLeaveCalendar>.planner-week-day-card{flex:0 0 min(82vw,360px)!important;scroll-snap-align:start;border-radius:16px!important}
+          .rotastic-planner-v2-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+          .rotastic-planner-v2-toolbar label{font-size:12px;font-weight:800}
+          .rotastic-planner-v2-toolbar select{min-width:130px}
+          .rotastic-group-hidden{display:none!important}
+          @media(min-width:900px){#weeklyLeaveCalendar>.planner-week-day-card{flex-basis:330px!important}}
+          </style>
+          <script id="rotastic-planner-modern-v2-js">
+          (function(){
+            function t(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim()}
+            function apply(c,w){Array.from(c.querySelectorAll('*')).forEach(function(e){var x=t(e),g=/\bGroup\s*1\b/i.test(x)?'1':(/\bGroup\s*2\b/i.test(x)?'2':'');if(!g)return;var b=e.closest('[class*=group],[class*=section],[class*=panel]')||e;if(b!==c&&!b.classList.contains('planner-week-day-card'))b.classList.toggle('rotastic-group-hidden',g!==w)})}
+            function go(){var c=document.getElementById('weeklyLeaveCalendar');if(!c||!c.parentElement)return;var h=c.parentElement;if(!h.querySelector('.rotastic-planner-v2-toolbar')){var b=document.createElement('div');b.className='rotastic-planner-v2-toolbar';var l=document.createElement('label');l.textContent='Display group ';var q=document.createElement('select');q.innerHTML='<option value="1">Group 1</option><option value="2">Group 2</option>';l.appendChild(q);b.appendChild(l);h.insertBefore(b,c);q.onchange=function(){apply(c,q.value)};apply(c,q.value)}var e=document.getElementById('plannerExportScope');if(e){Array.from(e.options).forEach(function(o){if(/group\s*1/i.test(o.text))o.text='Group 1';if(/group\s*2/i.test(o.text))o.text='Group 2'})}}
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(go,50)});else setTimeout(go,50);new MutationObserver(function(){setTimeout(go,30)}).observe(document.documentElement,{childList:true,subtree:true})
+          })();
+          </script>
+          '''
           pos=s.rfind('</body>')
           if pos<0: raise SystemExit('body anchor missing')
-          p.write_text(s[:pos]+patch+s[pos:],encoding='utf-8')
+          s=s[:pos]+patch+s[pos:]
+          p.write_text(s,encoding='utf-8')
           PY
       - name: Commit planner update
         run: |
@@ -87,5 +56,5 @@ jobs:
           git add index.html
           git diff --cached --check
           git diff --cached --quiet && exit 0
-          git commit -m "Fix Rota Planner visible timeline"
+          git commit -m "Fix visible Rota Planner timeline"
           git push origin HEAD:main
