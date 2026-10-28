@@ -25444,7 +25444,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   [250, 750, 1500, 3000].forEach(function(delay) {
     setTimeout(function() {
-      if (typeof isAdminViewActive === 'function' && isAdminViewActive()) return;
+      if (!activeUserDocName) return;
       forcePersonalViewLanding();
       ensurePersonalViewHasContent();
     }, delay);
