@@ -17,6 +17,41 @@ function restoreLiveRow(){
 @media(max-width:767px){#tabSchedule .live-rota-meta-row{margin-top:0!important;margin-bottom:-4px!important;transform:translateY(-20px)}}`;
  document.head.appendChild(style);
 }
+function settingsCardFor(el,tab){
+ let n=el;
+ while(n&&n.parentElement&&n.parentElement!==tab){
+  if(n.matches?.('.clean-card,.rounded-2xl,.rounded-xl,#rotastic-settings-card'))return n;
+  n=n.parentElement;
+ }
+ return n&&n!==tab?n:null;
+}
+function moveViewModeToTop(tab){
+ const marker=[...tab.querySelectorAll('h1,h2,h3,h4,h5,label,div,span,p')].find(el=>/^\s*view\s*mode\s*$/i.test(String(el.textContent||'')));
+ if(!marker)return;
+ const card=settingsCardFor(marker,tab);
+ if(!card||card.dataset.rotasticViewModeTop==='1')return;
+ card.dataset.rotasticViewModeTop='1';
+ const heading=[...tab.children].find(el=>/^\s*settings\s*$/i.test(String(el.textContent||'')));
+ if(heading&&heading.nextSibling)tab.insertBefore(card,heading.nextSibling);else tab.prepend(card);
+}
+function ensureSignOut(tab){
+ if([...tab.querySelectorAll('button,a')].some(el=>/^\s*sign\s*out\s*$/i.test(String(el.textContent||''))))return;
+ const host=document.getElementById('rotastic-settings-card')||tab;
+ const actions=host.querySelector?.('.rx-settings-actions')||host;
+ const b=document.createElement('button');
+ b.type='button';b.className='secondary';b.textContent='Sign out';b.dataset.rotasticSignOut='1';
+ b.onclick=async()=>{
+  if(!confirm('Sign out of ROTASTIC on this device?'))return;
+  b.disabled=true;
+  try{
+   if(typeof window.raSignOut==='function'){await window.raSignOut();return;}
+   const client=window.rotasticBackendClient||window.supabaseClient||null;
+   if(client?.auth?.signOut){const {error}=await client.auth.signOut({scope:'local'});if(error)throw error;}
+   sessionStorage.clear();localStorage.removeItem('rotastic-auth-session-v1');location.replace(location.pathname);
+  }catch(e){b.disabled=false;alert(e?.message||String(e));}
+ };
+ actions.appendChild(b);
+}
 function clean(){
  const tab=document.getElementById('tabUserSettings');
  if(!tab)return;
@@ -25,6 +60,8 @@ function clean(){
   const card=el.closest('.clean-card,.rounded-2xl,.rounded-xl');
   if(card&&tab.contains(card))card.remove();else el.remove();
  });
+ moveViewModeToTop(tab);
+ ensureSignOut(tab);
 }
 function init(){restoreLiveRow();clean();setTimeout(clean,400);setTimeout(clean,1200)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
