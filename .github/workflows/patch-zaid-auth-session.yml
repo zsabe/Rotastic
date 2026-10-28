@@ -1,53 +1,18 @@
-name: Patch Zaid authenticated session
+name: Disabled legacy Zaid email-auth patch
+
+# This workflow is intentionally disabled.
+# Dr. Zaid authentication now uses the app's password-based Supabase session.
+# Do not reintroduce signInWithOtp or magic-link authentication here.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/patch-zaid-auth-session.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  disabled:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: zaid-auth-safe-patch
-          fetch-depth: 0
-      - name: Patch only Zaid login logic
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text()
-          old = """      rotasticApplyVerifiedIdentity('Dr Zaid SE.', 'zaid', ROTASTIC_ZAID_PERMANENT_EMAIL);\n      if (codeInput) codeInput.value = '';"""
-          new = """      rotasticApplyVerifiedIdentity('Dr Zaid SE.', 'zaid', ROTASTIC_ZAID_PERMANENT_EMAIL);\n\n      // Establish a real Supabase Auth session for permanent-admin RPCs.\n      // This does not change any UI; it only sends a one-time PHCC magic link\n      // when this device does not already hold Dr Zaid's authenticated session.\n      try {\n        await rotasticBackendEnsureSession();\n        const currentSession = await rotasticBackendClient?.auth?.getSession();\n        const currentEmail = String(currentSession?.data?.session?.user?.email || '').trim().toLowerCase();\n        if (currentEmail !== ROTASTIC_ZAID_PERMANENT_EMAIL) {\n          const authResult = await rotasticBackendClient.auth.signInWithOtp({\n            email: ROTASTIC_ZAID_PERMANENT_EMAIL,\n            options: {\n              emailRedirectTo: window.location.origin + window.location.pathname,\n              shouldCreateUser: true\n            }\n          });\n          if (authResult?.error) throw authResult.error;\n          rotasticRegistrationSetStatus('Check your PHCC email once to authenticate permanent Admin View.', true);\n        }\n      } catch (authError) {\n        console.warn('ROTASTIC: permanent admin Supabase sign-in could not start.', authError?.message || authError);\n      }\n\n      if (codeInput) codeInput.value = '';"""
-          count = s.count(old)
-          if count != 1:
-              raise SystemExit(f'Expected exactly one Zaid login marker, found {count}; aborting safely.')
-          p.write_text(s.replace(old, new, 1))
-
-          sw = Path('service-worker.js')
-          w = sw.read_text()
-          old_cache = "const CACHE = 'rotastic-v232-first-week-exemption';"
-          new_cache = "const CACHE = 'rotastic-v233-zaid-auth-session';"
-          if old_cache not in w:
-              raise SystemExit('Expected service-worker cache marker not found; aborting safely.')
-          sw.write_text(w.replace(old_cache, new_cache, 1))
-          PY
-      - name: Verify no design files or admin UI modules changed
-        run: |
-          git diff --check
-          git diff --name-only
-          test "$(git diff --name-only | sort | tr '\n' ' ')" = "index.html service-worker.js "
-          grep -q "signInWithOtp" index.html
-          grep -q "rotastic-v233-zaid-auth-session" service-worker.js
-      - name: Commit patch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html service-worker.js
-          git commit -m 'Authenticate Dr Zaid permanent admin session'
-          git push origin HEAD:zaid-auth-safe-patch
+      - run: echo "Legacy email-auth patch disabled"
