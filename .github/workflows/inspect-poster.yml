@@ -1,0 +1,18 @@
+name: Inspect poster and splash source
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/inspect-poster.yml']
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inspect relevant source
+        run: |
+          echo '=== OFF / poster references ==='
+          grep -niE 'you.?re off|you are off|poster|off today|day off|rest day' index.html | head -80 || true
+          echo '=== splash references ==='
+          grep -niE 'rotasticOpeningSplash|startOpeningSplash|pointer-events' index.html | tail -80 || true
