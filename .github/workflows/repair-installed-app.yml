@@ -1,0 +1,58 @@
+name: Repair installed app controls and icon
+on:
+  push:
+    paths:
+      - '.github/workflows/repair-installed-app.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Restore index and patch installed-app interaction
+        shell: bash
+        run: |
+          git show HEAD^:index.html > index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          guard='''<style id="rotastic-splash-date-paint-guard">\n#rotasticOpeningSplash { visibility: hidden; }\n#rotasticOpeningSplash.rotastic-date-ready { visibility: visible; }\n</style>'''
+          replacement='''<style id="rotastic-splash-date-paint-guard">\n#rotasticOpeningSplash { visibility: hidden; pointer-events: none !important; }\n#rotasticOpeningSplash.rotastic-date-ready { visibility: visible; pointer-events: none !important; }\n#rotasticRegistrationGate.hidden { display: none !important; pointer-events: none !important; }\n</style>'''
+          if guard not in s:
+              raise SystemExit('splash guard not found')
+          s=s.replace(guard,replacement,1)
+          s=s.replace('<div class="rotastic-splash-date" id="rotasticSplashDate">Today is Monday, 1 January 2026</div>', '<div class="rotastic-splash-date" id="rotasticSplashDate"></div>',1)
+          p.write_text(s)
+          PY
+      - name: Add circular adaptive icon
+        shell: bash
+        run: |
+          cat > icons/icon-circle.svg <<'SVG'
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <circle cx="256" cy="256" r="232" fill="#111827" stroke="#22c7b8" stroke-width="18"/>
+            <text x="205" y="340" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="260" font-weight="700" fill="white">R</text>
+            <path d="M350 118v112M294 174h112" stroke="#28c8e6" stroke-width="38" stroke-linecap="round"/>
+          </svg>
+          SVG
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('manifest.webmanifest')
+          m=json.loads(p.read_text())
+          m['icons']=[
+            {'src':'./icons/icon-circle.svg','sizes':'any','type':'image/svg+xml','purpose':'any'},
+            {'src':'./icons/icon-circle.svg','sizes':'any','type':'image/svg+xml','purpose':'maskable'}
+          ]
+          p.write_text(json.dumps(m,indent=2)+'\n')
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html manifest.webmanifest icons/icon-circle.svg
+          git commit -m 'Fix installed app controls and use circular launcher icon'
+          git push
