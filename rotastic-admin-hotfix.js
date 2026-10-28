@@ -1,20 +1,21 @@
 (()=>{
 'use strict';
-function removeCodeCreationBoxes(){
-  ['tempAdminCodeManagerCard','adminAccessGrantCard'].forEach(id=>{
+function removeAccessCodeUI(){
+  const settings=document.getElementById('tabUserSettings');
+  const ids=['tempAdminCodeManagerCard','adminAccessGrantCard','rotastic-unified-admin'];
+  ids.forEach(id=>{
     const el=document.getElementById(id);
-    if(el){
-      el.classList.add('hidden');
-      el.style.display='none';
-      el.setAttribute('aria-hidden','true');
-    }
+    if(el&&(!settings||settings.contains(el)))el.remove();
+  });
+  if(!settings)return;
+  [...settings.querySelectorAll('h1,h2,h3,h4,h5,h6')].forEach(h=>{
+    const text=String(h.textContent||'').replace(/\s+/g,' ').trim();
+    if(!/^Access Codes$/i.test(text))return;
+    const card=h.closest('.clean-card,.rounded-2xl,.rounded-xl,section,article');
+    if(card&&settings.contains(card))card.remove();
   });
 }
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',removeCodeCreationBoxes,{once:true});
-}else{
-  removeCodeCreationBoxes();
-}
-const observer=new MutationObserver(removeCodeCreationBoxes);
-observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+function run(){removeAccessCodeUI();requestAnimationFrame(removeAccessCodeUI);setTimeout(removeAccessCodeUI,250);setTimeout(removeAccessCodeUI,1000);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+new MutationObserver(removeAccessCodeUI).observe(document.documentElement,{subtree:true,childList:true});
 })();
