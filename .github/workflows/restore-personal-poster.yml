@@ -1,0 +1,49 @@
+name: Restore personal poster landing
+on:
+  push:
+    paths: ['.github/workflows/restore-personal-poster.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore colleague personal poster landing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="""    setTimeout(function() {
+              if (!activeUserDocName) return;
+              forcePersonalViewLanding();
+              ensurePersonalViewHasContent();
+            }, delay);"""
+          if old not in s:
+              # tolerate original indentation from source
+              old="""    setTimeout(function() {
+                if (!activeUserDocName) return;
+                forcePersonalViewLanding();
+                ensurePersonalViewHasContent();
+              }, delay);"""
+          if old not in s:
+              raise SystemExit('personal-view startup block not found')
+          new=old.replace("if (!activeUserDocName) return;", "if (typeof isAdminViewActive === 'function' && isAdminViewActive()) return;")
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Verify poster path
+        run: |
+          grep -n "isAdminViewActive.*return" index.html | tail -5
+          grep -n "safeBuildMyShiftMainView" index.html | tail -8
+      - name: Commit restoration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Restore You are off personal poster landing'
+          git push origin HEAD:main
