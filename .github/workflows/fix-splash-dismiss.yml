@@ -18,13 +18,10 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          # Revert the immediately preceding personal-landing startup regression.
           bad="if (typeof isAdminViewActive === 'function' && isAdminViewActive()) return;\n      forcePersonalViewLanding();\n      ensurePersonalViewHasContent();"
           good="if (!activeUserDocName) return;\n      forcePersonalViewLanding();\n      ensurePersonalViewHasContent();"
           if bad in s:
               s=s.replace(bad,good,1)
-          # Add a fail-safe only for an already-running opening splash. This does not
-          # alter the poster, rota layout, auth, or normal splash date/name setup.
           anchor="document.addEventListener('DOMContentLoaded', function() {"
           guard="""document.addEventListener('DOMContentLoaded', function() {
   // Opening splash must never block the application indefinitely.
@@ -40,7 +37,6 @@ jobs:
     } catch (_) {}
   }, 5000);"""
           if 'Opening splash must never block the application indefinitely.' not in s:
-              # Place guard at the same late startup section, before personal landing timers.
               idx=s.rfind(anchor)
               if idx < 0: raise SystemExit('startup anchor not found')
               s=s[:idx]+s[idx:].replace(anchor,guard,1)
