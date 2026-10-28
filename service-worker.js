@@ -1,112 +1,17 @@
-const CACHE = 'rotastic-v241-network-first-recovery';
-const CORE = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png',
-  './icons/favicon-32.png',
-  './icons/favicon-48.png'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(CORE))
-      .then(() => self.skipWaiting())
-  );
+const CACHE='rotastic-v242-final-polish';
+const CORE=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./icons/apple-touch-icon.png','./icons/favicon-32.png','./icons/favicon-48.png'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));await self.clients.claim()})()));
+self.addEventListener('fetch',event=>{
+ if(event.request.method!=='GET')return;
+ const u=new URL(event.request.url);
+ if(event.request.mode==='navigate'){
+  event.respondWith((async()=>{try{const r=await fetch(event.request,{cache:'no-store'});if(r?.ok){const copy=r.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put('./index.html',copy)).catch(()=>{}))}return r}catch(_){return await caches.match('./index.html')}})());return;
+ }
+ if(u.origin===self.location.origin&&u.pathname.endsWith('/rotastic-communications.js')){
+  event.respondWith((async()=>{try{const r=await fetch(event.request,{cache:'no-store'});if(!r.ok)return r;let js=await r.text();if(!js.includes('rotastic-final-polish.js'))js+="\nimport('./rotastic-final-polish.js?v=1').catch(e=>console.warn('ROTASTIC final polish:',e));\n";return new Response(js,{status:200,headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'}})}catch(_){return(await caches.match(event.request))||Response.error()}})());return;
+ }
+ event.respondWith((async()=>{try{const r=await fetch(event.request,{cache:'no-store'});if(r?.ok&&u.origin===self.location.origin){const copy=r.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put(event.request,copy)).catch(()=>{}))}return r}catch(_){return(await caches.match(event.request))||Response.error()}})());
 });
-
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)));
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
-  if (event.request.mode === 'navigate') {
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(event.request, { cache: 'no-store' });
-        if (response && response.ok) {
-          const copy = response.clone();
-          event.waitUntil(
-            caches.open(CACHE)
-              .then(cache => cache.put('./index.html', copy))
-              .catch(() => {})
-          );
-        }
-        return response;
-      } catch (_) {
-        return await caches.match('./index.html');
-      }
-    })());
-    return;
-  }
-
-  // Network-first for application code; never pin outdated JS in the offline cache.
-  event.respondWith((async () => {
-    try {
-      const response = await fetch(event.request, { cache: 'no-store' });
-      if (response && response.ok && new URL(event.request.url).origin === self.location.origin) {
-        const copy = response.clone();
-        event.waitUntil(caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {}));
-      }
-      return response;
-    } catch (_) {
-      return (await caches.match(event.request)) || Response.error();
-    }
-  })());
-});
-
-self.addEventListener('push', event => {
-  let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (_) {
-    data = { body: 'Open ROTASTIC for a private update.' };
-  }
-
-  const title = data.title || 'ROTASTIC';
-  const url = typeof data.url === 'string' && data.url ? data.url : './';
-  const options = {
-    body: data.body || 'Open ROTASTIC for an update.',
-    icon: './icons/icon-192.png',
-    badge: './icons/icon-192.png',
-    tag: data.tag || data.type || 'rotastic-notification',
-    renotify: true,
-    requireInteraction: Boolean(data.requireInteraction),
-    data: Object.assign({}, data.data || {}, {
-      url,
-      type: data.type || '',
-      rotasticNotification: true
-    })
-  };
-
-  event.waitUntil(self.registration.showNotification(title, options));
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  const rawTarget = event.notification?.data?.url || './?rotasticNotification=1';
-
-  event.waitUntil((async () => {
-    const targetUrl = new URL(rawTarget, self.registration.scope).href;
-    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-
-    for (const client of windows) {
-      if (!client.url.startsWith(self.registration.scope)) continue;
-      try { if ('navigate' in client) await client.navigate(targetUrl); } catch (_) {}
-      try { client.postMessage({ type: 'ROTASTIC_NOTIFICATION_OPEN', url: targetUrl }); } catch (_) {}
-      try { return await client.focus(); } catch (_) {}
-    }
-
-    if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
-  })());
-});
+self.addEventListener('push',event=>{let d={};try{d=event.data?event.data.json():{}}catch(_){d={body:'Open ROTASTIC for a private update.'}}const title=d.title||'ROTASTIC',url=typeof d.url==='string'&&d.url?d.url:'./',options={body:d.body||'Open ROTASTIC for an update.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:d.tag||d.type||'rotastic-notification',renotify:true,requireInteraction:Boolean(d.requireInteraction),data:Object.assign({},d.data||{},{url,type:d.type||'',rotasticNotification:true})};event.waitUntil(self.registration.showNotification(title,options))});
+self.addEventListener('notificationclick',event=>{event.notification.close();const raw=event.notification?.data?.url||'./?rotasticNotification=1';event.waitUntil((async()=>{const target=new URL(raw,self.registration.scope).href,windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows){if(!client.url.startsWith(self.registration.scope))continue;try{if('navigate'in client)await client.navigate(target)}catch(_){}try{client.postMessage({type:'ROTASTIC_NOTIFICATION_OPEN',url:target})}catch(_){}try{return await client.focus()}catch(_){}}if(self.clients.openWindow)return self.clients.openWindow(target)})())});
