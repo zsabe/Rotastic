@@ -11,11 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 4
       - name: Restore index and patch installed-app interaction
         shell: bash
         run: |
-          git show HEAD^:index.html > index.html
+          git show 39b970b5ac238ba751866e624b87537569d29c3f:index.html > index.html
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
@@ -31,6 +31,7 @@ jobs:
       - name: Add circular adaptive icon
         shell: bash
         run: |
+          mkdir -p icons
           cat > icons/icon-circle.svg <<'SVG'
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <circle cx="256" cy="256" r="232" fill="#111827" stroke="#22c7b8" stroke-width="18"/>
