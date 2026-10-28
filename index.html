@@ -6178,6 +6178,11 @@ nav.mobile-nav-bar>button[data-rotastic-tab="schedule"]>span{font-weight:600!imp
 #tabSchedule #rotasticLiveMini,#tabSchedule .live-drive-slot,#tabSchedule #weatherBadge{margin-top:0!important;margin-bottom:0!important}
 }
 </style>
+
+<style id="rotastic-splash-date-paint-guard">
+#rotasticOpeningSplash { visibility: hidden; }
+#rotasticOpeningSplash.rotastic-date-ready { visibility: visible; }
+</style>
 </head>
 <body class="antialiased">
 <div class="fixed inset-0 z-[10050] hidden items-center justify-center bg-slate-950/96 px-4 py-6" id="rotasticRegistrationGate">
@@ -6688,26 +6693,6 @@ nav.mobile-nav-bar>button[data-rotastic-tab="schedule"]>span{font-weight:600!imp
         Save Preferences
       </button>
 </div>
-<div class="hidden clean-card rounded-2xl p-5 max-w-xl mx-auto border-amber-500/25" id="settingsBroadcastCard">
-<div class="pb-3 border-b border-slate-800">
-<h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center">
-<i class="fa-solid fa-tower-broadcast mr-2"></i>Broadcast
-        </h3>
-<p class="text-[11px] text-slate-400 mt-1">Available in Admin View.</p>
-<p class="text-[10px] text-slate-500 mt-1">Admin announcements and updates.</p>
-</div>
-<div class="pt-4 space-y-3">
-<textarea class="w-full bg-slate-900 text-white text-xs p-3 rounded-xl border border-slate-700 outline-none focus:border-amber-400 resize-none" id="settingsAnnouncementText" maxlength="280" oninput="syncSettingsAnnouncementCount()" placeholder="Type an announcement for all ROTASTIC users..." rows="3"></textarea>
-<div class="flex items-center justify-between">
-<span class="text-[10px] text-slate-500">Maximum 280 characters</span>
-<span class="text-[10px] text-slate-500" id="settingsAnnouncementCharCount">0/280</span>
-</div>
-<button class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition" onclick="broadcastFromSettings()" type="button">
-<i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast Now
-        </button>
-<div class="hidden p-3 rounded-xl text-[11px]" id="settingsBroadcastStatus"></div>
-</div>
-</div>
 <div class="hidden clean-card rounded-2xl p-5 max-w-xl mx-auto border-violet-500/25" id="tempAdminCodeManagerCard">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
 <div>
@@ -6720,8 +6705,8 @@ nav.mobile-nav-bar>button[data-rotastic-tab="schedule"]>span{font-weight:600!imp
 <div class="pt-4 space-y-3">
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 <select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="accessCodeType" onchange="onAccessCodeTypeChange()">
-<option value="first_time">First-time setup code</option>
-<option value="admin">Temporary Admin code</option>
+<option value="admin" selected>Temporary Admin code</option>
+<option value="first_time">First-time setup code (24 hours)</option>
 </select>
 <select class="bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none" id="accessCodeDoctorSelect">
 <option value="">Select physician</option>
@@ -8819,7 +8804,17 @@ async function issueActivationCodeForPhysician(docName) {
 
   try {
     await rotasticBackendEnsureSession();
-    if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified Admin sign-in is required.');
+    if (!rotasticBackendClient) throw new Error('Authentication service unavailable.');
+    const accessSessionResult = await rotasticBackendClient.auth.getSession();
+    const accessSessionUser = accessSessionResult?.data?.session?.user || null;
+    if (!accessSessionUser) {
+      const adminEmail = String(Storage.get('rotastic_verified_email', '') || ROTASTIC_ZAID_PERMANENT_EMAIL || '').trim().toLowerCase();
+      if (!/@phcc\.gov\.qa$/i.test(adminEmail)) throw new Error('A verified permanent-admin PHCC email is required.');
+      const authResult = await rotasticBackendClient.auth.signInWithOtp({email:adminEmail,options:{emailRedirectTo:window.location.origin+window.location.pathname,shouldCreateUser:true}});
+      if (authResult?.error) throw authResult.error;
+      throw new Error('Secure Admin sign-in link sent to '+adminEmail+'. Open it once, then Generate Code will work on this device.');
+    }
+    rotasticBackendUser = accessSessionUser;
 
     const allowedCheck = await rotasticBackendClient.rpc('rotastic_email_is_authorized',{p_email:email});
     if (allowedCheck.error) throw allowedCheck.error;
@@ -8947,7 +8942,7 @@ function populateAccessCodeDoctorSelect() {
 }
 
 function onAccessCodeTypeChange() {
-  const type = document.getElementById('accessCodeType')?.value || 'first_time';
+  const type = document.getElementById('accessCodeType')?.value || 'admin';
   const duration = document.getElementById('tempAdminDurationMinutes');
   const hint = document.getElementById('accessCodeModeHint');
   if (duration) {
@@ -9004,7 +8999,7 @@ async function createSelectedAccessCode() {
     alert('Access codes can only be created from an unlocked permanent Admin View.');
     return;
   }
-  const kind = document.getElementById('accessCodeType')?.value || 'first_time';
+  const kind = document.getElementById('accessCodeType')?.value || 'admin';
   const physicianName = String(document.getElementById('accessCodeDoctorSelect')?.value || '').trim();
   if (!physicianName) {
     alert('Select a physician first.');
@@ -9017,7 +9012,17 @@ async function createSelectedAccessCode() {
   }
   try {
     await rotasticBackendEnsureSession();
-    if (!rotasticBackendClient || !rotasticBackendUser) throw new Error('Verified Admin sign-in is required.');
+    if (!rotasticBackendClient) throw new Error('Authentication service unavailable.');
+    const accessSessionResult = await rotasticBackendClient.auth.getSession();
+    const accessSessionUser = accessSessionResult?.data?.session?.user || null;
+    if (!accessSessionUser) {
+      const adminEmail = String(Storage.get('rotastic_verified_email', '') || ROTASTIC_ZAID_PERMANENT_EMAIL || '').trim().toLowerCase();
+      if (!/@phcc\.gov\.qa$/i.test(adminEmail)) throw new Error('A verified permanent-admin PHCC email is required.');
+      const authResult = await rotasticBackendClient.auth.signInWithOtp({email:adminEmail,options:{emailRedirectTo:window.location.origin+window.location.pathname,shouldCreateUser:true}});
+      if (authResult?.error) throw authResult.error;
+      throw new Error('Secure Admin sign-in link sent to '+adminEmail+'. Open it once, then Generate Code will work on this device.');
+    }
+    rotasticBackendUser = accessSessionUser;
     if (kind === 'first_time') {
       const result = await rotasticBackendClient.functions.invoke('rotastic-registration-admin', {
         body: { action:'generate', email:email, physician_name:physicianName, valid_minutes:1440 }
@@ -13372,6 +13377,7 @@ function startOpeningSplash() {
   catch (e) { console.warn('ROTASTIC splash name update:', e); }
 
   const splash = document.getElementById('rotasticOpeningSplash');
+  if (splash) splash.classList.add('rotastic-date-ready');
 
   if (!splash) {
     if (typeof switchTab === 'function') switchTab('schedule');
