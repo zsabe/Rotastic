@@ -1,4 +1,4 @@
-const CACHE='rotastic-v249-source-repairs';
+const CACHE='rotastic-v247-settings-cleanup';
 const CORE=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./icons/apple-touch-icon.png','./icons/favicon-32.png','./icons/favicon-48.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)));await self.clients.claim()})()));
@@ -7,6 +7,9 @@ self.addEventListener('fetch',event=>{
  const u=new URL(event.request.url);
  if(event.request.mode==='navigate'){
   event.respondWith((async()=>{try{const r=await fetch(event.request,{cache:'no-store'});if(r?.ok){const copy=r.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put('./index.html',copy)).catch(()=>{}))}return r}catch(_){return await caches.match('./index.html')}})());return;
+ }
+ if(u.origin===self.location.origin&&u.pathname.endsWith('/rotastic-communications.js')){
+  event.respondWith((async()=>{try{const r=await fetch(event.request,{cache:'no-store'});if(!r.ok)return r;let js=await r.text();if(!js.includes('rotastic-final-polish.js'))js+="\nimport('./rotastic-final-polish.js?v=1').catch(e=>console.warn('ROTASTIC final polish:',e));\n";if(!js.includes('rotastic-settings-cleanup.js'))js+="\nimport('./rotastic-settings-cleanup.js?v=1').catch(e=>console.warn('ROTASTIC settings cleanup:',e));\n";return new Response(js,{status:200,headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'}})}catch(_){return(await caches.match(event.request))||Response.error()}})());return;
  }
  event.respondWith((async()=>{try{const r=await fetch(event.request,{cache:'no-store'});if(r?.ok&&u.origin===self.location.origin){const copy=r.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put(event.request,copy)).catch(()=>{}))}return r}catch(_){return(await caches.match(event.request))||Response.error()}})());
 });
