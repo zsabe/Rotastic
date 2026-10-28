@@ -1,0 +1,21 @@
+name: Controlled rebuild from backup-5
+on:
+  push:
+    paths: ['.github/workflows/rebuild-from-backup5-final.yml']
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore tested rebuild tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin rebuild-from-backup5
+          git read-tree --reset -u 9fff35c50c0c91f3ee926e7d67929015a4e944a3
+          git commit -m 'Deploy clean rebuild from backup-5'
+          git push origin HEAD:main
