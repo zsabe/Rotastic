@@ -6,13 +6,15 @@ function restoreLiveRow(){
  document.head.appendChild(style);
 }
 function qatarDate(){try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Qatar',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date())}catch(_){return ''}}
+function dismissSplash(){const splash=document.getElementById('rotasticOpeningSplash');if(!splash)return;try{splash.style.setProperty('pointer-events','none','important');splash.style.setProperty('opacity','0','important');splash.style.setProperty('visibility','hidden','important');splash.style.setProperty('display','none','important');splash.setAttribute('aria-hidden','true');splash.classList.add('hidden')}catch(_){}}
 function fixSplash(){
  const splash=document.getElementById('rotasticOpeningSplash');if(!splash)return;
  const d=document.getElementById('rotasticSplashDate');const text=qatarDate();if(d&&text)d.textContent='Today is '+text;
  if(splash.dataset.rotasticShown==='1')return;
  splash.dataset.rotasticShown='1';
  const observer=new MutationObserver(()=>{if(d&&text&&d.textContent!=='Today is '+text)d.textContent='Today is '+text});observer.observe(splash,{childList:true,subtree:true,characterData:true,attributes:true});
- setTimeout(()=>observer.disconnect(),5000);
+ setTimeout(()=>observer.disconnect(),4500);
+ setTimeout(dismissSplash,4800);
 }
 function isBroadcastNode(n){const t=String(n?.textContent||'').replace(/\s+/g,' ').trim();return /^broadcast$/i.test(t)||/^broadcast\b/i.test(t)||/admin announcements and updates/i.test(t)}
 function clean(){
@@ -20,7 +22,7 @@ function clean(){
  const candidates=[...tab.querySelectorAll('button,a,h1,h2,h3,h4,h5,p,span,div')].filter(isBroadcastNode);
  candidates.forEach(n=>{let card=n.closest('.clean-card,[class*="rounded-2xl"],[class*="rounded-xl"],section,article');if(card&&card!==tab&&tab.contains(card)){card.remove();return}if(n!==tab)n.remove()});
 }
-function init(){restoreLiveRow();fixSplash();clean();[50,150,400,800,1500,3000].forEach(ms=>setTimeout(()=>{fixSplash();clean()},ms))}
+function init(){restoreLiveRow();fixSplash();clean();setTimeout(dismissSplash,5000);[50,150,400,800,1500,3000].forEach(ms=>setTimeout(()=>{fixSplash();clean()},ms))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 new MutationObserver(()=>{clean();fixSplash()}).observe(document.documentElement,{childList:true,subtree:true});
 })();
