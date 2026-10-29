@@ -13699,6 +13699,8 @@ function getAutoRotaRules() {
   group1 = group1.filter(function(name){ return !doctorMatches(name, 'Dr Abdulgafoor K.'); });
   if (!group2.some(function(name){ return doctorMatches(name, 'Dr Abdulgafoor K.'); })) group2.push('Dr Abdulgafoor K.');
 
+  const weekOverrides=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{});
+  Object.keys(weekOverrides||{}).forEach(function(name){const g=Number(weekOverrides[name]);group1=group1.filter(function(x){return !doctorMatches(x,name);});group2=group2.filter(function(x){return !doctorMatches(x,name);});if(g===1)group1.push(name);if(g===2)group2.push(name);});
   return {
     group1: group1,
     group2: group2,
@@ -13961,7 +13963,7 @@ function rotasticDoctorScheduledPeriods(day, doctor) {
 }
 
 function rotasticIsWholeWeekPhrase(text) {
-  return /\b(whole|entire|full)\s+(working\s+)?week\b|\ball\s+week\b|\bfor\s+the\s+week\b/i.test(text);
+  return /\bthis\s+week\b|\b(whole|entire|full)\s+(working\s+)?week\b|\ball\s+week\b|\bfor\s+the\s+week\b/i.test(text);
 }
 
 function rotasticIsAbsencePhrase(text) {
@@ -14703,6 +14705,70 @@ function applySmartRuleActionsToDirectory(actions) {
   savePhysicianRules(rules);
 }
 
+/* ROTASTIC_SMARTBOX_WEEK_COMMANDS_V2 */
+function rotasticSmartWeekKey(){
+  const el=document.getElementById('cycleStartDate');
+  return String((el&&el.value)||(currentSchedule&&currentSchedule[0]&&currentSchedule[0].isoDate)||'').slice(0,10);
+}
+function rotasticGetWeeklyGroupOverrides(){
+  const all=Storage.getJSON('rotastic_weekly_group_overrides',{})||{};
+  return all[rotasticSmartWeekKey()]||{};
+}
+function rotasticSetWeeklyGroupOverride(doctor,group){
+  const key=rotasticSmartWeekKey(); if(!key)return false;
+  const all=Storage.getJSON('rotastic_weekly_group_overrides',{})||{};
+  const row=all[key]||{}; row[canonicalRotaName(doctor)]=Number(group); all[key]=row;
+  Storage.setJSON('rotastic_weekly_group_overrides',all); return true;
+}
+function rotasticParseWeeklyPhysicianCommand(raw){
+  const text=String(raw||'').replace(/\s+/g,' ').trim();
+  if(!/\bthis\s+week\b/i.test(text))return null;
+  const doctors=smartRuleFindDoctors(text);
+  if(!doctors.length)return null;
+  let m=text.match(/\bgroup\s*(one|1|two|2)\b/i);
+  if(m&&/\b(move|work|working|with|to)\b/i.test(text))return {action:'group',group:/^(one|1)$/i.test(m[1])?1:2,doctors:doctors};
+  if(/\b(not\s+off|working|on\s+duty|available)\b/i.test(text))return {action:'working',doctors:doctors};
+  if(/\boff\b|\bon\s+leave\b|\bunavailable\b/i.test(text))return {action:'off',doctors:doctors};
+  return null;
+}
+function rotasticWeekDates(){return (currentSchedule||[]).map(function(d){return String(d&&d.isoDate||'').slice(0,10);}).filter(Boolean);}
+function rotasticCancelWeekAbsence(doctor){
+  const dates=new Set(rotasticWeekDates());
+  const keys=['rotastic_leave_submissions'];
+  keys.forEach(function(key){
+    const rows=Storage.getJSON(key,[]); if(!Array.isArray(rows))return;
+    const kept=rows.filter(function(r){
+      const who=r&&String(r.doctor||r.physician||r.name||'');
+      if(!doctorMatches(who,doctor))return true;
+      const start=String(r.startDate||r.date||'').slice(0,10), end=String(r.endDate||start).slice(0,10);
+      return !Array.from(dates).some(function(d){return d>=start&&d<=end;});
+    });
+    Storage.setJSON(key,kept);
+  });
+}
+async function rotasticApplyWeeklyPhysicianCommand(cmd){
+  if(!cmd||!Array.isArray(cmd.doctors)||!cmd.doctors.length)return false;
+  const doctors=cmd.doctors.map(canonicalRotaName).filter(Boolean);
+  if(cmd.action==='group'){
+    doctors.forEach(function(d){rotasticSetWeeklyGroupOverride(d,cmd.group);});
+    if(typeof generateDutySchedule==='function')generateDutySchedule();
+    return {ok:true,message:doctors.join(', ')+' will work with Group '+cmd.group+' this week.'};
+  }
+  if(cmd.action==='working'){
+    doctors.forEach(rotasticCancelWeekAbsence);
+    if(typeof generateDutySchedule==='function')generateDutySchedule();
+    return {ok:true,message:doctors.join(', ')+' marked working / not off this week.'};
+  }
+  if(cmd.action==='off'){
+    const phrase=doctors.join(', ')+' are off whole week';
+    const result=await interpretScheduleAmendment(phrase);
+    if(!result||!result.ok||!result.action)return result||{ok:false,message:'Could not apply weekly OFF.'};
+    result.action.scope='week';
+    if(!applyScheduleAmendmentAction(result.action))return {ok:false,message:'Could not apply weekly OFF.'};
+    return {ok:true,message:doctors.join(', ')+' marked off this week.'};
+  }
+  return false;
+}
 function rotasticNormalizeSimpleEnglishRule(raw) {
   return String(raw || '')
     .replace(/\bcan you\b|\bcould you\b|\bplease\b|\bi want you to\b|\bi need you to\b/gi, ' ')
@@ -14726,6 +14792,15 @@ async function addSmartRotaRule() {
   const raw = rotasticNormalizeSimpleEnglishRule(rawOriginal);
   const scope = String(document.getElementById('smartRotaRuleScope')?.value || 'rota');
   if (!raw) return;
+  const __weekCmd=rotasticParseWeeklyPhysicianCommand(rawOriginal);
+  if(__weekCmd){
+    const __result=await rotasticApplyWeeklyPhysicianCommand(__weekCmd);
+    const __ok=!!(__result&&__result.ok);
+    if(status){status.className='mt-3 p-3 rounded-xl text-[11px] border '+(__ok?'bg-emerald-950/40 border-emerald-500/30 text-emerald-200':'bg-amber-950/40 border-amber-500/30 text-amber-200');status.textContent=(__result&&__result.message)||'Weekly command could not be applied.';status.classList.remove('hidden');}
+    if(__ok&&input)input.value='';
+    if(__ok&&typeof renderScheduleView==='function')renderScheduleView();
+    return;
+  }
   if (scope !== 'permanent' && rotasticLooksLikeOneOffAmendment(raw) && typeof interpretScheduleAmendment === 'function' && typeof applyScheduleAmendmentAction === 'function') {
     try {
       const understood = await interpretScheduleAmendment(rawOriginal);
@@ -15033,7 +15108,7 @@ function rotasticPinGaniGroup2Metadata() {
     }
   });});
 }
-function rotasticAuthoritativeGroup(name) { const k=canonicalRotaName(name); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }
+function rotasticAuthoritativeGroup(name) { const k=canonicalRotaName(name); const o=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{}); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }
 function rotasticIsFemalePhysician(name) {
   const canonical = canonicalRotaName(name);
   if (DOCTOR_GENDER[canonical] === 'female') return true;
