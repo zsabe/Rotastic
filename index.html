@@ -15637,6 +15637,13 @@ function applyAutomaticRotaPopulation() {
       });
     }
 
+    function rotasticIsFemaleTwilightDoctor(name) {
+      const canonical = canonicalRotaName(name);
+      if (DOCTOR_GENDER[canonical] === 'female') return true;
+      const first = String(canonical || name || '').replace(/^Dr\.?\s+/i,'').trim().split(/\s+/)[0].toLowerCase();
+      return ['rida','taysir','tayseer','ola','oula','saba','fazila','laila','layla','leila','maya','saima','fahima'].includes(first);
+    }
+
     function uniquePlannedAvailableForTwilight(list, scheduleDay) {
       const seen={};
       return (list||[]).map(canonicalRotaName).filter(function(n){
@@ -15647,9 +15654,9 @@ function applyAutomaticRotaPopulation() {
     }
 
     const amPlanned=uniquePlannedAvailableForTwilight(amGroupNo===1?rules.group1:rules.group2,day)
-      .filter(function(n){return n!=='Dr Mohamed M.' && DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});
+      .filter(function(n){return n!=='Dr Mohamed M.' && !rotasticIsFemaleTwilightDoctor(n);});
     const pmPlanned=uniquePlannedAvailableForTwilight(pmGroupNo===1?rules.group1:rules.group2,day)
-      .filter(function(n){return n!=='Dr Mohamed M.' && DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});
+      .filter(function(n){return n!=='Dr Mohamed M.' && !rotasticIsFemaleTwilightDoctor(n);});
 
     // Signed rotas show Twilight can overlap Emergency, Code Blue and other duties.
     // Therefore the active shift cohort itself is the Twilight candidate pool.
@@ -15711,7 +15718,7 @@ function applyAutomaticRotaPopulation() {
       }
     }
 
-    picks.slice(0,2).forEach(function(item){
+    picks.slice(0,2).filter(function(item){return item && !rotasticIsFemaleTwilightDoctor(item.doc);}).forEach(function(item){
       const shift=item.period==='AM'?day.am:day.pm;
       if(!shift.timed1Doc) shift.timed1Doc=item.doc;
       else shift.timed2Doc=item.doc;
