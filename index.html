@@ -16414,33 +16414,17 @@ function rotasticEnforceExclusiveShiftAssignments() {
   const normalFields = ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
   (currentSchedule || []).forEach(function(day) {
     ['am','pm'].forEach(function(period) {
-      const sh = day && day[period];
-      if (!sh) return;
+      const sh = day && day[period]; if (!sh) return;
       const seen = new Set();
       function key(v) { return v && /^Dr\.?\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,'')) : ''; }
       function reserve(v) { const k=key(v); if(!k) return false; if(seen.has(k)) return true; seen.add(k); return false; }
-
-      // Twilight is a normal assignment and must be unique.
       if (reserve(sh.timed1Doc)) sh.timed1Doc='';
       if (reserve(sh.timed2Doc)) sh.timed2Doc='';
-
-      // WBC is exclusive from every other NORMAL assignment, especially Twilight.
       const wbcKey=key(sh.wbcDoc);
-      if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic';
-      else if (wbcKey) seen.add(wbcKey);
-
-      normalFields.slice(3).forEach(function(field) {
-        const v=sh[field]; if(reserve(v)) sh[field]='';
-      });
-
-      if (sh.rooms && typeof sh.rooms==='object') {
-        Object.keys(sh.rooms).forEach(function(room) {
-          const v=sh.rooms[room], k=key(v); if(!k) return;
-          if (seen.has(k)) sh.rooms[room]='-'; else seen.add(k);
-        });
-      }
-      // sh.med / sh.fed / sh.ped are Emergency overlays and may coexist with one normal assignment.
-      // day.cbAM / day.cbPM are Code Blue overlays and are likewise allowed alongside one normal assignment.
+      if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic'; else if (wbcKey) seen.add(wbcKey);
+      normalFields.slice(3).forEach(function(field) { if(reserve(sh[field])) sh[field]=''; });
+      if (sh.rooms && typeof sh.rooms==='object') Object.keys(sh.rooms).forEach(function(room) { const k=key(sh.rooms[room]); if(!k)return; if(seen.has(k)) sh.rooms[room]='-'; else seen.add(k); });
+      // Emergency and Code Blue are permitted overlays.
     });
   });
 }
