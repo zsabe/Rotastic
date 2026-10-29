@@ -16491,10 +16491,15 @@ function rotasticAssignAllAvailablePhysicians(){
 function rotasticSurfaceMissingPhysicians(){
   const roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.','Dr Gani M.','Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.','Dr Rida C.','Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.'];
   const fahima=/^Dr\.?\s+Fahima\b/i;
+  const gani=/\b(?:gani|ghani)\b/i;
+  const bilal=/^Dr\.?\s+Bilal\b/i;
+  function weeklyLeave(doc){return gani.test(String(doc||''))||bilal.test(String(doc||''));}
   function visibleOnDay(day,doc){const k=rotasticDoctorKey(doc);let n=0;['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;rotasticNormalFields().forEach(function(f){if(rotasticDoctorKey(sh[f])===k)n++;});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});});return n;}
   (currentSchedule||[]).forEach(function(day){
+    /* Bilal and every Gani/Ghani/Shafi alias are on leave for this whole week. */
+    ['Dr Bilal C.','Dr Gani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'].forEach(function(doc){rotasticPurgeDoctorEverywhere(day,doc);});
     roster.forEach(function(doc){
-      if(fahima.test(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;
+      if(fahima.test(doc)||weeklyLeave(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;
       if(visibleOnDay(day,doc)>0)return;
       const k=rotasticDoctorKey(doc),g2=rotasticAuthoritativeGroup(doc)===2;
       const p=g2?'pm':'am',sh=day&&day[p];if(!sh)return;
@@ -16503,6 +16508,7 @@ function rotasticSurfaceMissingPhysicians(){
       if(!sh.noRoomDocs)sh.noRoomDocs=[];
       if(!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))sh.noRoomDocs.push(doc);
     });
+    ['Dr Bilal C.','Dr Gani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'].forEach(function(doc){rotasticPurgeDoctorEverywhere(day,doc);});
     rotasticPurgeExplicitOff(day);
   });
 }
