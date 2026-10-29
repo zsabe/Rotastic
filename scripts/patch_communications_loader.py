@@ -78,57 +78,65 @@ elif new_am not in s: raise SystemExit('Final AM Twilight candidate pool anchor 
 if old_pm in s: s = s.replace(old_pm, new_pm, 1)
 elif new_pm not in s: raise SystemExit('Final PM Twilight candidate pool anchor missing')
 
-# WBC cannot be assigned to anyone doing either Twilight shift on the same date.
-# Apply this after the final authoritative Twilight pass so persistent amendments cannot reintroduce the clash.
-wbc_guard = '''function rotasticRemoveTwilightFromWBC() {
+# Final authoritative exclusivity pass. WBC is exclusive within its shift: if a doctor is
+# doing WBC they cannot simultaneously be in Emergency, Twilight, another clinic or room.
+# More generally, one physician may occupy only one simultaneous slot per shift.
+exclusive_guard = '''function rotasticEnforceExclusiveShiftAssignments() {
+  const fields = ['timed1Doc','timed2Doc','med','fed','ped','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
   (currentSchedule || []).forEach(function(day) {
-    const twilight = new Set();
     ['am','pm'].forEach(function(period) {
       const sh = day && day[period];
       if (!sh) return;
-      [sh.timed1Doc, sh.timed2Doc].forEach(function(name) {
-        if (name) twilight.add(canonicalRotaName(name));
+      const seen = new Set();
+      function key(v) { return v && /^Dr\\.?\\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\\s*\\([^)]*\\)\\s*$/,'')) : ''; }
+      function reserve(v) { const k=key(v); if(!k) return false; if(seen.has(k)) return true; seen.add(k); return false; }
+
+      // Twilight is authoritative and must be unique. A second identical Twilight box is blank.
+      if (reserve(sh.timed1Doc)) sh.timed1Doc='';
+      if (reserve(sh.timed2Doc)) sh.timed2Doc='';
+
+      // WBC is an exclusive clinic. If its doctor is already on Twilight, WBC closes rather than duplicating them.
+      const wbcKey = key(sh.wbcDoc);
+      if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic';
+      else if (wbcKey) seen.add(wbcKey);
+
+      fields.slice(2).forEach(function(field) {
+        if (field==='wbcDoc') return;
+        const v=sh[field];
+        if (reserve(v)) sh[field]='';
       });
-    });
-    ['am','pm'].forEach(function(period) {
-      const sh = day && day[period];
-      if (sh && sh.wbcDoc && twilight.has(canonicalRotaName(sh.wbcDoc))) sh.wbcDoc = 'No Clinic';
+
+      if (sh.rooms && typeof sh.rooms==='object') {
+        Object.keys(sh.rooms).forEach(function(room) {
+          const v=sh.rooms[room]; const k=key(v); if(!k) return;
+          // If this room repeats any already reserved physician (including WBC), clear only the duplicate room.
+          if (seen.has(k)) sh.rooms[room]='-'; else seen.add(k);
+        });
+      }
     });
   });
 }
 
 '''
-if 'function rotasticRemoveTwilightFromWBC()' not in s:
+if 'function rotasticEnforceExclusiveShiftAssignments()' not in s:
     anchor = 'function enforceFinalTwilightAssignments() {'
-    if anchor not in s: raise SystemExit('Final Twilight function anchor missing for WBC guard')
-    s = s.replace(anchor, wbc_guard + anchor, 1)
+    if anchor not in s: raise SystemExit('Final Twilight function anchor missing for exclusivity guard')
+    s = s.replace(anchor, exclusive_guard + anchor, 1)
 
-old_order = '''  applyStoredSmartRuleActions();
-  enforceFinalTwilightAssignments();
-  rotasticApplyPersistentScheduleAmendments();
-  populateMoursiShiftDayOptions();'''
-new_order = '''  applyStoredSmartRuleActions();
-  enforceFinalTwilightAssignments();
-  rotasticApplyPersistentScheduleAmendments();
-  enforceFinalTwilightAssignments();
-  rotasticRemoveTwilightFromWBC();
-  populateMoursiShiftDayOptions();'''
-if old_order in s: s = s.replace(old_order, new_order, 1)
-else:
-    current_order = '''  applyStoredSmartRuleActions();
-  enforceFinalTwilightAssignments();
-  rotasticApplyPersistentScheduleAmendments();
-  enforceFinalTwilightAssignments();
-  populateMoursiShiftDayOptions();'''
-    if current_order in s: s = s.replace(current_order, new_order, 1)
-    elif new_order not in s: raise SystemExit('Final Twilight/amendment ordering anchor missing')
+old_guard_call = '  rotasticRemoveTwilightFromWBC();\n  populateMoursiShiftDayOptions();'
+new_guard_call = '  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();'
+if old_guard_call in s: s = s.replace(old_guard_call, new_guard_call, 1)
+elif new_guard_call not in s:
+    order_anchor = '  enforceFinalTwilightAssignments();\n  populateMoursiShiftDayOptions();'
+    if order_anchor in s: s = s.replace(order_anchor, '  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();', 1)
+    else: raise SystemExit('Final exclusivity call anchor missing')
 
 if new_assign not in s: raise SystemExit('Female <=20 room hard block missing')
 if new_emergency not in s: raise SystemExit('Male-side emergency rows not protected')
 if not re.search(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", s): raise SystemExit('WBC male-only invariant missing')
 if smoking_new not in s: raise SystemExit('Smoking Cessation No Clinic invariant missing')
 if new_am not in s or new_pm not in s: raise SystemExit('Final Twilight pools not protected')
-if 'rotasticRemoveTwilightFromWBC();' not in s: raise SystemExit('Twilight/WBC exclusion missing')
+if 'rotasticEnforceExclusiveShiftAssignments();' not in s: raise SystemExit('Final shift exclusivity invariant missing')
 
 p.write_text(s, encoding='utf-8')
-print('Applied permanent rota rules including Twilight/WBC mutual exclusion.')
+print('Applied permanent rota rules including exclusive WBC and one simultaneous duty per physician.')
