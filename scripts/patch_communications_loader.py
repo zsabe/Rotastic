@@ -30,10 +30,24 @@ s = s.replace("DOCTOR_GENDER[currentDoctor] !== 'female'", "!rotasticIsFemalePhy
 s = s.replace("DOCTOR_GENDER[name] === 'female'", "rotasticIsFemalePhysician(name)")
 s = s.replace("DOCTOR_GENDER[name] !== 'female'", "!rotasticIsFemalePhysician(name)")
 
+# Authoritative groups: Group 2 is explicit; every other roster physician is Group 1.
+group_helper = """const ROTASTIC_GROUP_2 = new Set(['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.'].map(canonicalRotaName));
+function rotasticAuthoritativeGroup(name) { return ROTASTIC_GROUP_2.has(canonicalRotaName(name)) ? 2 : 1; }
+"""
+if 'const ROTASTIC_GROUP_2 = new Set' not in s:
+    anchor='function rotasticIsFemalePhysician(name) {'
+    if anchor not in s: raise SystemExit('Group helper anchor missing')
+    s=s.replace(anchor,group_helper+anchor,1)
+# Override group lookup at the generator boundary without changing UI.
+s=re.sub(r"function getDoctorGroup\(name\)\s*\{.*?\n\}", "function getDoctorGroup(name) { return rotasticAuthoritativeGroup(name); }", s, count=1, flags=re.S)
+s=re.sub(r"function doctorGroup\(name\)\s*\{.*?\n\}", "function doctorGroup(name) { return rotasticAuthoritativeGroup(name); }", s, count=1, flags=re.S)
+
 old_assign = "function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }"
-new_assign = "function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }"
-if old_assign in s: s = s.replace(old_assign, new_assign, 1)
-elif new_assign not in s: raise SystemExit('Room assignment invariant anchor missing')
+new_assign = "function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo>=9 && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }"
+old_guard = "function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }"
+if old_assign in s: s=s.replace(old_assign,new_assign,1)
+elif old_guard in s:s=s.replace(old_guard,new_assign,1)
+elif new_assign not in s:raise SystemExit('Room assignment invariant anchor missing')
 
 old_emergency = """shift.med=chooseRotating(male,seed,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
       shift.fed=chooseRotating(female,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || chooseRotating(available,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
@@ -44,43 +58,40 @@ correct_emergency = """shift.med=chooseRotating(male,seed,emergencyUsed,function
 wrong_emergency = """shift.med=chooseRotating(male,seed,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
       shift.fed=chooseRotating(male,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
       shift.ped=chooseRotating(male,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';"""
-if wrong_emergency in s: s = s.replace(wrong_emergency, correct_emergency, 1)
-elif old_emergency in s: s = s.replace(old_emergency, correct_emergency, 1)
-elif correct_emergency not in s: raise SystemExit('Emergency assignment anchor missing')
+if wrong_emergency in s: s=s.replace(wrong_emergency,correct_emergency,1)
+elif old_emergency in s:s=s.replace(old_emergency,correct_emergency,1)
+elif correct_emergency not in s:raise SystemExit('Emergency assignment anchor missing')
 
-s = re.sub(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*chooseRotating\(wbcCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", "shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';", s, count=1)
+s=re.sub(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*chooseRotating\(wbcCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", "shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';", s, count=1)
+smoking_old="  if (!smoker) return;\n  shift.smokingDoc = smoker;"
+smoking_new="  if (!smoker) { shift.smokingDoc = 'No Clinic'; return; }\n  shift.smokingDoc = smoker;"
+if smoking_old in s:s=s.replace(smoking_old,smoking_new,1)
+elif smoking_new not in s:raise SystemExit('Smoking Cessation fallback anchor missing')
 
-smoking_old = "  if (!smoker) return;\n  shift.smokingDoc = smoker;"
-smoking_new = "  if (!smoker) { shift.smokingDoc = 'No Clinic'; return; }\n  shift.smokingDoc = smoker;"
-if smoking_old in s: s = s.replace(smoking_old, smoking_new, 1)
-elif smoking_new not in s: raise SystemExit('Smoking Cessation fallback anchor missing')
-
-female_helper_anchor = 'function uniquePlannedAvailableForTwilight(list, scheduleDay) {'
-female_helper = '''function rotasticIsFemaleTwilightDoctor(name) {
+female_helper_anchor='function uniquePlannedAvailableForTwilight(list, scheduleDay) {'
+female_helper='''function rotasticIsFemaleTwilightDoctor(name) {
       return rotasticIsFemalePhysician(name);
     }
 
     '''
 if 'function rotasticIsFemaleTwilightDoctor(name)' not in s:
-    if female_helper_anchor not in s: raise SystemExit('Twilight availability helper anchor missing')
-    s = s.replace(female_helper_anchor, female_helper + female_helper_anchor, 1)
+    if female_helper_anchor not in s:raise SystemExit('Twilight availability helper anchor missing')
+    s=s.replace(female_helper_anchor,female_helper+female_helper_anchor,1)
 else:
-    start = s.find('function rotasticIsFemaleTwilightDoctor(name)')
-    end = s.find('function uniquePlannedAvailableForTwilight', start)
-    if start >= 0 and end > start: s = s[:start] + female_helper + s[end:]
+    start=s.find('function rotasticIsFemaleTwilightDoctor(name)');end=s.find('function uniquePlannedAvailableForTwilight',start)
+    if start>=0 and end>start:s=s[:start]+female_helper+s[end:]
+s=s.replace(".filter(function(n){return n!=='Dr Mohamed M.';});", ".filter(function(n){return n!=='Dr Mohamed M.' && !rotasticIsFemaleTwilightDoctor(n);});",2)
+s=s.replace(".filter(function(n){return n!=='Dr Mohamed M.' && DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});", ".filter(function(n){return n!=='Dr Mohamed M.' && !rotasticIsFemaleTwilightDoctor(n);});",2)
+old_am="const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
+old_pm="const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
+new_am="const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
+new_pm="const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
+if old_am in s:s=s.replace(old_am,new_am,1)
+elif new_am not in s:raise SystemExit('Final AM Twilight candidate pool anchor missing')
+if old_pm in s:s=s.replace(old_pm,new_pm,1)
+elif new_pm not in s:raise SystemExit('Final PM Twilight candidate pool anchor missing')
 
-s = s.replace(".filter(function(n){return n!=='Dr Mohamed M.';});", ".filter(function(n){return n!=='Dr Mohamed M.' && !rotasticIsFemaleTwilightDoctor(n);});", 2)
-s = s.replace(".filter(function(n){return n!=='Dr Mohamed M.' && DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});", ".filter(function(n){return n!=='Dr Mohamed M.' && !rotasticIsFemaleTwilightDoctor(n);});", 2)
-old_am = "const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
-old_pm = "const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
-new_am = "const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
-new_pm = "const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });"
-if old_am in s: s = s.replace(old_am, new_am, 1)
-elif new_am not in s: raise SystemExit('Final AM Twilight candidate pool anchor missing')
-if old_pm in s: s = s.replace(old_pm, new_pm, 1)
-elif new_pm not in s: raise SystemExit('Final PM Twilight candidate pool anchor missing')
-
-exclusive_guard = '''function rotasticEnforceExclusiveShiftAssignments() {
+exclusive_guard='''function rotasticEnforceExclusiveShiftAssignments() {
   const normalFields = ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
   (currentSchedule || []).forEach(function(day) {
     ['am','pm'].forEach(function(period) {
@@ -94,7 +105,6 @@ exclusive_guard = '''function rotasticEnforceExclusiveShiftAssignments() {
       if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic'; else if (wbcKey) seen.add(wbcKey);
       normalFields.slice(3).forEach(function(field) { if(reserve(sh[field])) sh[field]=''; });
       if (sh.rooms && typeof sh.rooms==='object') Object.keys(sh.rooms).forEach(function(room) { const k=key(sh.rooms[room]); if(!k)return; if(seen.has(k)) sh.rooms[room]='-'; else seen.add(k); });
-      // Emergency and Code Blue are permitted overlays.
     });
   });
 }
@@ -122,28 +132,28 @@ function rotasticAssignAllAvailablePhysicians() {
 }
 
 '''
-start = s.find('function rotasticEnforceExclusiveShiftAssignments()')
-if start >= 0:
-    end = s.find('function enforceFinalTwilightAssignments() {', start)
-    if end <= start: raise SystemExit('Could not replace exclusivity guard')
-    s = s[:start] + exclusive_guard + s[end:]
+start=s.find('function rotasticEnforceExclusiveShiftAssignments()')
+if start>=0:
+    end=s.find('function enforceFinalTwilightAssignments() {',start)
+    if end<=start:raise SystemExit('Could not replace exclusivity guard')
+    s=s[:start]+exclusive_guard+s[end:]
 else:
     anchor='function enforceFinalTwilightAssignments() {'
-    if anchor not in s: raise SystemExit('Final Twilight function anchor missing')
+    if anchor not in s:raise SystemExit('Final Twilight function anchor missing')
     s=s.replace(anchor,exclusive_guard+anchor,1)
-
 order_anchor='  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();'
 new_order='  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();'
 if new_order not in s:
     if order_anchor in s:s=s.replace(order_anchor,new_order,1)
     else:raise SystemExit('Final allocation call anchor missing')
 
-if new_assign not in s: raise SystemExit('Female <=20 room hard block missing')
-if correct_emergency not in s: raise SystemExit('Gender-correct Emergency overlays missing')
-if not re.search(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", s): raise SystemExit('WBC male-only invariant missing')
-if smoking_new not in s: raise SystemExit('Smoking Cessation No Clinic invariant missing')
-if new_am not in s or new_pm not in s: raise SystemExit('Final Twilight pools not protected')
-if 'rotasticAssignAllAvailablePhysicians();' not in s: raise SystemExit('All-available allocation invariant missing')
+if new_assign not in s:raise SystemExit('Female room 9-20 hard block missing')
+if correct_emergency not in s:raise SystemExit('Gender-correct Emergency overlays missing')
+if not re.search(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';",s):raise SystemExit('WBC male-only invariant missing')
+if smoking_new not in s:raise SystemExit('Smoking Cessation No Clinic invariant missing')
+if new_am not in s or new_pm not in s:raise SystemExit('Final Twilight pools not protected')
+if 'rotasticAssignAllAvailablePhysicians();' not in s:raise SystemExit('All-available allocation invariant missing')
+if 'Dr Laith A.' not in s or 'Dr Bilal C.' not in s:raise SystemExit('Authoritative Group 2 missing')
 
-p.write_text(s, encoding='utf-8')
-print('Applied all-available physician allocation; Dr Fahima excluded from shifts.')
+p.write_text(s,encoding='utf-8')
+print('Applied authoritative groups and all rota generation rules; UI unchanged.')
