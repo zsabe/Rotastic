@@ -2,29 +2,28 @@
 'use strict';
 if(window.__rotasticFixedPhysicianRules)return;window.__rotasticFixedPhysicianRules=true;
 const key=v=>String(v||'').trim().toLowerCase().replace(/\./g,'').replace(/^dr\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
+const first=v=>key(v).split(' ')[0]||'';
 const isFahima=v=>/^fahima(?:\s+n)?$/.test(key(v));
 const isMoursi=v=>/^(?:m\s+)?moursi$/.test(key(v))||/^(?:m\s+)?morsi$/.test(key(v));
-function clearDoctorFromShift(sh,test){
-  if(!sh||typeof sh!=='object')return 0;let changed=0;
-  if(sh.rooms&&typeof sh.rooms==='object')for(const r of Object.keys(sh.rooms))if(test(sh.rooms[r])){sh.rooms[r]='';changed++}
-  for(const k of Object.keys(sh)){
-    if(k==='rooms')continue;
-    const v=sh[k];
-    if(typeof v==='string'&&test(v)){sh[k]='';changed++}
-    else if(Array.isArray(v))for(let i=v.length-1;i>=0;i--){const x=v[i],n=typeof x==='string'?x:(x?.doctor||x?.name||x?.physician||'');if(test(n)){v.splice(i,1);changed++}}
-  }
-  return changed;
-}
-function enforceFahima(day){let changed=0;for(const p of ['am','pm'])changed+=clearDoctorFromShift(day?.[p],isFahima);for(const k of ['cbAM','cbPM']){const cb=day?.[k];if(cb&&typeof cb==='object')for(const f of Object.keys(cb))if(isFahima(cb[f])){cb[f]='';changed++}}return changed}
-function enforceMoursi(day){const sh=day?.am;if(!sh||!sh.rooms||typeof sh.rooms!=='object')return 0;let changed=0;
-  for(const r of Object.keys(sh.rooms))if(String(r)!=='9'&&isMoursi(sh.rooms[r])){sh.rooms[r]='';changed++}
-  if(isMoursi(sh.rooms['9']))return changed;
-  const displaced=sh.rooms['9'];
-  if(displaced){for(let r=10;r<=20;r++){const k=String(r);if(!sh.rooms[k]){sh.rooms[k]=displaced;break}}}
-  sh.rooms['9']='Dr Moursi';return changed+1;
-}
-function enforce(schedule){const root=schedule||window.currentSchedule;const days=Array.isArray(root)?root:Array.isArray(root?.days)?root.days:[];let changed=0;for(const day of days){changed+=enforceFahima(day);changed+=enforceMoursi(day)}return changed}
+const isOula=v=>/^(oula|ola)(\s|$)/.test(key(v));
+const isRida=v=>/^rida(\s|$)/.test(key(v));
+const isAbdulgafoor=v=>/^(abdul\s*)?(ghafoor|gafoor|ghafour|gafour)(\s|$)/.test(key(v))||/^abdulgafoor(\s|$)/.test(key(v))||/^abdulghafoor(\s|$)/.test(key(v));
+const isShadi=v=>/^shadi(\s|$)/.test(key(v));
+const isHusam=v=>/^(husam|hossam|hussam)(\s|$)/.test(key(v));
+const isFemale=v=>['fazila','maya','oula','ola','tayseer','taysir','saima','rida','laila','layla','leila','saba','fahima'].includes(first(v));
+const codeBlueBlocked=v=>isAbdulgafoor(v)||/^maher(\s|$)/.test(key(v))||/^(mohamed|mohammed|muhammad)\s+(sayed|saeed|s)(\s|$)/.test(key(v))||/^(saleh|salah)(\s|$)/.test(key(v));
+const isTwilightField=k=>/twilight|timed|nine.?to.?four|two.?to.?eight|9.?4|2.?8/i.test(k);
+const isWbcField=k=>/wbc|well.?baby/i.test(k);
+const isAncField=k=>/^anc|antenatal/i.test(k);
+const doctorOf=v=>typeof v==='string'?v:(v?.doctor||v?.name||v?.physician||'');
+function clearDoctorFromShift(sh,test){if(!sh||typeof sh!=='object')return 0;let changed=0;if(sh.rooms&&typeof sh.rooms==='object')for(const r of Object.keys(sh.rooms))if(test(doctorOf(sh.rooms[r]))){sh.rooms[r]='';changed++}for(const k of Object.keys(sh)){if(k==='rooms')continue;const v=sh[k];if(typeof v==='string'&&test(v)){sh[k]='';changed++}else if(Array.isArray(v))for(let i=v.length-1;i>=0;i--){if(test(doctorOf(v[i]))){v.splice(i,1);changed++}}}return changed}
+function enforceFahima(day){let changed=0;for(const p of ['am','pm'])changed+=clearDoctorFromShift(day?.[p],isFahima);for(const k of ['cbAM','cbPM']){const cb=day?.[k];if(cb&&typeof cb==='object')for(const f of Object.keys(cb))if(isFahima(doctorOf(cb[f]))){cb[f]='';changed++}}return changed}
+function enforceMoursi(day){const sh=day?.am;if(!sh||!sh.rooms||typeof sh.rooms!=='object')return 0;let changed=0;for(const r of Object.keys(sh.rooms))if(String(r)!=='9'&&isMoursi(doctorOf(sh.rooms[r]))){sh.rooms[r]='';changed++}if(isMoursi(doctorOf(sh.rooms['9'])))return changed;const displaced=sh.rooms['9'];if(displaced){for(let r=10;r<=20;r++){const k=String(r);if(!sh.rooms[k]){sh.rooms[k]=displaced;break}}}sh.rooms['9']='Dr Moursi';return changed+1}
+function enforceClinicEligibility(day){let changed=0;for(const p of ['am','pm']){const sh=day?.[p];if(!sh||typeof sh!=='object')continue;for(const k of Object.keys(sh)){if(k==='rooms')continue;const d=doctorOf(sh[k]);if(!d)continue;if(isWbcField(k)&&(isFemale(d)||isShadi(d)||isHusam(d)||isAbdulgafoor(d))){sh[k]='';changed++}if(isAncField(k)&&!isFemale(d)){sh[k]='';changed++}if(isTwilightField(k)&&isFemale(d)){sh[k]='';changed++}}if(sh.rooms&&typeof sh.rooms==='object')for(const r of Object.keys(sh.rooms)){const d=doctorOf(sh.rooms[r]);if(isAbdulgafoor(d)&&String(r)!=='39'){sh.rooms[r]='';changed++}}}for(const cbKey of ['cbAM','cbPM']){const cb=day?.[cbKey];if(cb&&typeof cb==='object')for(const k of Object.keys(cb))if(codeBlueBlocked(doctorOf(cb[k]))){cb[k]='';changed++}}return changed}
+function enforceTwilightExclusivity(day){let changed=0;const twilight=[];for(const p of ['am','pm']){const sh=day?.[p];if(!sh)continue;for(const k of Object.keys(sh))if(isTwilightField(k)){const d=doctorOf(sh[k]);if(d&&!isFemale(d))twilight.push(d)}}for(const d of twilight){for(const p of ['am','pm']){const sh=day?.[p];if(!sh)continue;if(sh.rooms&&typeof sh.rooms==='object')for(const r of Object.keys(sh.rooms))if(key(doctorOf(sh.rooms[r]))===key(d)){sh.rooms[r]='';changed++}for(const k of Object.keys(sh)){if(isTwilightField(k))continue;if(isWbcField(k)&&key(doctorOf(sh[k]))===key(d)){sh[k]='';changed++}}}for(const cbKey of ['cbAM','cbPM']){const cb=day?.[cbKey];if(cb&&typeof cb==='object')for(const k of Object.keys(cb))if(key(doctorOf(cb[k]))===key(d)){cb[k]='';changed++}}}return changed}
+function enforceMondaySpecialties(day){const raw=String(day?.date||day?.isoDate||day?.dayDate||day?.shiftDate||'');const dt=raw?new Date(raw+'T12:00:00'):null;if(!dt||dt.getDay()!==1)return 0;let changed=0;for(const [doctor,room] of [['Dr Oula T.','21'],['Dr Rida C.','24']]){let target=null;for(const p of ['am','pm']){const sh=day?.[p];if(!sh)continue;const hasAnc=Object.keys(sh).some(k=>isAncField(k)&&key(doctorOf(sh[k]))===key(doctor));if(hasAnc){target=null;break}const present=(sh.rooms&&Object.values(sh.rooms).some(v=>key(doctorOf(v))===key(doctor)))||Object.keys(sh).some(k=>key(doctorOf(sh[k]))===key(doctor));if(present)target=sh}if(!target)continue;if(target.rooms&&typeof target.rooms==='object'){for(const r of Object.keys(target.rooms))if(key(doctorOf(target.rooms[r]))===key(doctor)&&String(r)!==room){target.rooms[r]='';changed++}if(!target.rooms[room]){target.rooms[room]=doctor;changed++}}}return changed}
+function enforce(schedule){const root=schedule||window.currentSchedule;const days=Array.isArray(root)?root:Array.isArray(root?.days)?root.days:[];let changed=0;for(const day of days){changed+=enforceFahima(day);changed+=enforceMoursi(day);changed+=enforceClinicEligibility(day);changed+=enforceTwilightExclusivity(day);changed+=enforceMondaySpecialties(day)}return changed}
 function install(){for(const name of ['generateDutyScheduleFromPlanner','generateSchedule','generateRota','buildSchedule','buildRota','createSchedule','createRota']){const fn=window[name];if(typeof fn!=='function'||fn.__rotasticFixedPhysicianGuard)continue;const wrapped=function(...args){const out=fn.apply(this,args);if(out&&typeof out.then==='function')return out.then(v=>{enforce(v);enforce(window.currentSchedule);window.renderSchedule?.();return v});enforce(out);enforce(window.currentSchedule);window.renderSchedule?.();return out};wrapped.__rotasticFixedPhysicianGuard=true;window[name]=wrapped}}
-window.rotasticEnforceFixedPhysicianRules=enforce;window.rotasticIsFahima=isFahima;window.rotasticIsMoursi=isMoursi;
+window.rotasticEnforceFixedPhysicianRules=enforce;window.rotasticIsFahima=isFahima;window.rotasticIsMoursi=isMoursi;window.rotasticIsOula=isOula;window.rotasticIsRida=isRida;window.rotasticIsAbdulgafoor=isAbdulgafoor;window.rotasticCodeBlueBlocked=codeBlueBlocked;
 install();setInterval(()=>{install();enforce(window.currentSchedule)},500);
 })();
