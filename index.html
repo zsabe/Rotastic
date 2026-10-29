@@ -15015,7 +15015,9 @@ function getGroupForPeriod(dayIndex, period, selectedWedAM) {
 }
 function blankRooms(){ return {9:'-',10:'-',12:'-',13:'-',14:'-',39:'-',21:'-',22:'-',24:'-',25:'-',26:'-',27:'-'}; }
 function makeBlankShift(){ return {med:'',fed:'',ped:'',timed1Doc:'',timed2Doc:'',rooms:blankRooms(),noRoomDocs:[],smokingDoc:'',iucdDoc:'',sdiDoc:''}; }
-function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }
+function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo>=9 && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }
+const ROTASTIC_GROUP_2 = new Set(['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.'].map(canonicalRotaName));
+function rotasticAuthoritativeGroup(name) { return ROTASTIC_GROUP_2.has(canonicalRotaName(name)) ? 2 : 1; }
 function rotasticIsFemalePhysician(name) {
   const canonical = canonicalRotaName(name);
   if (DOCTOR_GENDER[canonical] === 'female') return true;
@@ -16424,7 +16426,6 @@ function rotasticEnforceExclusiveShiftAssignments() {
       if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic'; else if (wbcKey) seen.add(wbcKey);
       normalFields.slice(3).forEach(function(field) { if(reserve(sh[field])) sh[field]=''; });
       if (sh.rooms && typeof sh.rooms==='object') Object.keys(sh.rooms).forEach(function(room) { const k=key(sh.rooms[room]); if(!k)return; if(seen.has(k)) sh.rooms[room]='-'; else seen.add(k); });
-      // Emergency and Code Blue are permitted overlays.
     });
   });
 }
