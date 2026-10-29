@@ -16393,6 +16393,23 @@ function getShiftDisplayedDutyCount(day, period) {
   return cohort.length + extras.length;
 }
 
+function rotasticRemoveTwilightFromWBC() {
+  (currentSchedule || []).forEach(function(day) {
+    const twilight = new Set();
+    ['am','pm'].forEach(function(period) {
+      const sh = day && day[period];
+      if (!sh) return;
+      [sh.timed1Doc, sh.timed2Doc].forEach(function(name) {
+        if (name) twilight.add(canonicalRotaName(name));
+      });
+    });
+    ['am','pm'].forEach(function(period) {
+      const sh = day && day[period];
+      if (sh && sh.wbcDoc && twilight.has(canonicalRotaName(sh.wbcDoc))) sh.wbcDoc = 'No Clinic';
+    });
+  });
+}
+
 function enforceFinalTwilightAssignments() {
   // Single authoritative Twilight calculation based on the historical signed rotas.
   if (!Array.isArray(currentSchedule) || !currentSchedule.length) return;
@@ -16576,6 +16593,7 @@ function generateDutySchedule() {
   enforceFinalTwilightAssignments();
   rotasticApplyPersistentScheduleAmendments();
   enforceFinalTwilightAssignments();
+  rotasticRemoveTwilightFromWBC();
   populateMoursiShiftDayOptions();
   renderScheduleView();
   renderTodayBriefing();
