@@ -7,6 +7,7 @@ function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+
  './rotastic-codeblue-hard-block.js?v=2',
  './rotastic-clinic-gender-hard-block.js?v=2',
  './rota-permanent-rules.js?v=16',
+ './rotastic-fixed-physician-rules.js?v=1',
  './rotastic-weekly-clinic-selector.js?v=8',
  './rotastic-smartbox-integration.js?v=8',
  './rotastic-schedule-name-normalization.js?v=2',
