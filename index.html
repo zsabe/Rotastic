@@ -16589,6 +16589,42 @@ function rotasticEnforceGaniGroup2Shift(){
     if(!sh.noRoomDocs.some(function(v){return rotasticDoctorKey(v)===gani;}))sh.noRoomDocs.push('Dr Gani M.');
   });
 }
+function rotasticDoctorKey(v) {
+  if (!v || !/^Dr\.?\s+/i.test(String(v))) return '';
+  return canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,''));
+}
+function rotasticNormalFields(){return ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];}
+function rotasticDayTwilight(day){
+  const out=new Set();
+  ['am','pm'].forEach(function(period){const sh=day&&day[period];if(!sh)return;['timed1Doc','timed2Doc'].forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)out.add(k);});});
+  return out;
+}
+function rotasticClearNormalDoctor(sh,k,keepTwilight){
+  if(!sh||!k)return;
+  rotasticNormalFields().forEach(function(f){if(keepTwilight&&(f==='timed1Doc'||f==='timed2Doc'))return;if(rotasticDoctorKey(sh[f])===k)sh[f]=f==='wbcDoc'?'No Clinic':'';});
+  if(sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(rotasticDoctorKey(sh.rooms[r])===k)sh.rooms[r]='-';});
+  if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==k;});
+}
+function rotasticEnforceGaniGroup2Shift(){
+  const gani=canonicalRotaName('Dr Gani M.');
+  (currentSchedule||[]).forEach(function(day){
+    function normalKeys(sh){const out=[];if(!sh)return out;rotasticNormalFields().forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)out.push(k);});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.push(k);});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.push(k);});return out;}
+    const amKeys=normalKeys(day&&day.am),pmKeys=normalKeys(day&&day.pm);
+    const ganiAM=amKeys.includes(gani),ganiPM=pmKeys.includes(gani);
+    if(!ganiAM&&!ganiPM)return;
+    const score=function(keys){return keys.filter(function(k){return k!==gani&&ROTASTIC_GROUP_2.has(k);}).length;};
+    const am2=score(amKeys),pm2=score(pmKeys);
+    if(am2===pm2)return;
+    const target=pm2>am2?'pm':'am',wrong=target==='pm'?'am':'pm';
+    if((target==='pm'&&ganiPM)||(target==='am'&&ganiAM)){rotasticClearNormalDoctor(day&&day[wrong],gani,false);return;}
+    rotasticClearNormalDoctor(day&&day[wrong],gani,false);
+    const sh=day&&day[target];if(!sh)return;
+    const rooms=['21','22','24','25','26','27','14','13','12','10','9','39'];
+    for(const r of rooms){if(assignIfFreeRoom(sh,r,'Dr Gani M.',''))return;}
+    if(!sh.noRoomDocs)sh.noRoomDocs=[];
+    if(!sh.noRoomDocs.some(function(v){return rotasticDoctorKey(v)===gani;}))sh.noRoomDocs.push('Dr Gani M.');
+  });
+}
 function rotasticEnforceExclusiveShiftAssignments(){
   (currentSchedule||[]).forEach(function(day){
     const twilight=rotasticDayTwilight(day);
