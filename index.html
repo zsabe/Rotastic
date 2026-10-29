@@ -16490,26 +16490,31 @@ function rotasticAssignAllAvailablePhysicians(){
 }
 function rotasticSurfaceMissingPhysicians(){
   const roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.','Dr Gani M.','Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.','Dr Rida C.','Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.'];
-  const fahima=/^Dr\.?\s+Fahima\b/i;
-  const gani=/\b(?:gani|ghani)\b/i;
-  const bilal=/^Dr\.?\s+Bilal\b/i;
-  function weeklyLeave(doc){return gani.test(String(doc||''))||bilal.test(String(doc||''));}
-  function visibleOnDay(day,doc){const k=rotasticDoctorKey(doc);let n=0;['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;rotasticNormalFields().forEach(function(f){if(rotasticDoctorKey(sh[f])===k)n++;});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});});return n;}
+  const gani=/\b(?:gani|ghani)\b/i,bilal=/^Dr\.?\s+Bilal\b/i,fahima=/^Dr\.?\s+Fahima\b/i;
+  const leaveAliases=['Dr Bilal C.','Dr Gani M.','Dr Ghani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'];
+  function unavailable(doc,day){return fahima.test(doc)||bilal.test(doc)||gani.test(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day);}
+  function groupPeriod(day,doc){
+    const want=rotasticAuthoritativeGroup(doc),score={am:0,pm:0};
+    ['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;const vals=[];rotasticNormalFields().forEach(function(f){if(sh[f])vals.push(sh[f]);});if(sh.rooms)vals.push(...Object.values(sh.rooms));if(Array.isArray(sh.noRoomDocs))vals.push(...sh.noRoomDocs);vals.forEach(function(x){if(rotasticAuthoritativeGroup(x)===want)score[p]++;});});
+    if(score.am!==score.pm)return score.am>score.pm?'am':'pm';
+    return want===2?'pm':'am';
+  }
+  function visible(day,doc){const k=rotasticDoctorKey(doc);for(const p of ['am','pm']){const sh=day&&day[p];if(!sh)continue;for(const f of rotasticNormalFields())if(rotasticDoctorKey(sh[f])===k)return true;if(sh.rooms&&Object.values(sh.rooms).some(v=>rotasticDoctorKey(v)===k))return true;if(Array.isArray(sh.noRoomDocs)&&sh.noRoomDocs.some(v=>rotasticDoctorKey(v)===k))return true;}return false;}
   (currentSchedule||[]).forEach(function(day){
-    /* Bilal and every Gani/Ghani/Shafi alias are on leave for this whole week. */
-    ['Dr Bilal C.','Dr Gani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'].forEach(function(doc){rotasticPurgeDoctorEverywhere(day,doc);});
-    roster.forEach(function(doc){
-      if(fahima.test(doc)||weeklyLeave(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;
-      if(visibleOnDay(day,doc)>0)return;
-      const k=rotasticDoctorKey(doc),g2=rotasticAuthoritativeGroup(doc)===2;
-      const p=g2?'pm':'am',sh=day&&day[p];if(!sh)return;
-      const rooms=rotasticIsFemalePhysician(doc)?['21','22','24','25','26','27','39']:['21','22','24','25','26','27','14','13','12','10','9','39'];
-      for(const r of rooms){if(assignIfFreeRoom(sh,r,doc,''))return;}
-      if(!sh.noRoomDocs)sh.noRoomDocs=[];
-      if(!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))sh.noRoomDocs.push(doc);
-    });
-    ['Dr Bilal C.','Dr Gani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'].forEach(function(doc){rotasticPurgeDoctorEverywhere(day,doc);});
+    leaveAliases.forEach(doc=>rotasticPurgeDoctorEverywhere(day,doc));
     rotasticPurgeExplicitOff(day);
+    roster.forEach(function(doc){
+      if(unavailable(doc,day)||visible(day,doc))return;
+      const p=groupPeriod(day,doc),sh=day&&day[p];if(!sh)return;
+      const k=rotasticDoctorKey(doc);
+      /* noRoomDocs is an actual generated normal assignment and the export prioritizes it. */
+      if(!Array.isArray(sh.noRoomDocs))sh.noRoomDocs=[];
+      if(!sh.noRoomDocs.some(x=>rotasticDoctorKey(x)===k))sh.noRoomDocs.push(doc);
+    });
+    leaveAliases.forEach(doc=>rotasticPurgeDoctorEverywhere(day,doc));
+    rotasticPurgeExplicitOff(day);
+    /* Hard assertion: never silently publish a day missing an available physician. */
+    roster.forEach(function(doc){if(!unavailable(doc,day)&&!visible(day,doc))throw new Error('ROTASTIC missing available physician: '+doc+' '+(rotasticDayISO(day)||''));});
   });
 }
 function enforceFinalTwilightAssignments() {
@@ -16700,8 +16705,6 @@ function generateDutySchedule() {
   rotasticRepairWBCAndANC();
   rotasticAssignAllAvailablePhysicians();
   rotasticEnforceExclusiveShiftAssignments();
-  rotasticSurfaceMissingPhysicians();
-  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);
   rotasticEnforceGaniGroup2Shift();
   rotasticEnforceExclusiveShiftAssignments();
   rotasticRepairWBCAndANC();
@@ -16710,6 +16713,8 @@ function generateDutySchedule() {
   rotasticRepairWBCAndANC();
   rotasticAssignAllAvailablePhysicians();
   rotasticEnforceExclusiveShiftAssignments();
+  rotasticSurfaceMissingPhysicians();
+  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);
   (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);
   populateMoursiShiftDayOptions();
   renderScheduleView();
