@@ -6803,6 +6803,7 @@ nav.mobile-nav-bar>button[data-rotastic-tab="schedule"]>span{font-weight:600!imp
 <label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicWBC" type="checkbox" checked class="accent-teal-500"><span>Well Baby Clinic</span></label>
 <label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicIUD" type="checkbox" checked class="accent-teal-500"><span>IUD / IUCD</span></label>
 <label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicNCD" type="checkbox" checked class="accent-teal-500"><span>NCD</span></label>
+<label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicSmoking" type="checkbox" checked class="accent-teal-500"><span>Smoking Cessation</span></label>
 </div>
 </div>
 <div class="flex items-end">
@@ -15177,7 +15178,7 @@ function getWeeklySpecialClinicPlan(isoDate) {
 }
 
 function rotasticWeeklyClinicEnabled(id) {
-  const map = {anc:'weeklyClinicANC', wbc:'weeklyClinicWBC', iud:'weeklyClinicIUD', ncd:'weeklyClinicNCD'};
+  const map = {anc:'weeklyClinicANC', wbc:'weeklyClinicWBC', iud:'weeklyClinicIUD', ncd:'weeklyClinicNCD', smoking:'weeklyClinicSmoking'};
   const el = document.getElementById(map[id]);
   return !el || !!el.checked;
 }
@@ -15219,6 +15220,7 @@ function rotasticAssignMondaySpecialClinics(day, period, available, shift, used)
 function rotasticAssignTuesdaySmoking(day, period, available, shift, used) {
   if (!day || day.day !== 'Tuesday') return;
   const plan = getWeeklySpecialClinicPlan(day.isoDate);
+  if (!rotasticWeeklyClinicEnabled('smoking')) { shift.smokingDoc = 'No Clinic'; return; }
   const alternate = plan.smokingDoctor === 'Dr Enan M.' ? 'Dr Selman E.' : 'Dr Enan M.';
   let smoker = '';
 
