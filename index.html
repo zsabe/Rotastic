@@ -16466,6 +16466,24 @@ function rotasticClearNormalDoctor(sh, doctorKey, keepTwilight) {
   });
   if (Array.isArray(sh.noRoomDocs)) sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==doctorKey;});
 }
+function rotasticDoctorKey(v) {
+  if (!v || !/^Dr\.?\s+/i.test(String(v))) return '';
+  return canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,''));
+}
+function rotasticNormalFields() {
+  return ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
+}
+function rotasticClearNormalDoctor(sh, doctorKey, keepTwilight) {
+  if (!sh || !doctorKey) return;
+  rotasticNormalFields().forEach(function(field) {
+    if (keepTwilight && (field==='timed1Doc' || field==='timed2Doc')) return;
+    if (rotasticDoctorKey(sh[field])===doctorKey) sh[field] = field==='wbcDoc' ? 'No Clinic' : '';
+  });
+  if (sh.rooms && typeof sh.rooms==='object') Object.keys(sh.rooms).forEach(function(room) {
+    if (rotasticDoctorKey(sh.rooms[room])===doctorKey) sh.rooms[room]='-';
+  });
+  if (Array.isArray(sh.noRoomDocs)) sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==doctorKey;});
+}
 function rotasticEnforceExclusiveShiftAssignments() {
   (currentSchedule || []).forEach(function(day) {
     const twilight = new Set();
@@ -16488,6 +16506,33 @@ function rotasticEnforceExclusiveShiftAssignments() {
         if(seen.has(k))sh.rooms[room]='-';else seen.add(k);
       });
       if(Array.isArray(sh.noRoomDocs)) sh.noRoomDocs=sh.noRoomDocs.filter(function(v){const k=rotasticDoctorKey(v);if(!k||seen.has(k))return false;seen.add(k);return true;});
+    });
+  });
+}
+function rotasticRepairWBCAndANC() {
+  (currentSchedule||[]).forEach(function(day){
+    ['am','pm'].forEach(function(period){
+      const sh=day&&day[period]; if(!sh)return;
+      const list=typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,period):(typeof getAvailableDoctors==='function'?getAvailableDoctors(day,period):[]);
+      const available=(list||[]).filter(function(doc){return doc&&!doctorIsOnLeaveForDay(doc,day);});
+      const occupied=new Set();
+      ['timed1Doc','timed2Doc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'].forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)occupied.add(k);});
+      if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)occupied.add(k);});
+      const wbcEnabled=typeof rotasticWeeklyClinicEnabled!=='function'||rotasticWeeklyClinicEnabled('wbc');
+      const wbcKey=rotasticDoctorKey(sh.wbcDoc);
+      if(wbcEnabled && !wbcKey){
+        const next=available.find(function(doc){const k=canonicalRotaName(doc);return !rotasticIsFemalePhysician(doc)&&!occupied.has(k)&&!dutyExempt(doc,'wbc',day);});
+        if(next){sh.wbcDoc=next;occupied.add(canonicalRotaName(next));}
+      }
+      if(!wbcEnabled)sh.wbcDoc='No Clinic';
+      /* WBC is a named clinic with no room number. Remove any duplicate room placement. */
+      const finalWbc=rotasticDoctorKey(sh.wbcDoc);
+      if(finalWbc&&sh.rooms)Object.keys(sh.rooms).forEach(function(room){if(rotasticDoctorKey(sh.rooms[room])===finalWbc)sh.rooms[room]='-';});
+      /* ANC is exclusively Room 32. Keep the physician in ancDoc and remove any other room copy. */
+      const anc=rotasticDoctorKey(sh.ancDoc);
+      if(anc&&sh.rooms)Object.keys(sh.rooms).forEach(function(room){if(room!=='32'&&rotasticDoctorKey(sh.rooms[room])===anc)sh.rooms[room]='-';});
+      sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':'';
+      sh.wbcRoom='';
     });
   });
 }
@@ -16709,8 +16754,10 @@ function generateDutySchedule() {
   rotasticApplyPersistentScheduleAmendments();
   enforceFinalTwilightAssignments();
   rotasticEnforceExclusiveShiftAssignments();
+  rotasticRepairWBCAndANC();
   rotasticAssignAllAvailablePhysicians();
   rotasticEnforceExclusiveShiftAssignments();
+  rotasticRepairWBCAndANC();
   populateMoursiShiftDayOptions();
   renderScheduleView();
   renderTodayBriefing();
