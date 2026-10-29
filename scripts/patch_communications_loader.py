@@ -95,11 +95,9 @@ exclusive_guard = '''function rotasticEnforceExclusiveShiftAssignments() {
       function key(v) { return v && /^Dr\\.?\\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\\s*\\([^)]*\\)\\s*$/,'')) : ''; }
       function reserve(v) { const k=key(v); if(!k) return false; if(seen.has(k)) return true; seen.add(k); return false; }
 
-      // Twilight is a normal assignment and must be unique.
       if (reserve(sh.timed1Doc)) sh.timed1Doc='';
       if (reserve(sh.timed2Doc)) sh.timed2Doc='';
 
-      // WBC is exclusive from every other NORMAL assignment, especially Twilight.
       const wbcKey=key(sh.wbcDoc);
       if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic';
       else if (wbcKey) seen.add(wbcKey);
@@ -114,8 +112,7 @@ exclusive_guard = '''function rotasticEnforceExclusiveShiftAssignments() {
           if (seen.has(k)) sh.rooms[room]='-'; else seen.add(k);
         });
       }
-      // sh.med / sh.fed / sh.ped are Emergency overlays and may coexist with one normal assignment.
-      // day.cbAM / day.cbPM are Code Blue overlays and are likewise allowed alongside one normal assignment.
+      // Emergency (med/fed/ped) and Code Blue are permitted overlays.
     });
   });
 }
@@ -136,12 +133,20 @@ if 'rotasticEnforceExclusiveShiftAssignments();' not in s:
     if order_anchor in s: s=s.replace(order_anchor,'  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();',1)
     else: raise SystemExit('Final exclusivity call anchor missing')
 
+# Critical: later amendments/manual persistence can mutate the schedule after generation.
+# Normalize immediately before EVERY render so the displayed rota and every export source are authoritative.
+render_guard = "if (typeof rotasticEnforceExclusiveShiftAssignments === 'function') rotasticEnforceExclusiveShiftAssignments();\n  renderDutySchedule();"
+if render_guard not in s:
+    if 'renderDutySchedule();' not in s: raise SystemExit('Rota render anchor missing')
+    s = s.replace('renderDutySchedule();', render_guard)
+
 if new_assign not in s: raise SystemExit('Female <=20 room hard block missing')
 if correct_emergency not in s: raise SystemExit('Gender-correct Emergency overlays missing')
 if not re.search(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", s): raise SystemExit('WBC male-only invariant missing')
 if smoking_new not in s: raise SystemExit('Smoking Cessation No Clinic invariant missing')
 if new_am not in s or new_pm not in s: raise SystemExit('Final Twilight pools not protected')
 if 'rotasticEnforceExclusiveShiftAssignments();' not in s: raise SystemExit('Final shift exclusivity invariant missing')
+if render_guard not in s: raise SystemExit('Pre-render exclusivity invariant missing')
 
 p.write_text(s, encoding='utf-8')
-print('Applied normal-duty exclusivity with Emergency and Code Blue overlays preserved.')
+print('Applied authoritative normal-duty exclusivity before every rota render; Emergency and Code Blue overlays preserved.')
