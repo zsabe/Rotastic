@@ -34,8 +34,7 @@ s = s.replace("DOCTOR_GENDER[currentDoctor] !== 'female'", "!rotasticIsFemalePhy
 s = s.replace("DOCTOR_GENDER[name] === 'female'", "rotasticIsFemalePhysician(name)")
 s = s.replace("DOCTOR_GENDER[name] !== 'female'", "!rotasticIsFemalePhysician(name)")
 
-# Absolute room invariant: every numbered room <=20 is male-side. This covers the
-# currently displayed 9,10,12,13,14 and also 11,15,16,17,18,19,20 if introduced later.
+# Absolute room invariant: every numbered room <=20 is male-side.
 old_assign = "function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }"
 new_assign = "function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }"
 if old_assign in s:
@@ -43,8 +42,6 @@ if old_assign in s:
 elif new_assign not in s:
     raise SystemExit('Room assignment invariant anchor missing')
 
-# Emergency display rows correspond to male-side room numbers 10/12/13 in the locked
-# rota/export layout, so those three pools must also be male-only.
 old_emergency = """shift.med=chooseRotating(male,seed,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
       shift.fed=chooseRotating(female,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || chooseRotating(available,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
       shift.ped=chooseRotating(available,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';"""
@@ -56,8 +53,6 @@ if old_emergency in s:
 elif new_emergency not in s:
     raise SystemExit('Emergency assignment anchor missing')
 
-# WBC is male-only. Remove the legacy fallback to the mixed candidate pool regardless
-# of whether the source still uses DOCTOR_GENDER or the hard helper.
 s = re.sub(
     r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*chooseRotating\(wbcCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';",
     "shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';",
@@ -66,7 +61,15 @@ s = re.sub(
 )
 s = s.replace("DOCTOR_GENDER[name] === 'female' &&\n      canonicalRotaName(name)", "rotasticIsFemalePhysician(name) &&\n      canonicalRotaName(name)", 1)
 
-# Twilight: no female physician, in both initial and final authoritative paths.
+# Smoking Cessation is Tuesday-only, uses only the configured Dr Enan/Dr Selman pair,
+# and must explicitly show No Clinic when closed or when neither eligible doctor is available.
+smoking_old = "  if (!smoker) return;\n  shift.smokingDoc = smoker;"
+smoking_new = "  if (!smoker) { shift.smokingDoc = 'No Clinic'; return; }\n  shift.smokingDoc = smoker;"
+if smoking_old in s:
+    s = s.replace(smoking_old, smoking_new, 1)
+elif smoking_new not in s:
+    raise SystemExit('Smoking Cessation fallback anchor missing')
+
 female_helper_anchor = 'function uniquePlannedAvailableForTwilight(list, scheduleDay) {'
 female_helper = '''function rotasticIsFemaleTwilightDoctor(name) {
       return rotasticIsFemalePhysician(name);
@@ -107,12 +110,12 @@ new_order = '''  applyStoredSmartRuleActions();
 if old_order in s: s = s.replace(old_order, new_order, 1)
 elif new_order not in s: raise SystemExit('Final Twilight/amendment ordering anchor missing')
 
-# Fail only on the actual invariants, not on fragile formatting.
 if new_assign not in s: raise SystemExit('Female <=20 room hard block missing')
 if new_emergency not in s: raise SystemExit('Male-side emergency rows not protected')
 if not re.search(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", s):
     raise SystemExit('WBC male-only invariant missing')
+if smoking_new not in s: raise SystemExit('Smoking Cessation No Clinic invariant missing')
 if new_am not in s or new_pm not in s: raise SystemExit('Final Twilight pools not protected')
 
 p.write_text(s, encoding='utf-8')
-print('Hard-blocked female physicians from every room <=20, protected 10/12/13 duty rows, WBC and Twilight.')
+print('Applied permanent rota rules including Tuesday Smoking Cessation No Clinic fallback.')
