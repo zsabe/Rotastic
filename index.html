@@ -16436,8 +16436,8 @@ function enforceFinalTwilightAssignments() {
     const pmGroupNo = getGroupForPeriod(dayIndex, 'PM', selected);
     const amBlocked = twilightBlockedDoctors(day.am, day.cbAM);
     const pmBlocked = twilightBlockedDoctors(day.pm, day.cbPM);
-    const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
-    const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
+    const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
+    const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
 
     // The signed "Notices" counts include the active cohort plus legitimate
     // non-group doctors actually rostered in that shift (for example Moursi).
@@ -16572,6 +16572,7 @@ function generateDutySchedule() {
   applyStoredSmartRuleActions();
   enforceFinalTwilightAssignments();
   rotasticApplyPersistentScheduleAmendments();
+  enforceFinalTwilightAssignments();
   populateMoursiShiftDayOptions();
   renderScheduleView();
   renderTodayBriefing();
