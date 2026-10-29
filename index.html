@@ -15236,7 +15236,7 @@ function rotasticAssignTuesdaySmoking(day, period, available, shift, used) {
     smoker = alternate;
   }
 
-  if (!smoker) return;
+  if (!smoker) { shift.smokingDoc = 'No Clinic'; return; }
   shift.smokingDoc = smoker;
   assignIfFreeRoom(shift, 9, smoker, ' (Smoking Cessation)');
   used.add(smoker);
