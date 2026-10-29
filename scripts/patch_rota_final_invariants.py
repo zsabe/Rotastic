@@ -4,31 +4,36 @@ import re
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
-# Scheduling-only hotfix. UI markup/styles are intentionally untouched.
-roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.','Dr Gani M.','Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.','Dr Rida C.','Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.']
-
+# Scheduling-only final invariant. UI markup/styles are intentionally untouched.
+# This pass is deliberately last: it purges unavailable doctors, then guarantees
+# every available roster physician has a normal assignment on the correct group shift.
 surface=r'''function rotasticSurfaceMissingPhysicians(){
   const roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.','Dr Gani M.','Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.','Dr Rida C.','Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.'];
-  const fahima=/^Dr\.?\s+Fahima\b/i;
-  const gani=/\b(?:gani|ghani)\b/i;
-  const bilal=/^Dr\.?\s+Bilal\b/i;
-  function weeklyLeave(doc){return gani.test(String(doc||''))||bilal.test(String(doc||''));}
-  function visibleOnDay(day,doc){const k=rotasticDoctorKey(doc);let n=0;['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;rotasticNormalFields().forEach(function(f){if(rotasticDoctorKey(sh[f])===k)n++;});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});});return n;}
+  const gani=/\b(?:gani|ghani)\b/i,bilal=/^Dr\.?\s+Bilal\b/i,fahima=/^Dr\.?\s+Fahima\b/i;
+  const leaveAliases=['Dr Bilal C.','Dr Gani M.','Dr Ghani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'];
+  function unavailable(doc,day){return fahima.test(doc)||bilal.test(doc)||gani.test(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day);}
+  function groupPeriod(day,doc){
+    const want=rotasticAuthoritativeGroup(doc),score={am:0,pm:0};
+    ['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;const vals=[];rotasticNormalFields().forEach(function(f){if(sh[f])vals.push(sh[f]);});if(sh.rooms)vals.push(...Object.values(sh.rooms));if(Array.isArray(sh.noRoomDocs))vals.push(...sh.noRoomDocs);vals.forEach(function(x){if(rotasticAuthoritativeGroup(x)===want)score[p]++;});});
+    if(score.am!==score.pm)return score.am>score.pm?'am':'pm';
+    return want===2?'pm':'am';
+  }
+  function visible(day,doc){const k=rotasticDoctorKey(doc);for(const p of ['am','pm']){const sh=day&&day[p];if(!sh)continue;for(const f of rotasticNormalFields())if(rotasticDoctorKey(sh[f])===k)return true;if(sh.rooms&&Object.values(sh.rooms).some(v=>rotasticDoctorKey(v)===k))return true;if(Array.isArray(sh.noRoomDocs)&&sh.noRoomDocs.some(v=>rotasticDoctorKey(v)===k))return true;}return false;}
   (currentSchedule||[]).forEach(function(day){
-    /* Bilal and every Gani/Ghani/Shafi alias are on leave for this whole week. */
-    ['Dr Bilal C.','Dr Gani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'].forEach(function(doc){rotasticPurgeDoctorEverywhere(day,doc);});
-    roster.forEach(function(doc){
-      if(fahima.test(doc)||weeklyLeave(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;
-      if(visibleOnDay(day,doc)>0)return;
-      const k=rotasticDoctorKey(doc),g2=rotasticAuthoritativeGroup(doc)===2;
-      const p=g2?'pm':'am',sh=day&&day[p];if(!sh)return;
-      const rooms=rotasticIsFemalePhysician(doc)?['21','22','24','25','26','27','39']:['21','22','24','25','26','27','14','13','12','10','9','39'];
-      for(const r of rooms){if(assignIfFreeRoom(sh,r,doc,''))return;}
-      if(!sh.noRoomDocs)sh.noRoomDocs=[];
-      if(!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))sh.noRoomDocs.push(doc);
-    });
-    ['Dr Bilal C.','Dr Gani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'].forEach(function(doc){rotasticPurgeDoctorEverywhere(day,doc);});
+    leaveAliases.forEach(doc=>rotasticPurgeDoctorEverywhere(day,doc));
     rotasticPurgeExplicitOff(day);
+    roster.forEach(function(doc){
+      if(unavailable(doc,day)||visible(day,doc))return;
+      const p=groupPeriod(day,doc),sh=day&&day[p];if(!sh)return;
+      const k=rotasticDoctorKey(doc);
+      /* noRoomDocs is an actual generated normal assignment and the export prioritizes it. */
+      if(!Array.isArray(sh.noRoomDocs))sh.noRoomDocs=[];
+      if(!sh.noRoomDocs.some(x=>rotasticDoctorKey(x)===k))sh.noRoomDocs.push(doc);
+    });
+    leaveAliases.forEach(doc=>rotasticPurgeDoctorEverywhere(day,doc));
+    rotasticPurgeExplicitOff(day);
+    /* Hard assertion: never silently publish a day missing an available physician. */
+    roster.forEach(function(doc){if(!unavailable(doc,day)&&!visible(day,doc))throw new Error('ROTASTIC missing available physician: '+doc+' '+(rotasticDayISO(day)||''));});
   });
 }'''
 
@@ -38,16 +43,25 @@ end=s.find('\nfunction ',start+1)
 if end<0: raise SystemExit('surface invariant boundary missing')
 s=s[:start]+surface+s[end:]
 
+# Force the final pass after exclusivity/repair work. Remove duplicate nearby calls first.
 call='  rotasticAssignAllAvailablePhysicians();'
 pos=s.find(call)
 if pos<0: raise SystemExit('assign-all call missing')
-window=s[pos:pos+900]
-if 'rotasticSurfaceMissingPhysicians();' not in window:
-    line_end=s.find('\n',pos)
-    s=s[:line_end]+'\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);'+s[line_end:]
+window_end=min(len(s),pos+1400)
+window=s[pos:window_end]
+window=re.sub(r'\n\s*rotasticSurfaceMissingPhysicians\(\);','',window)
+window=re.sub(r'\n\s*\(currentSchedule\|\|\[\]\)\.forEach\(rotasticPurgeExplicitOff\);','',window)
+# Put validation after the last exclusivity call in this generator window.
+idx=window.rfind('rotasticEnforceExclusiveShiftAssignments();')
+if idx>=0:
+    insert=idx+len('rotasticEnforceExclusiveShiftAssignments();')
+else:
+    insert=window.find('\n')
+window=window[:insert]+'\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);'+window[insert:]
+s=s[:pos]+window+s[window_end:]
 
-for token in ['rotasticSurfaceMissingPhysicians','Dr Husam S','Dr Rida C.','Dr Imran A.','Dr Gani Shafi','Dr Ghani Shafi','weeklyLeave(doc)']:
+for token in ['Dr Laila A.','Dr Rida C.','groupPeriod(day,doc)','ROTASTIC missing available physician','Dr Ghani M.']:
     if token not in s: raise SystemExit('missing invariant '+token)
 
 p.write_text(s,encoding='utf-8')
-print('Enforced weekly Bilal/Gani-Ghani leave and day-by-day coverage for every other available physician; UI unchanged.')
+print('Final generator invariant guarantees every available physician on the actual group shift and purges Bilal/Gani-Ghani leave; UI unchanged.')
