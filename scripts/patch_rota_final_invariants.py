@@ -29,6 +29,26 @@ function rotasticClearNormalDoctor(sh,k,keepTwilight){
   if(sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(rotasticDoctorKey(sh.rooms[r])===k)sh.rooms[r]='-';});
   if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==k;});
 }
+function rotasticEnforceGaniGroup2Shift(){
+  const gani=canonicalRotaName('Dr Gani M.');
+  (currentSchedule||[]).forEach(function(day){
+    function normalKeys(sh){const out=[];if(!sh)return out;rotasticNormalFields().forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)out.push(k);});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.push(k);});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.push(k);});return out;}
+    const amKeys=normalKeys(day&&day.am),pmKeys=normalKeys(day&&day.pm);
+    const ganiAM=amKeys.includes(gani),ganiPM=pmKeys.includes(gani);
+    if(!ganiAM&&!ganiPM)return;
+    const score=function(keys){return keys.filter(function(k){return k!==gani&&ROTASTIC_GROUP_2.has(k);}).length;};
+    const am2=score(amKeys),pm2=score(pmKeys);
+    if(am2===pm2)return;
+    const target=pm2>am2?'pm':'am',wrong=target==='pm'?'am':'pm';
+    if((target==='pm'&&ganiPM)||(target==='am'&&ganiAM)){rotasticClearNormalDoctor(day&&day[wrong],gani,false);return;}
+    rotasticClearNormalDoctor(day&&day[wrong],gani,false);
+    const sh=day&&day[target];if(!sh)return;
+    const rooms=['21','22','24','25','26','27','14','13','12','10','9','39'];
+    for(const r of rooms){if(assignIfFreeRoom(sh,r,'Dr Gani M.',''))return;}
+    if(!sh.noRoomDocs)sh.noRoomDocs=[];
+    if(!sh.noRoomDocs.some(function(v){return rotasticDoctorKey(v)===gani;}))sh.noRoomDocs.push('Dr Gani M.');
+  });
+}
 function rotasticEnforceExclusiveShiftAssignments(){
   (currentSchedule||[]).forEach(function(day){
     const twilight=rotasticDayTwilight(day);
@@ -40,7 +60,6 @@ function rotasticEnforceExclusiveShiftAssignments(){
 function rotasticRepairWBCAndANC(){
   (currentSchedule||[]).forEach(function(day){
     const twilight=rotasticDayTwilight(day);
-    /* First remove WBC from ANY Twilight doctor, regardless of AM/PM side. */
     ['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;const k=rotasticDoctorKey(sh.wbcDoc);if(k&&twilight.has(k))sh.wbcDoc='No Clinic';});
     ['am','pm'].forEach(function(period){
       const sh=day&&day[period];if(!sh)return;
@@ -57,7 +76,6 @@ function rotasticRepairWBCAndANC(){
       const anc=rotasticDoctorKey(sh.ancDoc);if(anc&&sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(r!=='32'&&rotasticDoctorKey(sh.rooms[r])===anc)sh.rooms[r]='-';});
       sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':'';sh.wbcRoom='';
     });
-    /* Hard postcondition: Twilight and WBC must be two different people. */
     const finalTwilight=rotasticDayTwilight(day);['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;const k=rotasticDoctorKey(sh.wbcDoc);if(k&&finalTwilight.has(k))throw new Error('Invalid rota: Twilight physician also assigned WBC: '+k);});
   });
 }
@@ -69,14 +87,15 @@ function rotasticAssignAllAvailablePhysicians(){
 
 '''
 s=s[:start]+block+s[end:]
-old="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
-new="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
+old="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
+new="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise SystemExit('Final invariant call order missing')
 for token in ['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.']:
   if token not in s:raise SystemExit('Missing Group 2 member: '+token)
+if 'function rotasticEnforceGaniGroup2Shift()' not in s:raise SystemExit('Gani final Group 2 shift invariant missing')
 if "throw new Error('Invalid rota: Twilight physician also assigned WBC: '+k)" not in s:raise SystemExit('Twilight/WBC hard postcondition missing')
 if "sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':''" not in s:raise SystemExit('ANC room invariant missing')
 if "sh.wbcRoom=''" not in s:raise SystemExit('WBC room invariant missing')
 p.write_text(s,encoding='utf-8')
-print('Applied day-wide Twilight/WBC hard exclusion and final postcondition; UI unchanged.')
+print('Applied final Dr Gani Group 2 shift enforcement plus rota invariants; UI unchanged.')
