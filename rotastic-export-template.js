@@ -22,9 +22,9 @@ function dateParts(day,i){const names=['Sunday','Monday','Tuesday','Wednesday','
 function specialRows(d){const sp=[];const add=(label,v,cls,room='')=>{if(v!==''&&v!=null)sp.push([label,v,cls,room])};add('ANC',d.anc,'anc','32');add('NCD (32)',d.ncd,'ncd');add('32 (wic)',d.wic,'');add('WBC',d.wbc,d.wbc==='No Clinic'?'closed':'wbc','');add('Newborn Hearing Test (HT)',d.ht,'ht');add('Smoking Cessation',d.smoking,d.smoking==='No Clinic'?'closed':'');add('IUCD',d.iucd,d.iucd==='No Clinic'?'closed':'');add('SDI',d.sdi,d.sdi==='No Clinic'?'closed':'');return sp}
 function normalRows(d,already){const out=[];const seen=new Set(already.filter(isDoc).map(key));const specials=specialRows(d);for(const x of specials){const k=key(x[1]);if(isDoc(x[1])&&seen.has(k))continue;if(isDoc(x[1]))seen.add(k);out.push(x)}
   const preferred=['9','10','12','13','14','39','21','22','24','25','26','27','32','38'];
+  for(const raw of d.noRoomDocs||[]){const doc=doctor(raw);if(!isDoc(doc)||seen.has(key(doc)))continue;seen.add(key(doc));out.push(['',doc,'',''])}
   const roomKeys=[...preferred,...Object.keys(d.rooms||{}).filter(r=>!preferred.includes(String(r)))];
   for(const room of roomKeys){const raw=d.rooms?.[room];const doc=doctor(raw);if(!isDoc(doc)||seen.has(key(doc)))continue;seen.add(key(doc));out.push(['',doc,'',String(room)])}
-  for(const raw of d.noRoomDocs||[]){const doc=doctor(raw);if(!isDoc(doc)||seen.has(key(doc)))continue;seen.add(key(doc));out.push(['',doc,'',''])}
   if(isDoc(d.iso)&&!seen.has(key(d.iso))){seen.add(key(d.iso));out.push(['Isolation',d.iso,'iso',''])}
   return out}
 function clinicRows(day,s){const d=data(day,s),tw=s==='am'?'9-4':'2-8',base=[['Emergency Duty','','em head'],['Male',d.male,'em'],['Female',d.female,'em'],['Paeds',d.paeds,'em'],[tw,d.t1,''],[tw,d.t2,'']],already=[d.male,d.female,d.paeds,d.t1,d.t2],normal=normalRows(d,already);while(normal.length<4)normal.push(['','','','']);return{d,rows:base.concat(normal.slice(0,4))}}
