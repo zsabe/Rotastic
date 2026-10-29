@@ -16410,6 +16410,42 @@ function rotasticRemoveTwilightFromWBC() {
   });
 }
 
+function rotasticEnforceExclusiveShiftAssignments() {
+  const fields = ['timed1Doc','timed2Doc','med','fed','ped','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
+  (currentSchedule || []).forEach(function(day) {
+    ['am','pm'].forEach(function(period) {
+      const sh = day && day[period];
+      if (!sh) return;
+      const seen = new Set();
+      function key(v) { return v && /^Dr\.?\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,'')) : ''; }
+      function reserve(v) { const k=key(v); if(!k) return false; if(seen.has(k)) return true; seen.add(k); return false; }
+
+      // Twilight is authoritative and must be unique. A second identical Twilight box is blank.
+      if (reserve(sh.timed1Doc)) sh.timed1Doc='';
+      if (reserve(sh.timed2Doc)) sh.timed2Doc='';
+
+      // WBC is an exclusive clinic. If its doctor is already on Twilight, WBC closes rather than duplicating them.
+      const wbcKey = key(sh.wbcDoc);
+      if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic';
+      else if (wbcKey) seen.add(wbcKey);
+
+      fields.slice(2).forEach(function(field) {
+        if (field==='wbcDoc') return;
+        const v=sh[field];
+        if (reserve(v)) sh[field]='';
+      });
+
+      if (sh.rooms && typeof sh.rooms==='object') {
+        Object.keys(sh.rooms).forEach(function(room) {
+          const v=sh.rooms[room]; const k=key(v); if(!k) return;
+          // If this room repeats any already reserved physician (including WBC), clear only the duplicate room.
+          if (seen.has(k)) sh.rooms[room]='-'; else seen.add(k);
+        });
+      }
+    });
+  });
+}
+
 function enforceFinalTwilightAssignments() {
   // Single authoritative Twilight calculation based on the historical signed rotas.
   if (!Array.isArray(currentSchedule) || !currentSchedule.length) return;
@@ -16593,7 +16629,7 @@ function generateDutySchedule() {
   enforceFinalTwilightAssignments();
   rotasticApplyPersistentScheduleAmendments();
   enforceFinalTwilightAssignments();
-  rotasticRemoveTwilightFromWBC();
+  rotasticEnforceExclusiveShiftAssignments();
   populateMoursiShiftDayOptions();
   renderScheduleView();
   renderTodayBriefing();
