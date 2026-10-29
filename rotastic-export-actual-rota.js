@@ -5,6 +5,7 @@ if(window.__rotasticExportActualRotaInstalled)return;window.__rotasticExportActu
 const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
 const norm=s=>clean(s).replace(/\s+P$/i,'').replace(/\s*\((?:IUCD|SDI)\)\s*$/i,'').trim();
 const isDoc=s=>/^Dr\.?\s+/i.test(norm(s));
+const sameDoc=(a,b)=>{const x=norm(a).toLowerCase(),y=norm(b).toLowerCase();return !!x&&x===y};
 const leaveNames=day=>{const x=day?.leaves||day?.leave||day?.leaveDoctors||day?.onLeave||[];return (Array.isArray(x)?x:[x]).map(v=>norm(typeof v==='string'?v:(v?.name||v?.doctor||v?.physician||''))).filter(isDoc)};
 const shiftNames=sh=>{if(!sh)return[];const vals=[sh.med,sh.fed,sh.ped,sh.timed1Doc,sh.timed2Doc,sh.ancDoc,sh.ncdDoc,sh.wicDoc,sh.wbcDoc,sh.hearingDoc,sh.htDoc,sh.isolationDoc,sh.isoDoc];if(sh.rooms&&typeof sh.rooms==='object')vals.push(...Object.values(sh.rooms));return [...new Set(vals.map(norm).filter(isDoc))]};
 function fallbackCount(day,p){const leaves=new Set(leaveNames(day).map(x=>x.toLowerCase()));return shiftNames(day?.[p]).filter(x=>!leaves.has(x.toLowerCase())).length}
@@ -12,8 +13,9 @@ function exactCount(day,p){const n=p==='am'?day?.amNotices:day?.pmNotices;const 
 function exposeShift(day,p){const sh=day?.[p];if(!sh||typeof sh!=='object')return;
   /* Emergency and twilight: map directly from the rota, never from DOM text. */
   sh.maleER=sh.med||''; sh.femaleER=sh.fed||''; sh.paedsDoc=sh.ped||'';
-  if(p==='am'){sh.nineFour1=sh.timed1Doc||'';sh.nineFour2=sh.timed2Doc||''}
-  else{sh.twoEight1=sh.timed1Doc||'';sh.twoEight2=sh.timed2Doc||''}
+  const t1=sh.timed1Doc||'',t2=sh.timed2Doc||'';
+  if(p==='am'){sh.nineFour1=t1;sh.nineFour2=sameDoc(t1,t2)?'':t2}
+  else{sh.twoEight1=t1;sh.twoEight2=sameDoc(t1,t2)?'':t2}
   /* Keep explicit clinic fields authoritative. */
   sh.ancDoc=sh.ancDoc||'';sh.ncdDoc=sh.ncdDoc||'';sh.wicDoc=sh.wicDoc||'';sh.wbcDoc=sh.wbcDoc||'';
   sh.hearingDoc=sh.hearingDoc||sh.htDoc||'';sh.isoDoc=sh.isoDoc||sh.isolationDoc||'';
