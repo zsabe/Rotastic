@@ -16489,9 +16489,22 @@ function rotasticAssignAllAvailablePhysicians(){
   (currentSchedule||[]).forEach(function(day){rotasticPurgeExplicitOff(day);const used=existing(day),g1=groupPeriod(day,false),g2p=groupPeriod(day,true);roster.forEach(function(doc){const k=rotasticDoctorKey(doc);if(!k||fahima.test(doc)||used.has(k)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;place(day,group2.has(k)?g2p:g1,doc,used);});rotasticPurgeExplicitOff(day);});
 }
 function rotasticSurfaceMissingPhysicians(){
-  const targets=['Dr Bilal C.','Dr Rida C.','Dr Saima N.','Dr Imran A.'];
-  function visible(doc){const k=rotasticDoctorKey(doc);let n=0;(currentSchedule||[]).forEach(function(day){['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;rotasticNormalFields().forEach(function(f){if(rotasticDoctorKey(sh[f])===k)n++;});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});});});return n;}
-  targets.forEach(function(doc){if(visible(doc)>0)return;const k=rotasticDoctorKey(doc);for(const day of (currentSchedule||[])){if(rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))continue;for(const p of ['am','pm']){const sh=day&&day[p];if(!sh||!Array.isArray(sh.noRoomDocs)||!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))continue;const rooms=rotasticIsFemalePhysician(doc)?['21','22','24','25','26','27','39']:['21','22','24','25','26','27','14','13','12','10','9','39'];for(const r of rooms){const displaced=sh.rooms&&sh.rooms[r];if(!rotasticDoctorKey(displaced))continue;if(visible(displaced)<2)continue;sh.rooms[r]=doc;sh.noRoomDocs=sh.noRoomDocs.filter(function(x){return rotasticDoctorKey(x)!==k;});sh.noRoomDocs.push(displaced);return;}}}});
+  const roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.','Dr Gani M.','Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.','Dr Rida C.','Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.'];
+  const fahima=/^Dr\.?\s+Fahima\b/i;
+  function visibleOnDay(day,doc){const k=rotasticDoctorKey(doc);let n=0;['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;rotasticNormalFields().forEach(function(f){if(rotasticDoctorKey(sh[f])===k)n++;});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){if(rotasticDoctorKey(v)===k)n++;});});return n;}
+  (currentSchedule||[]).forEach(function(day){
+    roster.forEach(function(doc){
+      if(fahima.test(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;
+      if(visibleOnDay(day,doc)>0)return;
+      const k=rotasticDoctorKey(doc),g2=rotasticAuthoritativeGroup(doc)===2;
+      const p=g2?'pm':'am',sh=day&&day[p];if(!sh)return;
+      const rooms=rotasticIsFemalePhysician(doc)?['21','22','24','25','26','27','39']:['21','22','24','25','26','27','14','13','12','10','9','39'];
+      for(const r of rooms){if(assignIfFreeRoom(sh,r,doc,''))return;}
+      if(!sh.noRoomDocs)sh.noRoomDocs=[];
+      if(!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))sh.noRoomDocs.push(doc);
+    });
+    rotasticPurgeExplicitOff(day);
+  });
 }
 function enforceFinalTwilightAssignments() {
   // Single authoritative Twilight calculation based on the historical signed rotas.
