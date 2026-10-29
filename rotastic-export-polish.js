@@ -43,6 +43,19 @@ function fitOne(el){
   const after=onePhysician(before);
   if(after!==before)el.textContent=after;
 }
+function blankUnusedTwilightRooms(sheet){
+  sheet.querySelectorAll('tbody tr').forEach(row=>{
+    const labels=[...row.querySelectorAll('.label')];
+    const docs=[...row.querySelectorAll('.doc')];
+    const rooms=[...row.querySelectorAll('.roomnum')];
+    labels.forEach((label,i)=>{
+      const duty=clean(label.textContent).replace(/[–—]/g,'-');
+      if(!/^(?:9\s*-\s*4|2\s*-\s*8)$/i.test(duty))return;
+      const doc=docs[i]; const room=rooms[i];
+      if(room && (!doc || !clean(doc.textContent))) room.textContent='';
+    });
+  });
+}
 function apply(root){
   const sheet=root?.matches?.('.sheet')?root:root?.querySelector?.('.sheet');
   if(!sheet)return null;
@@ -50,6 +63,8 @@ function apply(root){
   if(!style){style=document.createElement('style');style.dataset.rotasticExportPolish='2';style.textContent=POLISH;sheet.prepend(style)}
   /* A duty/clinic/Code Blue slot represents one physician. Never print merged fallback candidates. */
   sheet.querySelectorAll('.doc,.cbhalf span').forEach(fitOne);
+  /* An unused 9-4 / 2-8 box has no room number. Room 39 remains a real room only when that slot is actually occupied. */
+  blankUnusedTwilightRooms(sheet);
   return sheet;
 }
 function install(){
