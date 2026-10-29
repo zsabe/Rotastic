@@ -32,6 +32,16 @@ needle="\n  const __rg=rotasticCanonicalRidaGani(name);\n  if(__rg===ROTASTIC_RI
 if needle not in s[brace:brace+800]:
     s=s[:brace+1]+needle+s[brace+1:]
 
+# Strict invariant: canonical Rida is always Group 1 and canonical Gani/Ghani is always Group 2.
+# Apply this at the authoritative group function so every downstream stage sees the same group.
+gstart=s.find('function rotasticAuthoritativeGroup(')
+if gstart<0: raise SystemExit('authoritative group anchor missing')
+gbrace=s.find('{',gstart)
+if gbrace<0: raise SystemExit('authoritative group body missing')
+gneedle="\n  const __rgGroup=rotasticCanonicalRidaGani(doctor);\n  if(__rgGroup===ROTASTIC_RIDA)return 1;\n  if(__rgGroup===ROTASTIC_GANI)return 2;"
+if gneedle not in s[gbrace:gbrace+1000]:
+    s=s[:gbrace+1]+gneedle+s[gbrace+1:]
+
 surface=r'''function rotasticSurfaceMissingPhysicians(){
   const RIDA=ROTASTIC_RIDA,GANI=ROTASTIC_GANI;
   const roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.',GANI,'Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.',RIDA,'Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.'];
@@ -39,7 +49,7 @@ surface=r'''function rotasticSurfaceMissingPhysicians(){
   const female=/\b(?:Rida|Tayseer|Taysir|Oula|Ola|Saba|Fazila|Laila|Layla|Leila|Maya|Saima|Fahima)\b/i;
   const leaveAliases=['Dr Bilal C.',GANI,'Dr Ghani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'];
   function canonical(doc){return canonicalRotaName(rotasticCanonicalRidaGani(doc));}
-  function group(doc){doc=canonical(doc);if(doc===RIDA)return 1;return rotasticAuthoritativeGroup(doc);}
+  function group(doc){doc=canonical(doc);if(doc===RIDA)return 1;if(doc===GANI)return 2;return rotasticAuthoritativeGroup(doc);}
   function unavailable(doc,day){doc=canonical(doc);if(doc===RIDA)return rotasticExplicitOff(RIDA,day);return fahima.test(doc)||bilal.test(doc)||doc===GANI||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day);}
   function rotationPeriod(day,doc){
     doc=canonical(doc);const g=group(doc),iso=rotasticDayISO(day)||'',d=Number(iso.slice(-2));
@@ -79,8 +89,8 @@ else: insert=window.find('\n')
 window=window[:insert]+'\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);'+window[insert:]
 s=s[:pos]+window+s[window_end:]
 
-for token in ['ROTASTIC_CANONICAL_RIDA_GANI_V1','ROTASTIC_RIDA','ROTASTIC_GANI','rotasticCanonicalRidaGani','rebuildRida(day)','ROTASTIC missing available physician']:
+for token in ['ROTASTIC_CANONICAL_RIDA_GANI_V1','ROTASTIC_RIDA','ROTASTIC_GANI','rotasticCanonicalRidaGani','__rgGroup===ROTASTIC_RIDA','__rgGroup===ROTASTIC_GANI','rebuildRida(day)','ROTASTIC missing available physician']:
     if token not in s: raise SystemExit('missing invariant '+token)
 
 p.write_text(s,encoding='utf-8')
-print('Rida and Gani canonical identities unified across rota matching; Rida remains active Group 1 unless explicitly off; UI unchanged.')
+print('Rida locked to Group 1 and Gani/Ghani locked to Group 2 across authoritative rota matching; UI unchanged.')
