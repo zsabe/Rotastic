@@ -1,80 +1,106 @@
 from pathlib import Path
-import re
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
-# Smart Box logic only; do not alter UI/CSS/markup.
-# The deployed file does not contain a reliable literal "Smart Box" label, so
-# locate the existing natural-language command area by command-oriented code.
-markers=[
-    r'function\s+[A-Za-z_$][\w$]*\s*\([^)]*(?:text|input|command|prompt|message|instruction)[^)]*\)\s*\{',
-    r'(?:instruction|command|prompt|message)',
-]
-positions=[]
-for pat in markers:
-    m=re.search(pat,s,re.I)
-    if m: positions.append(m.start())
-if not positions:
-    raise SystemExit('Natural-language command area missing; refusing unsafe index edit')
-anchor=min(positions)
-script_start=s.rfind('<script',0,anchor)
-if script_start<0:
-    raise SystemExit('Command script boundary missing')
-insert=s.find('>',script_start)+1
-if insert<=0:
-    raise SystemExit('Command script tag malformed')
-
-code=r'''
-/* ROTASTIC_SMARTBOX_WEEK_COMMANDS_V1 */
-function rotasticParseWeeklyPhysicianCommand(input){
-  const raw=String(input||'').trim();
-  if(!raw)return null;
-  const text=raw.replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim();
+# Smart Box / scheduling logic only. No UI, CSS, navigation or markup changes.
+marker='/* ROTASTIC_SMARTBOX_WEEK_COMMANDS_V2 */'
+if marker not in s:
+    anchor='function rotasticNormalizeSimpleEnglishRule(raw) {'
+    pos=s.find(anchor)
+    if pos<0: raise SystemExit('Smart Rules parser anchor missing')
+    code=r'''/* ROTASTIC_SMARTBOX_WEEK_COMMANDS_V2 */
+function rotasticSmartWeekKey(){
+  const el=document.getElementById('cycleStartDate');
+  return String((el&&el.value)||(currentSchedule&&currentSchedule[0]&&currentSchedule[0].isoDate)||'').slice(0,10);
+}
+function rotasticGetWeeklyGroupOverrides(){
+  const all=Storage.getJSON('rotastic_weekly_group_overrides',{})||{};
+  return all[rotasticSmartWeekKey()]||{};
+}
+function rotasticSetWeeklyGroupOverride(doctor,group){
+  const key=rotasticSmartWeekKey(); if(!key)return false;
+  const all=Storage.getJSON('rotastic_weekly_group_overrides',{})||{};
+  const row=all[key]||{}; row[canonicalRotaName(doctor)]=Number(group); all[key]=row;
+  Storage.setJSON('rotastic_weekly_group_overrides',all); return true;
+}
+function rotasticParseWeeklyPhysicianCommand(raw){
+  const text=String(raw||'').replace(/\s+/g,' ').trim();
   if(!/\bthis\s+week\b/i.test(text))return null;
-  function cleanName(v){v=String(v||'').trim().replace(/^[\s:,-]+|[\s,.;:]+$/g,'').replace(/^(?:doctor|dr\.?)\s+/i,'');return v?'Dr '+v:'';}
-  function namesFrom(v){v=String(v||'').replace(/\bthis\s+week\b/ig,'').trim().replace(/^(?:the\s+following\s+)?(?:doctors?|physicians?)\s*(?:are|is)?\s*[:,-]?\s*/i,'');return [...new Set(v.split(/\s*(?:,|\band\b|&)\s*/i).map(cleanName).filter(Boolean))];}
-  let m,names=[];
-  m=text.match(/^(.+?)\s+(?:is|are)\s+(?:not\s+off|working|on\s+duty|available)\b/i);
-  if(m){names=namesFrom(m[1]);if(names.length)return {scope:'week',action:'working',doctors:names};}
-  m=text.match(/^(?:the\s+following\s+)?(?:doctors?|physicians?)\s+(?:are|is)\s+(?:not\s+off|working|on\s+duty|available)\s*[:,-]?\s*(.+)$/i);
-  if(m){names=namesFrom(m[1]);if(names.length)return {scope:'week',action:'working',doctors:names};}
-  m=text.match(/^(.+?)\s+(?:is|are)\s+off\b/i);
-  if(m){names=namesFrom(m[1]);if(names.length)return {scope:'week',action:'off',doctors:names};}
-  m=text.match(/^(?:the\s+following\s+)?(?:doctors?|physicians?)\s+(?:are|is)\s+off\s*[:,-]?\s*(.+)$/i);
-  if(m){names=namesFrom(m[1]);if(names.length)return {scope:'week',action:'off',doctors:names};}
-  m=text.match(/^(?:move\s+)?(.+?)\s+(?:to\s+)?work\s+with\s+group\s*(one|1|two|2)\b/i)||text.match(/^(?:move\s+)?(.+?)\s+to\s+group\s*(one|1|two|2)\b/i);
-  if(m){names=namesFrom(m[1]);if(names.length)return {scope:'week',action:'group',group:/^(?:one|1)$/i.test(m[2])?1:2,doctors:names};}
+  const doctors=smartRuleFindDoctors(text);
+  if(!doctors.length)return null;
+  let m=text.match(/\bgroup\s*(one|1|two|2)\b/i);
+  if(m&&/\b(move|work|working|with|to)\b/i.test(text))return {action:'group',group:/^(one|1)$/i.test(m[1])?1:2,doctors:doctors};
+  if(/\b(not\s+off|working|on\s+duty|available)\b/i.test(text))return {action:'working',doctors:doctors};
+  if(/\boff\b|\bon\s+leave\b|\bunavailable\b/i.test(text))return {action:'off',doctors:doctors};
   return null;
 }
+function rotasticWeekDates(){return (currentSchedule||[]).map(function(d){return String(d&&d.isoDate||'').slice(0,10);}).filter(Boolean);}
+function rotasticCancelWeekAbsence(doctor){
+  const dates=new Set(rotasticWeekDates());
+  const keys=['rotastic_leave_submissions'];
+  keys.forEach(function(key){
+    const rows=Storage.getJSON(key,[]); if(!Array.isArray(rows))return;
+    const kept=rows.filter(function(r){
+      const who=r&&String(r.doctor||r.physician||r.name||'');
+      if(!doctorMatches(who,doctor))return true;
+      const start=String(r.startDate||r.date||'').slice(0,10), end=String(r.endDate||start).slice(0,10);
+      return !Array.from(dates).some(function(d){return d>=start&&d<=end;});
+    });
+    Storage.setJSON(key,kept);
+  });
+}
+async function rotasticApplyWeeklyPhysicianCommand(cmd){
+  if(!cmd||!Array.isArray(cmd.doctors)||!cmd.doctors.length)return false;
+  const doctors=cmd.doctors.map(canonicalRotaName).filter(Boolean);
+  if(cmd.action==='group'){
+    doctors.forEach(function(d){rotasticSetWeeklyGroupOverride(d,cmd.group);});
+    if(typeof generateDutySchedule==='function')generateDutySchedule();
+    return {ok:true,message:doctors.join(', ')+' will work with Group '+cmd.group+' this week.'};
+  }
+  if(cmd.action==='working'){
+    doctors.forEach(rotasticCancelWeekAbsence);
+    if(typeof generateDutySchedule==='function')generateDutySchedule();
+    return {ok:true,message:doctors.join(', ')+' marked working / not off this week.'};
+  }
+  if(cmd.action==='off'){
+    const phrase=doctors.join(', ')+' are off whole week';
+    const result=await interpretScheduleAmendment(phrase);
+    if(!result||!result.ok||!result.action)return result||{ok:false,message:'Could not apply weekly OFF.'};
+    result.action.scope='week';
+    if(!applyScheduleAmendmentAction(result.action))return {ok:false,message:'Could not apply weekly OFF.'};
+    return {ok:true,message:doctors.join(', ')+' marked off this week.'};
+  }
+  return false;
+}
 '''
-if 'ROTASTIC_SMARTBOX_WEEK_COMMANDS_V1' not in s:
-    s=s[:insert]+code+s[insert:]
+    s=s[:pos]+code+s[pos:]
 
-# Locate a nearby command-processing function and hook only that function.
-region_start=max(0,anchor-50000); region_end=min(len(s),anchor+120000)
-region=s[region_start:region_end]
-candidates=[]
-for m in re.finditer(r'(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{',region):
-    args=m.group(2).strip()
-    if not args: continue
-    absolute=region_start+m.start()
-    body=s[absolute:absolute+16000].lower()
-    if any(k in body for k in ['instruction','command','prompt','message','rota']) and any(k in args.lower() for k in ['text','input','command','prompt','message','instruction']):
-        candidates.append((absolute,m.group(1),args.split(',')[0].strip()))
-if not candidates:
-    raise SystemExit('Command handler not safely identifiable; refusing partial write')
-pos,name,arg=min(candidates,key=lambda x:abs(x[0]-anchor))
-brace=s.find('{',pos)+1
-hook=f"\n  const __rotasticWeekCmd=rotasticParseWeeklyPhysicianCommand({arg});\n  if(__rotasticWeekCmd && typeof rotasticApplyWeeklyPhysicianCommand==='function'){{const __r=rotasticApplyWeeklyPhysicianCommand(__rotasticWeekCmd);if(__r!==undefined)return __r;}}\n"
-if '__rotasticWeekCmd=rotasticParseWeeklyPhysicianCommand' not in s[pos:pos+4000]:
-    s=s[:brace]+hook+s[brace:]
+# Make "this week" a first-class whole-week phrase for the existing interpreter.
+old="return /\\b(whole|entire|full)\\s+(working\\s+)?week\\b|\\ball\\s+week\\b|\\bfor\\s+the\\s+week\\b/i.test(text);"
+new="return /\\bthis\\s+week\\b|\\b(whole|entire|full)\\s+(working\\s+)?week\\b|\\ball\\s+week\\b|\\bfor\\s+the\\s+week\\b/i.test(text);"
+if old in s: s=s.replace(old,new,1)
+elif new not in s: raise SystemExit('whole-week phrase anchor missing')
 
-# Do not invent storage semantics. The app must expose its weekly state adapter.
-if 'rotasticApplyWeeklyPhysicianCommand' not in s.replace(hook,''):
-    raise SystemExit('Weekly command state adapter missing; refusing to guess storage semantics')
+# Weekly group override must be seen by both the normal generator and the final invariant layer.
+auth="function rotasticAuthoritativeGroup(name) { const k=canonicalRotaName(name); if (/^Dr\\.?\\s+Gani\\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }"
+auth_new="function rotasticAuthoritativeGroup(name) { const k=canonicalRotaName(name); const o=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{}); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\\.?\\s+Gani\\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }"
+if auth in s: s=s.replace(auth,auth_new,1)
+elif auth_new not in s: raise SystemExit('authoritative group anchor missing')
 
-for token in ['ROTASTIC_SMARTBOX_WEEK_COMMANDS_V1',"action:'working'","action:'off'","action:'group'"]:
+# Apply the same override to editable auto-rule groups without persisting a permanent group move.
+ret="  return {\n    group1: group1,\n    group2: group2,"
+ret_new="  const weekOverrides=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{});\n  Object.keys(weekOverrides||{}).forEach(function(name){const g=Number(weekOverrides[name]);group1=group1.filter(function(x){return !doctorMatches(x,name);});group2=group2.filter(function(x){return !doctorMatches(x,name);});if(g===1)group1.push(name);if(g===2)group2.push(name);});\n  return {\n    group1: group1,\n    group2: group2,"
+if ret in s: s=s.replace(ret,ret_new,1)
+elif 'const weekOverrides=(typeof rotasticGetWeeklyGroupOverrides' not in s: raise SystemExit('auto-rule return anchor missing')
+
+# Route only recognized weekly sentences through the adapter at the start of Smart Rules submission.
+hook_anchor="  const scope = String(document.getElementById('smartRotaRuleScope')?.value || 'rota');\n  if (!raw) return;"
+hook_new="  const scope = String(document.getElementById('smartRotaRuleScope')?.value || 'rota');\n  if (!raw) return;\n  const __weekCmd=rotasticParseWeeklyPhysicianCommand(rawOriginal);\n  if(__weekCmd){\n    const __result=await rotasticApplyWeeklyPhysicianCommand(__weekCmd);\n    const __ok=!!(__result&&__result.ok);\n    if(status){status.className='mt-3 p-3 rounded-xl text-[11px] border '+(__ok?'bg-emerald-950/40 border-emerald-500/30 text-emerald-200':'bg-amber-950/40 border-amber-500/30 text-amber-200');status.textContent=(__result&&__result.message)||'Weekly command could not be applied.';status.classList.remove('hidden');}\n    if(__ok&&input)input.value='';\n    if(__ok&&typeof renderScheduleView==='function')renderScheduleView();\n    return;\n  }"
+if hook_anchor in s: s=s.replace(hook_anchor,hook_new,1)
+elif 'const __weekCmd=rotasticParseWeeklyPhysicianCommand(rawOriginal);' not in s: raise SystemExit('Smart Rules submit anchor missing')
+
+for token in ['ROTASTIC_SMARTBOX_WEEK_COMMANDS_V2','rotasticApplyWeeklyPhysicianCommand','rotastic_weekly_group_overrides','not\\s+off','this\\s+week']:
     if token not in s: raise SystemExit('missing Smart Box invariant '+token)
 p.write_text(s,encoding='utf-8')
-print('Smart Box weekly natural-language commands integrated; UI unchanged.')
+print('Smart Box weekly OFF, working/not-off and Group 1/2 overrides integrated; UI unchanged.')
