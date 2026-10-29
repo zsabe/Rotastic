@@ -1,7 +1,14 @@
 from pathlib import Path
+import re
 
 p = Path('index.html')
 s = p.read_text(encoding='utf-8')
+
+# Dr Gani M. is authoritative Group 2. Correct the generator group set after the base scheduling patch.
+group2 = "const ROTASTIC_GROUP_2 = new Set(['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.'].map(canonicalRotaName));"
+s, n = re.subn(r"const ROTASTIC_GROUP_2 = new Set\(\[.*?\]\.map\(canonicalRotaName\)\);", group2, s, count=1)
+if n != 1:
+    raise SystemExit('Authoritative Group 2 set missing')
 
 start = s.find('function rotasticEnforceExclusiveShiftAssignments()')
 end = s.find('function enforceFinalTwilightAssignments() {', start)
@@ -89,15 +96,13 @@ function rotasticAssignAllAvailablePhysicians() {
 s = s[:start] + block + s[end:]
 
 old = "  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();"
-new = "  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();"
 if old not in s:
     raise SystemExit('Final invariant call order missing')
 
-# Hard checks: authoritative Group 2 and UI-independent generator rules must already be present.
-for token in ['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.']:
+for token in ['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.']:
     if token not in s: raise SystemExit('Missing Group 2 member: '+token)
 if 'rotasticIsFemaleTwilightDoctor' not in s: raise SystemExit('Female Twilight guard missing')
 if "shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';" not in s: raise SystemExit('WBC male-only guard missing')
 
 p.write_text(s, encoding='utf-8')
-print('Applied day-wide normal-duty uniqueness, Twilight/WBC exclusivity, one-shift-per-day allocation, and complete Group 2; UI unchanged.')
+print('Applied day-wide normal-duty uniqueness and authoritative Group 2 including Dr Gani M.; UI unchanged.')
