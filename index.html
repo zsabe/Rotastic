@@ -13707,6 +13707,8 @@ function getAutoRotaRules() {
   Object.keys(weekOverrides||{}).forEach(function(name){const g=Number(weekOverrides[name]);group1=group1.filter(function(x){return !doctorMatches(x,name);});group2=group2.filter(function(x){return !doctorMatches(x,name);});if(g===1)group1.push(name);if(g===2)group2.push(name);});
   const weekOverrides=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{});
   Object.keys(weekOverrides||{}).forEach(function(name){const g=Number(weekOverrides[name]);group1=group1.filter(function(x){return !doctorMatches(x,name);});group2=group2.filter(function(x){return !doctorMatches(x,name);});if(g===1)group1.push(name);if(g===2)group2.push(name);});
+  const weekOverrides=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{});
+  Object.keys(weekOverrides||{}).forEach(function(name){const g=Number(weekOverrides[name]);group1=group1.filter(function(x){return !doctorMatches(x,name);});group2=group2.filter(function(x){return !doctorMatches(x,name);});if(g===1)group1.push(name);if(g===2)group2.push(name);});
   return {
     group1: group1,
     group2: group2,
@@ -14834,6 +14836,15 @@ async function addSmartRotaRule() {
     if(__ok&&typeof renderScheduleView==='function')renderScheduleView();
     return;
   }
+  const __weekCmd=rotasticParseWeeklyPhysicianCommand(rawOriginal);
+  if(__weekCmd){
+    const __result=await rotasticApplyWeeklyPhysicianCommand(__weekCmd);
+    const __ok=!!(__result&&__result.ok);
+    if(status){status.className='mt-3 p-3 rounded-xl text-[11px] border '+(__ok?'bg-emerald-950/40 border-emerald-500/30 text-emerald-200':'bg-amber-950/40 border-amber-500/30 text-amber-200');status.textContent=(__result&&__result.message)||'Weekly command could not be applied.';status.classList.remove('hidden');}
+    if(__ok&&input)input.value='';
+    if(__ok&&typeof renderScheduleView==='function')renderScheduleView();
+    return;
+  }
   if (scope !== 'permanent' && rotasticLooksLikeOneOffAmendment(raw) && typeof interpretScheduleAmendment === 'function' && typeof applyScheduleAmendmentAction === 'function') {
     try {
       const understood = await interpretScheduleAmendment(rawOriginal);
@@ -15141,7 +15152,7 @@ function rotasticPinGaniGroup2Metadata() {
     }
   });});
 }
-function rotasticAuthoritativeGroup(name) { const k=canonicalRotaName(name); const o=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{}); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }
+function rotasticAuthoritativeGroup(name) { const k=canonicalRotaName(name); const o=(typeof rotasticGetWeeklyGroupOverrides==='function'?rotasticGetWeeklyGroupOverrides():{}); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }); if(o&&Number(o[k])) return Number(o[k]); if (/^Dr\.?\s+Gani\b/i.test(String(k||name||''))) return 2; return ROTASTIC_GROUP_2.has(k) ? 2 : 1; }
 function rotasticIsFemalePhysician(name) {
   const canonical = canonicalRotaName(name);
   if (DOCTOR_GENDER[canonical] === 'female') return true;
@@ -16596,7 +16607,7 @@ function rotasticAssignAllAvailablePhysicians(){
   function place(day,p,doc,used){const sh=day&&day[p];if(!sh)return false;const k=rotasticDoctorKey(doc),rooms=rotasticIsFemalePhysician(doc)?['21','22','24','25','26','27','39']:['21','22','24','25','26','27','14','13','12','10','9','39'];for(const r of rooms){if(assignIfFreeRoom(sh,r,doc,'')){used.add(k);return true;}}if(!sh.noRoomDocs)sh.noRoomDocs=[];if(!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))sh.noRoomDocs.push(doc);used.add(k);return true;}
   (currentSchedule||[]).forEach(function(day){rotasticPurgeExplicitOff(day);const used=existing(day),g1=groupPeriod(day,false),g2p=groupPeriod(day,true);roster.forEach(function(doc){const k=rotasticDoctorKey(doc);if(!k||fahima.test(doc)||used.has(k)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))return;place(day,group2.has(k)?g2p:g1,doc,used);});rotasticPurgeExplicitOff(day);});
 }
-/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V2 */
+/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V3 */
 const ROTASTIC_RIDA = 'Dr Rida C.';
 const ROTASTIC_GANI = 'Dr Gani M.';
 function isRidaVariant(doctorName){
@@ -16614,6 +16625,11 @@ function rotasticSchedulerCanonicalDoctor(doctor){
   if(isGaniVariant(d))return ROTASTIC_GANI;
   return d;
 }
+function getAuthoritativeGroupForScheduler(doctorName,day){
+  if(isRidaVariant(doctorName))return 1;
+  if(isGaniVariant(doctorName))return 2;
+  return typeof rotasticAuthoritativeGroup==='function'?rotasticAuthoritativeGroup(doctorName):1;
+}
 function rotasticSurfaceMissingPhysicians(){
   const RIDA=ROTASTIC_RIDA,GANI=ROTASTIC_GANI;
   const roster=['Dr Abdulgafoor K.','Dr Abdulrashid S.','Dr Aminullah Z.','Dr Bilal C.','Dr Enan M.','Dr Fahima N.','Dr Faisal C.','Dr Fazila K.',GANI,'Dr Husam S','Dr Imran A.','Dr Laila A.','Dr Laith A.','Dr Maher A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Oula T.',RIDA,'Dr Saba T.','Dr Saima N.','Dr Salah M.','Dr Selman E.','Dr Shadi T','Dr Syed I.','Dr Tayseer A.','Dr Zaid SE.'];
@@ -16621,10 +16637,10 @@ function rotasticSurfaceMissingPhysicians(){
   const female=/\b(?:Rida|Tayseer|Taysir|Oula|Ola|Saba|Fazila|Laila|Layla|Leila|Maya|Saima|Fahima)\b/i;
   const leaveAliases=['Dr Bilal C.',GANI,'Dr Ghani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'];
   function canonical(doc){return rotasticSchedulerCanonicalDoctor(doc);}
-  function group(doc){doc=canonical(doc);if(doc===RIDA)return 1;if(doc===GANI)return 2;return rotasticAuthoritativeGroup(doc);}
+  function group(doc){return getAuthoritativeGroupForScheduler(doc);}
   function unavailable(doc,day){doc=canonical(doc);if(doc===RIDA)return rotasticExplicitOff(RIDA,day);return fahima.test(doc)||bilal.test(doc)||doc===GANI||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day);}
   function rotationPeriod(day,doc){
-    doc=canonical(doc);const g=group(doc),iso=rotasticDayISO(day)||'',d=Number(iso.slice(-2));
+    doc=canonical(doc);const g=getAuthoritativeGroupForScheduler(doc,day),iso=rotasticDayISO(day)||'',d=Number(iso.slice(-2));
     if(d>=1&&d<=3)return g===1?'am':'pm';
     if(d>=4&&d<=5)return g===2?'am':'pm';
     const score={am:0,pm:0};
