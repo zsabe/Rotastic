@@ -13,31 +13,34 @@ surface=r'''function rotasticSurfaceMissingPhysicians(){
     if(rida.test(String(doc||'')))return rotasticExplicitOff(doc,day);
     return fahima.test(doc)||bilal.test(doc)||gani.test(doc)||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day);
   }
-  function groupPeriod(day,doc){
-    const want=rotasticAuthoritativeGroup(doc),score={am:0,pm:0};
-    ['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;const vals=[];rotasticNormalFields().forEach(function(f){if(sh[f])vals.push(sh[f]);});if(sh.rooms)vals.push(...Object.values(sh.rooms));if(Array.isArray(sh.noRoomDocs))vals.push(...sh.noRoomDocs);vals.forEach(function(x){if(rotasticAuthoritativeGroup(x)===want)score[p]++;});});
+  function rotationPeriod(day,doc){
+    const group=rotasticAuthoritativeGroup(doc),iso=rotasticDayISO(day)||'';
+    const d=Number(iso.slice(-2));
+    if(d>=1&&d<=3)return group===1?'am':'pm';
+    if(d>=4&&d<=5)return group===2?'am':'pm';
+    const score={am:0,pm:0};
+    ['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;const vals=[];rotasticNormalFields().forEach(function(f){if(sh[f])vals.push(sh[f]);});if(sh.rooms)vals.push(...Object.values(sh.rooms));if(Array.isArray(sh.noRoomDocs))vals.push(...sh.noRoomDocs);vals.forEach(function(x){if(rotasticAuthoritativeGroup(x)===group)score[p]++;});});
     if(score.am!==score.pm)return score.am>score.pm?'am':'pm';
-    return want===2?'pm':'am';
+    return group===2?'pm':'am';
   }
   function visible(day,doc){const k=rotasticDoctorKey(doc);for(const p of ['am','pm']){const sh=day&&day[p];if(!sh)continue;for(const f of rotasticNormalFields())if(rotasticDoctorKey(sh[f])===k)return true;if(sh.rooms&&Object.values(sh.rooms).some(v=>rotasticDoctorKey(v)===k))return true;if(Array.isArray(sh.noRoomDocs)&&sh.noRoomDocs.some(v=>rotasticDoctorKey(v)===k))return true;}return false;}
   function forceRida(day){
     const doc='Dr Rida C.';
     if(unavailable(doc,day))return;
-    const p=groupPeriod(day,doc),sh=day&&day[p];if(!sh)return;
-    const k=rotasticDoctorKey(doc);
-    if(visible(day,doc))return;
+    rotasticPurgeDoctorEverywhere(day,doc);
+    const p=rotationPeriod(day,doc),sh=day&&day[p];if(!sh)return;
     if(!sh.rooms)sh.rooms={};
-    const femaleRooms=['21','22','24','25','26','27','39'];
+    const femaleRooms=['21','22','24','25','26','27'];
     for(const room of femaleRooms){if(!sh.rooms[room]){sh.rooms[room]=doc;return;}}
     if(!Array.isArray(sh.noRoomDocs))sh.noRoomDocs=[];
-    if(!sh.noRoomDocs.some(x=>rotasticDoctorKey(x)===k))sh.noRoomDocs.unshift(doc);
+    sh.noRoomDocs.unshift(doc);
   }
   (currentSchedule||[]).forEach(function(day){
     leaveAliases.forEach(doc=>rotasticPurgeDoctorEverywhere(day,doc));
     rotasticPurgeExplicitOff(day);
     roster.forEach(function(doc){
-      if(unavailable(doc,day)||visible(day,doc))return;
-      const p=groupPeriod(day,doc),sh=day&&day[p];if(!sh)return;
+      if(rida.test(String(doc||''))||unavailable(doc,day)||visible(day,doc))return;
+      const p=rotationPeriod(day,doc),sh=day&&day[p];if(!sh)return;
       const k=rotasticDoctorKey(doc);
       if(!Array.isArray(sh.noRoomDocs))sh.noRoomDocs=[];
       if(!sh.noRoomDocs.some(x=>rotasticDoctorKey(x)===k))sh.noRoomDocs.push(doc);
@@ -70,8 +73,8 @@ else:
 window=window[:insert]+'\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);'+window[insert:]
 s=s[:pos]+window+s[window_end:]
 
-for token in ['Dr Laila A.','Dr Rida C.','forceRida(day)','femaleRooms','groupPeriod(day,doc)','ROTASTIC missing available physician','Dr Ghani M.']:
+for token in ['Dr Laila A.','Dr Rida C.','forceRida(day)','femaleRooms','rotationPeriod(day,doc)','d>=1&&d<=3','d>=4&&d<=5','ROTASTIC missing available physician','Dr Ghani M.']:
     if token not in s: raise SystemExit('missing invariant '+token)
 
 p.write_text(s,encoding='utf-8')
-print('Final invariant forces working Dr Rida into a visible female-side room when possible; UI unchanged.')
+print('Final invariant places working Dr Rida by authoritative Group 1 rotation in female-side rooms; UI unchanged.')
