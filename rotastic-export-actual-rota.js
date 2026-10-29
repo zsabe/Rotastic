@@ -11,26 +11,23 @@ const shiftNames=sh=>{if(!sh)return[];const vals=[sh.med,sh.fed,sh.ped,sh.timed1
 function fallbackCount(day,p){const leaves=new Set(leaveNames(day).map(x=>x.toLowerCase()));return shiftNames(day?.[p]).filter(x=>!leaves.has(x.toLowerCase())).length}
 function exactCount(day,p){const n=p==='am'?day?.amNotices:day?.pmNotices;const v=Number(n);return Number.isFinite(v)&&v>=0?v:fallbackCount(day,p)}
 function exposeShift(day,p){const sh=day?.[p];if(!sh||typeof sh!=='object')return;
-  /* Emergency and twilight: map directly from the rota, never from DOM text. */
   sh.maleER=sh.med||''; sh.femaleER=sh.fed||''; sh.paedsDoc=sh.ped||'';
   const t1=sh.timed1Doc||'',t2=sh.timed2Doc||'';
   if(p==='am'){sh.nineFour1=t1;sh.nineFour2=sameDoc(t1,t2)?'':t2}
   else{sh.twoEight1=t1;sh.twoEight2=sameDoc(t1,t2)?'':t2}
-  /* Keep explicit clinic fields authoritative. */
   sh.ancDoc=sh.ancDoc||'';sh.ncdDoc=sh.ncdDoc||'';sh.wicDoc=sh.wicDoc||'';sh.wbcDoc=sh.wbcDoc||'';
   sh.hearingDoc=sh.hearingDoc||sh.htDoc||'';sh.isoDoc=sh.isoDoc||sh.isolationDoc||'';
 }
 function patchDay(day){if(!day||typeof day!=='object')return day;exposeShift(day,'am');exposeShift(day,'pm');
-  /* Code Blue is an overlay role and must come only from cbAM/cbPM. */
   day.codeBlue={am:{tl:day?.cbAM?.tl||'',tm2:day?.cbAM?.tm2||'',tm3:day?.cbAM?.tm3||''},pm:{tl:day?.cbPM?.tl||'',tm2:day?.cbPM?.tm2||'',tm3:day?.cbPM?.tm3||''}};
-  /* Notices must use the rota's actual per-shift totals (already leave-aware in the generator). */
+  /* Keep the real leave list explicit for the locked Management > Leaves export column. */
+  const leaves=leaveNames(day);day.leaves=leaves;day.leaveDoctors=leaves;day.managementLeaves=leaves;day.leaveNames=leaves;
   day.doctorsAM=day.drsAM=day.amCount=exactCount(day,'am');
   day.doctorsPM=day.drsPM=day.pmCount=exactCount(day,'pm');
   return day;
 }
 function patchSchedule(){const s=window.currentSchedule||window.rotasticCurrentSchedule||window.schedule||window.rota;if(Array.isArray(s))s.forEach(patchDay);else if(Array.isArray(s?.days))s.days.forEach(patchDay);return s}
 window.rotasticPatchExportActualRota=patchSchedule;
-/* Patch immediately and again immediately before every export. */
 patchSchedule();
 const wrap=n=>{const f=window[n];if(typeof f!=='function'||f.__actualRota)return;const w=function(...a){patchSchedule();return f.apply(this,a)};w.__actualRota=true;window[n]=w};
 ['exportToPDFReport','exportToImageReport','exportToXLSReport'].forEach(wrap);
