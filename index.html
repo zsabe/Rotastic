@@ -16429,6 +16429,28 @@ function rotasticEnforceExclusiveShiftAssignments() {
   });
 }
 
+function rotasticAssignAllAvailablePhysicians() {
+  const roomOrderMale=['39','21','22','24','25','26','27','14','13','12','10','9'];
+  const roomOrderFemale=['21','22','24','25','26','27','39'];
+  const fahima=/^Dr\.?\s+Fahima\b/i;
+  function key(v){return v && /^Dr\.?\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,'')) : '';}
+  function assigned(sh){const out=new Set();['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'].forEach(f=>{const k=key(sh&&sh[f]);if(k)out.add(k)});if(sh&&sh.rooms)Object.values(sh.rooms).forEach(v=>{const k=key(v);if(k)out.add(k)});return out;}
+  (currentSchedule||[]).forEach(function(day){
+    ['am','pm'].forEach(function(period){
+      const sh=day&&day[period];if(!sh)return;
+      const available=(typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,period):typeof getAvailableDoctors==='function'?getAvailableDoctors(day,period):[]).filter(function(doc){return doc&&!fahima.test(doc)&&!doctorIsOnLeaveForDay(doc,day);});
+      const used=assigned(sh);
+      available.forEach(function(doc){
+        const k=canonicalRotaName(doc);if(used.has(k))return;
+        const rooms=rotasticIsFemalePhysician(doc)?roomOrderFemale:roomOrderMale;
+        for(const room of rooms){if(assignIfFreeRoom(sh,room,doc,'')){used.add(k);return;}}
+        if(!sh.noRoomDocs)sh.noRoomDocs=[];
+        if(!sh.noRoomDocs.some(x=>canonicalRotaName(x)===k)){sh.noRoomDocs.push(doc);used.add(k);}
+      });
+    });
+  });
+}
+
 function enforceFinalTwilightAssignments() {
   // Single authoritative Twilight calculation based on the historical signed rotas.
   if (!Array.isArray(currentSchedule) || !currentSchedule.length) return;
@@ -16612,6 +16634,8 @@ function generateDutySchedule() {
   enforceFinalTwilightAssignments();
   rotasticApplyPersistentScheduleAmendments();
   enforceFinalTwilightAssignments();
+  rotasticEnforceExclusiveShiftAssignments();
+  rotasticAssignAllAvailablePhysicians();
   rotasticEnforceExclusiveShiftAssignments();
   populateMoursiShiftDayOptions();
   renderScheduleView();
