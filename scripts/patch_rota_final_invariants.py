@@ -6,7 +6,7 @@ s=p.read_text(encoding='utf-8')
 
 # Scheduling-only final invariant. UI markup/styles are intentionally untouched.
 # Dedicated scheduler/validation helpers only; do not alter canonicalRotaName or UI/dropdown name handling.
-identity=r'''/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V2 */
+identity=r'''/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V3 */
 const ROTASTIC_RIDA = 'Dr Rida C.';
 const ROTASTIC_GANI = 'Dr Gani M.';
 function isRidaVariant(doctorName){
@@ -24,14 +24,20 @@ function rotasticSchedulerCanonicalDoctor(doctor){
   if(isGaniVariant(d))return ROTASTIC_GANI;
   return d;
 }
+function getAuthoritativeGroupForScheduler(doctorName,day){
+  if(isRidaVariant(doctorName))return 1;
+  if(isGaniVariant(doctorName))return 2;
+  return typeof rotasticAuthoritativeGroup==='function'?rotasticAuthoritativeGroup(doctorName):1;
+}
 '''
-# Remove the previous scheduler identity block if a prior integration already contains it.
-old_start=s.find('/* ROTASTIC_CANONICAL_RIDA_GANI_V1 */')
-if old_start>=0:
-    old_end=s.find('function rotasticSurfaceMissingPhysicians(){',old_start)
-    if old_end<0: raise SystemExit('old identity block boundary missing')
-    s=s[:old_start]+s[old_end:]
-if '/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V2 */' not in s:
+# Remove previous scheduler helper block if a prior integration already contains it.
+for marker in ['/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V2 */','/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V3 */']:
+    old_start=s.find(marker)
+    if old_start>=0:
+        old_end=s.find('function rotasticSurfaceMissingPhysicians(){',old_start)
+        if old_end<0: raise SystemExit('scheduler helper block boundary missing')
+        s=s[:old_start]+s[old_end:]
+if '/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V3 */' not in s:
     anchor='function rotasticSurfaceMissingPhysicians(){'
     pos=s.find(anchor)
     if pos<0: raise SystemExit('surface invariant anchor missing')
@@ -41,16 +47,12 @@ if '/* ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V2 */' not in s:
 old_hook="\n  const __rg=rotasticCanonicalRidaGani(name);\n  if(__rg===ROTASTIC_RIDA||__rg===ROTASTIC_GANI)return __rg;"
 s=s.replace(old_hook,'')
 
-# Strict scheduler invariant: Rida Group 1, Gani/Ghani Group 2. No UI/dropdown mutation.
+# Keep the existing authoritative function protected too: scheduler callers and legacy callers agree on Rida/Gani.
 gstart=s.find('function rotasticAuthoritativeGroup(')
 if gstart<0: raise SystemExit('authoritative group anchor missing')
 gbrace=s.find('{',gstart)
 if gbrace<0: raise SystemExit('authoritative group body missing')
-old_group="\n  const __rgGroup=rotasticCanonicalRidaGani(doctor);\n  if(__rgGroup===ROTASTIC_RIDA)return 1;\n  if(__rgGroup===ROTASTIC_GANI)return 2;"
-s=s.replace(old_group,'')
 gneedle="\n  if(isRidaVariant(doctor))return 1;\n  if(isGaniVariant(doctor))return 2;"
-# Re-find after replacement in case offsets changed.
-gstart=s.find('function rotasticAuthoritativeGroup('); gbrace=s.find('{',gstart)
 if gneedle not in s[gbrace:gbrace+1000]:
     s=s[:gbrace+1]+gneedle+s[gbrace+1:]
 
@@ -61,10 +63,10 @@ surface=r'''function rotasticSurfaceMissingPhysicians(){
   const female=/\b(?:Rida|Tayseer|Taysir|Oula|Ola|Saba|Fazila|Laila|Layla|Leila|Maya|Saima|Fahima)\b/i;
   const leaveAliases=['Dr Bilal C.',GANI,'Dr Ghani M.','Dr Gani Shafi','Dr Ghani Shafi','دكتور GANI','دكتور GHANI'];
   function canonical(doc){return rotasticSchedulerCanonicalDoctor(doc);}
-  function group(doc){doc=canonical(doc);if(doc===RIDA)return 1;if(doc===GANI)return 2;return rotasticAuthoritativeGroup(doc);}
+  function group(doc){return getAuthoritativeGroupForScheduler(doc);}
   function unavailable(doc,day){doc=canonical(doc);if(doc===RIDA)return rotasticExplicitOff(RIDA,day);return fahima.test(doc)||bilal.test(doc)||doc===GANI||rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day);}
   function rotationPeriod(day,doc){
-    doc=canonical(doc);const g=group(doc),iso=rotasticDayISO(day)||'',d=Number(iso.slice(-2));
+    doc=canonical(doc);const g=getAuthoritativeGroupForScheduler(doc,day),iso=rotasticDayISO(day)||'',d=Number(iso.slice(-2));
     if(d>=1&&d<=3)return g===1?'am':'pm';
     if(d>=4&&d<=5)return g===2?'am':'pm';
     const score={am:0,pm:0};
@@ -101,9 +103,9 @@ else: insert=window.find('\n')
 window=window[:insert]+'\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);'+window[insert:]
 s=s[:pos]+window+s[window_end:]
 
-for token in ['ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V2','isRidaVariant','isGaniVariant','rotasticSchedulerCanonicalDoctor','if(isRidaVariant(doctor))return 1','if(isGaniVariant(doctor))return 2','rebuildRida(day)','ROTASTIC missing available physician']:
+for token in ['ROTASTIC_SCHEDULER_RIDA_GANI_HELPERS_V3','isRidaVariant','isGaniVariant','getAuthoritativeGroupForScheduler','if(isRidaVariant(doctorName))return 1','if(isGaniVariant(doctorName))return 2','rebuildRida(day)','ROTASTIC missing available physician']:
     if token not in s: raise SystemExit('missing invariant '+token)
 if 'const __rg=rotasticCanonicalRidaGani(name)' in s: raise SystemExit('UI/global canonicalRotaName hook still present')
 
 p.write_text(s,encoding='utf-8')
-print('Rida/Gani variant helpers isolated to scheduler/validation; original canonical/UI naming left untouched; UI unchanged.')
+print('Scheduler-only authoritative grouping added: Rida Group 1, Gani/Ghani Group 2; UI naming untouched.')
