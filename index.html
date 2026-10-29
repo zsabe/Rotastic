@@ -6796,6 +6796,15 @@ nav.mobile-nav-bar>button[data-rotastic-tab="schedule"]>span{font-weight:600!imp
 <label class="block text-[10px] font-semibold text-indigo-400 uppercase mb-1">Assign PM Shift Lead</label>
 <select class="w-full bg-slate-900 text-white font-medium text-xs outline-none" id="assignShiftLeadPM" onchange="onAdminAssignShiftLead('PM')"></select>
 </div>
+<div id="rotasticWeeklyClinicControls" class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+<div class="text-[10px] uppercase tracking-wider font-bold text-slate-300 mb-2">Clinics running this week</div>
+<div class="grid grid-cols-2 gap-2">
+<label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicANC" type="checkbox" checked class="accent-teal-500"><span>ANC</span></label>
+<label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicWBC" type="checkbox" checked class="accent-teal-500"><span>Well Baby Clinic</span></label>
+<label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicIUD" type="checkbox" checked class="accent-teal-500"><span>IUD / IUCD</span></label>
+<label class="flex items-center gap-2 text-xs text-slate-300"><input id="weeklyClinicNCD" type="checkbox" checked class="accent-teal-500"><span>NCD</span></label>
+</div>
+</div>
 <div class="flex items-end">
 <button class="w-full px-3.5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl transition" onclick="generateDutyScheduleFromPlanner()" type="button">
 <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generate Schedule
@@ -15167,11 +15176,19 @@ function getWeeklySpecialClinicPlan(isoDate) {
   return {weekIndex:idx, iucdPeriod:iucdPeriod, sdiPeriod:sdiPeriod, smokingDoctor:smokingDoctor};
 }
 
+function rotasticWeeklyClinicEnabled(id) {
+  const map = {anc:'weeklyClinicANC', wbc:'weeklyClinicWBC', iud:'weeklyClinicIUD', ncd:'weeklyClinicNCD'};
+  const el = document.getElementById(map[id]);
+  return !el || !!el.checked;
+}
+
 function rotasticAssignMondaySpecialClinics(day, period, available, shift, used) {
   if (!day || day.day !== 'Monday') return;
   const plan = getWeeklySpecialClinicPlan(day.isoDate);
 
-  if (period === plan.iucdPeriod && available.indexOf('Dr Oula T.') !== -1 && !doctorIsOnLeaveForDay('Dr Oula T.', day)) {
+  if (!rotasticWeeklyClinicEnabled('iud') && period === plan.iucdPeriod) shift.iucdDoc = 'No Clinic';
+
+  if (rotasticWeeklyClinicEnabled('iud') && period === plan.iucdPeriod && available.indexOf('Dr Oula T.') !== -1 && !doctorIsOnLeaveForDay('Dr Oula T.', day)) {
     shift.iucdDoc = 'Dr Oula T.';
     assignIfFreeRoom(shift, 21, 'Dr Oula T.', ' (IUCD)');
     used.add('Dr Oula T.');
@@ -15510,7 +15527,7 @@ function applyAutomaticRotaPopulation() {
       shift.ped=chooseRotating(available,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';
 
       const clinic=getClinicPattern(day.day,period);
-      if(clinic.wbc){
+      if(clinic.wbc && rotasticWeeklyClinicEnabled('wbc')){
         if(day.day==='Tuesday' && period==='AM' && !doctorIsOnLeaveForDay('Dr Mohamed M.', day)) { shift.wbcDoc='Dr Mohamed M.'; }
         else {
           // Signed rota pattern: WBC is normally covered by a male physician.
@@ -15520,8 +15537,9 @@ function applyAutomaticRotaPopulation() {
           shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || chooseRotating(wbcCandidates,seed+3,used) || 'No Clinic';
         }
       }
-      if(clinic.anc) shift.ancDoc=pickANCDoctor(day,available,used,weekIdx+dayIndex+(period==='PM'?1:0)) || 'No Clinic';
-      if(clinic.ncd) shift.ncdDoc=chooseRotating(available,seed+4,used) || 'No Clinic';
+      if(clinic.wbc && !rotasticWeeklyClinicEnabled('wbc')) shift.wbcDoc='No Clinic';
+      if(clinic.anc) shift.ancDoc=rotasticWeeklyClinicEnabled('anc') ? (pickANCDoctor(day,available,used,weekIdx+dayIndex+(period==='PM'?1:0)) || 'No Clinic') : 'No Clinic';
+      if(clinic.ncd) shift.ncdDoc=rotasticWeeklyClinicEnabled('ncd') ? (chooseRotating(available,seed+4,used) || 'No Clinic') : 'No Clinic';
 
       // Signed-rota Priority pattern: Room 27 is the female-side Priority slot
       // and Room 14 is the male-side Priority slot. Keep Priority independent
@@ -15627,9 +15645,9 @@ function applyAutomaticRotaPopulation() {
     }
 
     const amPlanned=uniquePlannedAvailableForTwilight(amGroupNo===1?rules.group1:rules.group2,day)
-      .filter(function(n){return n!=='Dr Mohamed M.';});
+      .filter(function(n){return n!=='Dr Mohamed M.' && DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});
     const pmPlanned=uniquePlannedAvailableForTwilight(pmGroupNo===1?rules.group1:rules.group2,day)
-      .filter(function(n){return n!=='Dr Mohamed M.';});
+      .filter(function(n){return n!=='Dr Mohamed M.' && DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});
 
     // Signed rotas show Twilight can overlap Emergency, Code Blue and other duties.
     // Therefore the active shift cohort itself is the Twilight candidate pool.
@@ -26210,6 +26228,6 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
 <script id="rotastic-rota-matrix-v5-js">
 (function(){var busy=false,chosen='1';function same(a,b){try{return typeof doctorMatches==='function'?doctorMatches(a,b):String(a||'').toLowerCase()===String(b||'').toLowerCase()}catch(e){return false}}function rules(){try{return typeof getAutoRotaRules==='function'?getAutoRotaRules():null}catch(e){return null}}function days(){return Array.isArray(window.currentSchedule)?window.currentSchedule:[]}function labelKey(path){var p=path.join('.'),per=/^am\b/i.test(p)?'AM':(/^pm\b/i.test(p)?'PM':''),room=p.match(/rooms\.(\d+)/i);if(room)return(per?per+' ':'')+'R'+room[1];if(/cbAM/i.test(p))return'AM CB';if(/cbPM/i.test(p))return'PM CB';if(/twilight/i.test(p))return'Twilight';var last=String(path[path.length-1]||'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' ');return((per?per+' ':'')+last).trim().toUpperCase()}function assignments(day,doctor){var out=[];if(!day)return out;try{if(Array.isArray(day.leaves)&&day.leaves.some(function(x){return same(typeof x==='string'?x:(x&&x.name),doctor)}))out.push('AL')}catch(e){}function walk(v,path){if(v==null)return;if(typeof v==='string'){if(same(v,doctor))out.push(labelKey(path));return}if(Array.isArray(v)){v.forEach(function(x,i){walk(x,path.concat(String(i))) });return}if(typeof v==='object'){Object.keys(v).forEach(function(k){if(k!=='leaves')walk(v[k],path.concat(k))})}}['am','pm','cbAM','cbPM','twilight','twilightDoctors'].forEach(function(k){if(day[k]!=null)walk(day[k],[k])});return Array.from(new Set(out.filter(Boolean)))}function dateObj(day,i){var raw=day&&(day.isoDate||day.date);if(raw){var d=new Date(String(raw).slice(0,10)+'T12:00:00');if(!isNaN(d))return d}var d2=new Date();d2.setDate(d2.getDate()+i);return d2}function hideWeek(){var s=document.getElementById('plannerWeekSelect');if(s&&s.parentElement)s.parentElement.classList.add('rotastic-hide-week-select')}function root(){var cal=document.getElementById('weeklyLeaveCalendar');return cal&&(cal.closest('.clean-card')||cal.parentElement)}function esc(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}function build(){if(busy)return;busy=true;try{hideWeek();var r=root();if(!r)return;var old=r.querySelector('.rotastic-rota-matrix-shell');if(old)old.remove();var ds=days(),rr=rules(),members=rr?(chosen==='1'?rr.group1:rr.group2):[],shell=document.createElement('div');shell.className='rotastic-rota-matrix-shell';var bar=document.createElement('div');bar.className='rrm-toolbar';bar.innerHTML='<div class="rrm-toolbar-left"><label>Display group</label><select aria-label="Rota Planner group"><option value="1">Group 1</option><option value="2">Group 2</option></select><span class="rrm-note">Scroll right for more dates</span></div>';shell.appendChild(bar);var sel=bar.querySelector('select');sel.value=chosen;sel.onchange=function(){chosen=this.value;build()};var wrap=document.createElement('div');wrap.className='rrm-wrap';if(!ds.length||!members.length){wrap.innerHTML='<div class="rrm-no-rota">'+(!ds.length?'No released/generated rota is currently available.':'No physicians found for this group.')+'</div>'}else{var h='<table class="rrm-table"><thead><tr><th class="rrm-name">Physician</th>',today=new Date().toDateString();ds.forEach(function(day,i){var d=dateObj(day,i),c=(d.toDateString()===today?' rrm-today':'')+([5,6].indexOf(d.getDay())>=0?' rrm-weekend':'');h+='<th class="'+c+'"><span class="rrm-day">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</span><span class="rrm-date">'+d.getDate()+'</span></th>'});h+='</tr></thead><tbody>';members.forEach(function(name){h+='<tr><td class="rrm-name">'+esc(name)+'</td>';ds.forEach(function(day,i){var a=assignments(day,name),d=dateObj(day,i),c=(d.toDateString()===today?' rrm-today':'')+([5,6].indexOf(d.getDay())>=0?' rrm-weekend':'');h+='<td class="'+c+(a.length?'':' rrm-empty')+'">'+(a.length?'<span class="rrm-pill" title="'+esc(a.join(' · '))+'">'+esc(a.join(' · '))+'</span>':'—')+'</td>'});h+='</tr>'});h+='</tbody></table>';wrap.innerHTML=h}shell.appendChild(wrap);var cal=document.getElementById('weeklyLeaveCalendar');if(cal&&cal.parentElement)cal.parentElement.insertBefore(shell,cal);else r.appendChild(shell);bar.querySelector('[data-x="png"]').onclick=function(){exportMatrix(shell,'png')};bar.querySelector('[data-x="pdf"]').onclick=function(){exportMatrix(shell,'pdf')}}finally{busy=false}}async function exportMatrix(shell,type){var target=shell.querySelector('.rrm-wrap');if(!target||typeof html2canvas!=='function')return;var group='Group '+chosen,clone=document.createElement('div');clone.style.cssText='position:fixed;left:-20000px;top:0;width:1500px;padding:42px;background:#fff;color:#172033;font-family:Arial,sans-serif;z-index:-1';clone.innerHTML='<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:24px"><div><div style="font-size:12px;font-weight:900;letter-spacing:.18em;color:#14b8a6">ROTASTIC</div><div style="font-size:30px;font-weight:900;margin-top:4px">Physician Rota Planner</div><div style="font-size:13px;color:#64748b;margin-top:5px">Abu Nakhla Health Centre · '+group+'</div></div><div style="font-size:12px;color:#64748b">'+new Date().toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})+'</div></div>';var c=target.cloneNode(true);c.style.overflow='visible';clone.appendChild(c);document.body.appendChild(clone);Array.from(clone.querySelectorAll('table,th,td')).forEach(function(e){e.style.color='#172033';e.style.background='#fff';e.style.borderColor='#e5e7eb'});Array.from(clone.querySelectorAll('.rrm-name')).forEach(function(e){e.style.position='static';e.style.background='#f8fafc'});Array.from(clone.querySelectorAll('.rrm-pill')).forEach(function(e){e.style.background='#e6fffb';e.style.color='#115e59';e.style.border='1px solid #99f6e4'});try{var canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true});if(type==='png'){var a=document.createElement('a');a.download='ROTASTIC-'+group.replace(' ','-')+'-Rota.png';a.href=canvas.toDataURL('image/png');a.click()}else if(window.jspdf&&window.jspdf.jsPDF){var pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'}),img=canvas.toDataURL('image/jpeg',.95),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),ratio=Math.min((pw-36)/canvas.width,(ph-36)/canvas.height);pdf.addImage(img,'JPEG',18,18,canvas.width*ratio,canvas.height*ratio);pdf.save('ROTASTIC-'+group.replace(' ','-')+'-Rota.pdf')}}finally{clone.remove()}}function go(){build();setTimeout(build,700);setTimeout(build,1800)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();document.addEventListener('click',function(){setTimeout(build,180)},true);window.addEventListener('rotastic-rota-released',function(){setTimeout(build,100)})})();
 </script>
-<script src="./rotastic-communications.js?v=7" defer></script>
+<script src="./rotastic-communications.js?v=8" defer></script>
 </body>
 </html>
