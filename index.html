@@ -15531,8 +15531,8 @@ function applyAutomaticRotaPopulation() {
       // Emergency roles first among duty-eligible doctors, but they do not consume their room allocation later.
       const emergencyUsed=new Set();
       shift.med=chooseRotating(male,seed,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
-      shift.fed=chooseRotating(male,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
-      shift.ped=chooseRotating(male,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';
+      shift.fed=chooseRotating(female,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
+      shift.ped=chooseRotating(available,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';
 
       const clinic=getClinicPattern(day.day,period);
       if(clinic.wbc && rotasticWeeklyClinicEnabled('wbc')){
@@ -16411,7 +16411,7 @@ function rotasticRemoveTwilightFromWBC() {
 }
 
 function rotasticEnforceExclusiveShiftAssignments() {
-  const fields = ['timed1Doc','timed2Doc','med','fed','ped','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
+  const normalFields = ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
   (currentSchedule || []).forEach(function(day) {
     ['am','pm'].forEach(function(period) {
       const sh = day && day[period];
@@ -16420,28 +16420,27 @@ function rotasticEnforceExclusiveShiftAssignments() {
       function key(v) { return v && /^Dr\.?\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,'')) : ''; }
       function reserve(v) { const k=key(v); if(!k) return false; if(seen.has(k)) return true; seen.add(k); return false; }
 
-      // Twilight is authoritative and must be unique. A second identical Twilight box is blank.
+      // Twilight is a normal assignment and must be unique.
       if (reserve(sh.timed1Doc)) sh.timed1Doc='';
       if (reserve(sh.timed2Doc)) sh.timed2Doc='';
 
-      // WBC is an exclusive clinic. If its doctor is already on Twilight, WBC closes rather than duplicating them.
-      const wbcKey = key(sh.wbcDoc);
+      // WBC is exclusive from every other NORMAL assignment, especially Twilight.
+      const wbcKey=key(sh.wbcDoc);
       if (wbcKey && seen.has(wbcKey)) sh.wbcDoc='No Clinic';
       else if (wbcKey) seen.add(wbcKey);
 
-      fields.slice(2).forEach(function(field) {
-        if (field==='wbcDoc') return;
-        const v=sh[field];
-        if (reserve(v)) sh[field]='';
+      normalFields.slice(3).forEach(function(field) {
+        const v=sh[field]; if(reserve(v)) sh[field]='';
       });
 
       if (sh.rooms && typeof sh.rooms==='object') {
         Object.keys(sh.rooms).forEach(function(room) {
-          const v=sh.rooms[room]; const k=key(v); if(!k) return;
-          // If this room repeats any already reserved physician (including WBC), clear only the duplicate room.
+          const v=sh.rooms[room], k=key(v); if(!k) return;
           if (seen.has(k)) sh.rooms[room]='-'; else seen.add(k);
         });
       }
+      // sh.med / sh.fed / sh.ped are Emergency overlays and may coexist with one normal assignment.
+      // day.cbAM / day.cbPM are Code Blue overlays and are likewise allowed alongside one normal assignment.
     });
   });
 }
