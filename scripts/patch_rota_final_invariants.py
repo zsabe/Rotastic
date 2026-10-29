@@ -60,24 +60,26 @@ function rotasticEnforceExclusiveShiftAssignments() {
 }
 function rotasticRepairWBCAndANC() {
   (currentSchedule||[]).forEach(function(day){
+    const twilight=new Set();
+    ['am','pm'].forEach(function(period){const q=day&&day[period];if(!q)return;['timed1Doc','timed2Doc'].forEach(function(f){const k=rotasticDoctorKey(q[f]);if(k)twilight.add(k);});});
     ['am','pm'].forEach(function(period){
       const sh=day&&day[period]; if(!sh)return;
       const list=typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,period):(typeof getAvailableDoctors==='function'?getAvailableDoctors(day,period):[]);
       const available=(list||[]).filter(function(doc){return doc&&!doctorIsOnLeaveForDay(doc,day);});
-      const occupied=new Set();
-      ['timed1Doc','timed2Doc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'].forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)occupied.add(k);});
+      const occupied=new Set(twilight);
+      ['ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'].forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)occupied.add(k);});
       if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)occupied.add(k);});
       const wbcEnabled=typeof rotasticWeeklyClinicEnabled!=='function'||rotasticWeeklyClinicEnabled('wbc');
-      const wbcKey=rotasticDoctorKey(sh.wbcDoc);
+      let wbcKey=rotasticDoctorKey(sh.wbcDoc);
+      /* Twilight is absolute normal-duty priority: a Twilight doctor can never also hold WBC. */
+      if(wbcKey && twilight.has(wbcKey)){sh.wbcDoc='No Clinic';wbcKey='';}
       if(wbcEnabled && !wbcKey){
-        const next=available.find(function(doc){const k=canonicalRotaName(doc);return !rotasticIsFemalePhysician(doc)&&!occupied.has(k)&&!dutyExempt(doc,'wbc',day);});
-        if(next){sh.wbcDoc=next;occupied.add(canonicalRotaName(next));}
+        const next=available.find(function(doc){const k=canonicalRotaName(doc);return !rotasticIsFemalePhysician(doc)&&!twilight.has(k)&&!occupied.has(k)&&!dutyExempt(doc,'wbc',day);});
+        if(next){sh.wbcDoc=next;wbcKey=canonicalRotaName(next);occupied.add(wbcKey);}
       }
       if(!wbcEnabled)sh.wbcDoc='No Clinic';
-      /* WBC is a named clinic with no room number. Remove any duplicate room placement. */
       const finalWbc=rotasticDoctorKey(sh.wbcDoc);
       if(finalWbc&&sh.rooms)Object.keys(sh.rooms).forEach(function(room){if(rotasticDoctorKey(sh.rooms[room])===finalWbc)sh.rooms[room]='-';});
-      /* ANC is exclusively Room 32. Keep the physician in ancDoc and remove any other room copy. */
       const anc=rotasticDoctorKey(sh.ancDoc);
       if(anc&&sh.rooms)Object.keys(sh.rooms).forEach(function(room){if(room!=='32'&&rotasticDoctorKey(sh.rooms[room])===anc)sh.rooms[room]='-';});
       sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':'';
@@ -131,8 +133,10 @@ for token in ['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I
     if token not in s: raise SystemExit('Missing Group 2 member: '+token)
 if 'rotasticIsFemaleTwilightDoctor' not in s: raise SystemExit('Female Twilight guard missing')
 if "shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';" not in s: raise SystemExit('WBC male-only guard missing')
+if "if(wbcKey && twilight.has(wbcKey)){sh.wbcDoc='No Clinic';wbcKey='';}" not in s: raise SystemExit('Twilight/WBC exclusion missing')
+if "!twilight.has(k)&&!occupied.has(k)" not in s: raise SystemExit('WBC replacement Twilight exclusion missing')
 if "sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':'';" not in s: raise SystemExit('ANC Room 32 invariant missing')
 if "sh.wbcRoom='';" not in s: raise SystemExit('WBC no-room invariant missing')
 
 p.write_text(s, encoding='utf-8')
-print('Applied WBC fallback/no-room and ANC Room 32 invariants; UI design unchanged.')
+print('Applied strict Twilight/WBC exclusivity, WBC fallback/no-room and ANC Room 32 invariants; UI design unchanged.')
