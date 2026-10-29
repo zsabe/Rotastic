@@ -99,6 +99,28 @@ exclusive_guard = '''function rotasticEnforceExclusiveShiftAssignments() {
   });
 }
 
+function rotasticAssignAllAvailablePhysicians() {
+  const roomOrderMale=['39','21','22','24','25','26','27','14','13','12','10','9'];
+  const roomOrderFemale=['21','22','24','25','26','27','39'];
+  const fahima=/^Dr\\.?\\s+Fahima\\b/i;
+  function key(v){return v && /^Dr\\.?\\s+/i.test(String(v)) ? canonicalRotaName(String(v).replace(/\\s*\\([^)]*\\)\\s*$/,'')) : '';}
+  function assigned(sh){const out=new Set();['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'].forEach(f=>{const k=key(sh&&sh[f]);if(k)out.add(k)});if(sh&&sh.rooms)Object.values(sh.rooms).forEach(v=>{const k=key(v);if(k)out.add(k)});return out;}
+  (currentSchedule||[]).forEach(function(day){
+    ['am','pm'].forEach(function(period){
+      const sh=day&&day[period];if(!sh)return;
+      const available=(typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,period):typeof getAvailableDoctors==='function'?getAvailableDoctors(day,period):[]).filter(function(doc){return doc&&!fahima.test(doc)&&!doctorIsOnLeaveForDay(doc,day);});
+      const used=assigned(sh);
+      available.forEach(function(doc){
+        const k=canonicalRotaName(doc);if(used.has(k))return;
+        const rooms=rotasticIsFemalePhysician(doc)?roomOrderFemale:roomOrderMale;
+        for(const room of rooms){if(assignIfFreeRoom(sh,room,doc,'')){used.add(k);return;}}
+        if(!sh.noRoomDocs)sh.noRoomDocs=[];
+        if(!sh.noRoomDocs.some(x=>canonicalRotaName(x)===k)){sh.noRoomDocs.push(doc);used.add(k);}
+      });
+    });
+  });
+}
+
 '''
 start = s.find('function rotasticEnforceExclusiveShiftAssignments()')
 if start >= 0:
@@ -110,19 +132,18 @@ else:
     if anchor not in s: raise SystemExit('Final Twilight function anchor missing')
     s=s.replace(anchor,exclusive_guard+anchor,1)
 
-if 'rotasticEnforceExclusiveShiftAssignments();' not in s:
-    order_anchor='  enforceFinalTwilightAssignments();\n  populateMoursiShiftDayOptions();'
-    if order_anchor in s: s=s.replace(order_anchor,'  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();',1)
-    else: raise SystemExit('Final exclusivity call anchor missing')
+order_anchor='  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();'
+new_order='  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();'
+if new_order not in s:
+    if order_anchor in s:s=s.replace(order_anchor,new_order,1)
+    else:raise SystemExit('Final allocation call anchor missing')
 
-# The authoritative normalizer is called after final Twilight generation. This is the stable generator boundary;
-# do not depend on a renderer function name, which differs across generated index revisions.
 if new_assign not in s: raise SystemExit('Female <=20 room hard block missing')
 if correct_emergency not in s: raise SystemExit('Gender-correct Emergency overlays missing')
 if not re.search(r"shift\.wbcDoc=chooseRotating\(wbcMaleCandidates,seed\+3,used\)\s*\|\|\s*'No Clinic';", s): raise SystemExit('WBC male-only invariant missing')
 if smoking_new not in s: raise SystemExit('Smoking Cessation No Clinic invariant missing')
 if new_am not in s or new_pm not in s: raise SystemExit('Final Twilight pools not protected')
-if 'rotasticEnforceExclusiveShiftAssignments();' not in s: raise SystemExit('Final shift exclusivity invariant missing')
+if 'rotasticAssignAllAvailablePhysicians();' not in s: raise SystemExit('All-available allocation invariant missing')
 
 p.write_text(s, encoding='utf-8')
-print('Applied authoritative normal-duty exclusivity; Emergency and Code Blue overlays preserved.')
+print('Applied all-available physician allocation; Dr Fahima excluded from shifts.')
