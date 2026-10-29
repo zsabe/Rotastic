@@ -6,13 +6,14 @@ const FEMALE_FIRST_NAMES=new Set(['fazila','maya','oula','ola','tayseer','taysir
 const FEMALE_SIDE_ONLY=new Set(['Dr Fazila K','Dr Fazila','Dr Maya S','Dr Maya','Dr Oula T','Dr Oula','Dr Ola','Dr Tayseer A','Dr Tayseer','Dr Taysir','Dr Saima N','Dr Saima','Dr Rida C','Dr Rida','Dr Laila','Dr Layla','Dr Leila','Dr Saba']);
 const CODE_BLUE_BLOCKED=new Set(['Dr Saleh','Saleh','Dr Maher','Dr Maher A','Maher','Maher A','Dr Abdulghafoor','Dr Abdulgafoor','Dr Abdel Ghafoor','Dr Abdelghafoor','Dr Abdelgafour','Dr Abdel Gafour','Dr Abdel Ghaffour','Dr Abdelghaffour','Dr Abdul Ghafoor','Dr Abdulghafour','Abdulghafoor','Abdulgafoor','Abdel Ghafoor','Abdelghafoor','Abdelgafour','Abdel Gafour','Abdel Ghaffour','Abdelghaffour','Abdul Ghafoor','Abdulghafour','Dr Mohammed Sayed','Dr Mohamed Sayed','Dr Muhammad Sayed','Dr Mohamed Saeed','Dr Mohammed Saeed','Dr Muhammad Saeed','Dr Mohamed S','Dr Mohammed S','Dr Muhammad S','Mohammed Sayed','Mohamed Sayed','Muhammad Sayed','Mohamed Saeed','Mohammed Saeed','Muhammad Saeed','Mohamed S','Mohammed S','Muhammad S']);
 const PAEDS_WBC_BLOCKED_FIRST_NAMES=new Set(['shadi','hossam','husam','hussam']);
-const GROUPS=Object.freeze({group1:['Dr Laila','Dr Saleh'],group2:['Dr Saba']});
+const GROUPS=Object.freeze({group1:['Dr Abdulgafoor K.','Dr Aminullah Z.','Dr Fahima N.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T'],group2:['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.']});
 const doctorName=d=>typeof d==='string'?d:(d?.name||d?.doctor||d?.physician||'');
 const isFemale=d=>{const k=compact(doctorName(d));return [...FEMALE_SIDE_ONLY].some(x=>compact(x)===k)||FEMALE_FIRST_NAMES.has(k.split(' ')[0])};
 const codeBlueBlocked=d=>{const k=compact(doctorName(d));return [...CODE_BLUE_BLOCKED].some(x=>compact(x)===k)};
 const paedsWbcBlocked=d=>PAEDS_WBC_BLOCKED_FIRST_NAMES.has(compact(doctorName(d)).split(' ')[0]);
 const displayName=d=>String(d||'').trim().replace(/\bDr\.?\s+Moursi\b/i,'Dr Morsi');
-const doctorGroup=d=>Object.entries(GROUPS).find(([,a])=>a.some(x=>norm(x)===norm(d)))?.[0]||null;
+const groupKey=d=>{const k=compact(doctorName(d));if(/^(gani|ghani)(\s|$)/.test(k))return compact('Dr Gani M.');return k};
+const doctorGroup=d=>Object.entries(GROUPS).find(([,a])=>a.some(x=>groupKey(x)===groupKey(d)))?.[0]||null;
 const isLeave=a=>a?.leave===true||a?.onLeave===true||a?.isLeave===true||/\b(leave|annual leave|on leave)\b/i.test(String(a?.status||a?.role||a?.assignment||a?.duty||''));
 const dateOf=a=>String(a?.date||a?.isoDate||a?.dayDate||a?.shiftDate||'').slice(0,10);
 const leaveKey=(doctor,date)=>`${date}|${compact(doctor)}`;
