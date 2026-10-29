@@ -4,28 +4,18 @@ import re
 p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 
-# Dr Gani / Dr Gani Shafi / Dr Gani M. are one physician and authoritative Group 2.
+# Dr Gani M. is authoritative Group 2.
 group2 = "const ROTASTIC_GROUP_2 = new Set(['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.'].map(canonicalRotaName));"
 s, n = re.subn(r"const ROTASTIC_GROUP_2 = new Set\(\[.*?\]\.map\(canonicalRotaName\)\);", group2, s, count=1)
 if n != 1: raise SystemExit('Authoritative Group 2 set missing')
 
-start=s.find('function rotasticDoctorKey(v)')
+start=s.find('function rotasticEnforceExclusiveShiftAssignments()')
 end=s.find('function enforceFinalTwilightAssignments() {',start)
 if start<0 or end<=start: raise SystemExit('Final rota invariant anchor missing')
 
-block=r'''function rotasticIsGaniName(v) {
-  const x=String(v||'').trim();
-  return /^Dr\.?\s+Gani(?:\s+(?:M\.?|Shafi))?\b/i.test(x) || /دكتور\s*GANI/i.test(x);
-}
-function rotasticDoctorKey(v) {
-  if (!v) return '';
-  if (rotasticIsGaniName(v)) return canonicalRotaName('Dr Gani M.');
-  if (!/^Dr\.?\s+/i.test(String(v))) return '';
+block=r'''function rotasticDoctorKey(v) {
+  if (!v || !/^Dr\.?\s+/i.test(String(v))) return '';
   return canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,''));
-}
-function rotasticGaniOnLeave(day){
-  if(typeof doctorIsOnLeaveForDay!=='function')return false;
-  return ['Dr Gani M.','Dr Gani Shafi','Dr Gani','دكتور GANI'].some(function(n){try{return !!doctorIsOnLeaveForDay(n,day);}catch(e){return false;}});
 }
 function rotasticNormalFields(){return ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];}
 function rotasticDayTwilight(day){
@@ -39,16 +29,9 @@ function rotasticClearNormalDoctor(sh,k,keepTwilight){
   if(sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(rotasticDoctorKey(sh.rooms[r])===k)sh.rooms[r]='-';});
   if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==k;});
 }
-function rotasticPurgeGaniIfOnLeave(day){
-  if(!day||!rotasticGaniOnLeave(day))return false;
-  const gani=canonicalRotaName('Dr Gani M.');
-  ['am','pm'].forEach(function(p){const sh=day[p];if(!sh)return;rotasticClearNormalDoctor(sh,gani,false);Object.keys(sh).forEach(function(f){if(typeof sh[f]==='string'&&rotasticDoctorKey(sh[f])===gani)sh[f]='';});if(sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(rotasticDoctorKey(sh.rooms[r])===gani)sh.rooms[r]='-';});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==gani;});});
-  return true;
-}
 function rotasticEnforceGaniGroup2Shift(){
   const gani=canonicalRotaName('Dr Gani M.');
   (currentSchedule||[]).forEach(function(day){
-    if(rotasticPurgeGaniIfOnLeave(day))return;
     function normalKeys(sh){const out=[];if(!sh)return out;rotasticNormalFields().forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)out.push(k);});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.push(k);});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.push(k);});return out;}
     const amKeys=normalKeys(day&&day.am),pmKeys=normalKeys(day&&day.pm);
     const ganiAM=amKeys.includes(gani),ganiPM=pmKeys.includes(gani);
@@ -87,7 +70,7 @@ function rotasticRepairWBCAndANC(){
       const enabled=typeof rotasticWeeklyClinicEnabled!=='function'||rotasticWeeklyClinicEnabled('wbc');
       let wk=rotasticDoctorKey(sh.wbcDoc);
       if(wk&&twilight.has(wk)){sh.wbcDoc='No Clinic';wk='';}
-      if(enabled&&!wk){const next=available.find(function(doc){const k=rotasticDoctorKey(doc);return !rotasticIsFemalePhysician(doc)&&!twilight.has(k)&&!occupied.has(k)&&!dutyExempt(doc,'wbc',day);});if(next){sh.wbcDoc=next;wk=rotasticDoctorKey(next);occupied.add(wk);}}
+      if(enabled&&!wk){const next=available.find(function(doc){const k=canonicalRotaName(doc);return !rotasticIsFemalePhysician(doc)&&!twilight.has(k)&&!occupied.has(k)&&!dutyExempt(doc,'wbc',day);});if(next){sh.wbcDoc=next;wk=canonicalRotaName(next);occupied.add(wk);}}
       if(!enabled)sh.wbcDoc='No Clinic';
       const finalWbc=rotasticDoctorKey(sh.wbcDoc);if(finalWbc&&sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(rotasticDoctorKey(sh.rooms[r])===finalWbc)sh.rooms[r]='-';});
       const anc=rotasticDoctorKey(sh.ancDoc);if(anc&&sh.rooms)Object.keys(sh.rooms).forEach(function(r){if(r!=='32'&&rotasticDoctorKey(sh.rooms[r])===anc)sh.rooms[r]='-';});
@@ -99,21 +82,20 @@ function rotasticRepairWBCAndANC(){
 function rotasticAssignAllAvailablePhysicians(){
   const fahima=/^Dr\.?\s+Fahima\b/i;
   function existing(day){const out=new Set();['am','pm'].forEach(function(p){const sh=day&&day[p];if(!sh)return;rotasticNormalFields().forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)out.add(k);});if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.add(k);});if(Array.isArray(sh.noRoomDocs))sh.noRoomDocs.forEach(function(v){const k=rotasticDoctorKey(v);if(k)out.add(k);});});return out;}
-  (currentSchedule||[]).forEach(function(day){const byPeriod={am:[],pm:[]};['am','pm'].forEach(function(p){const list=typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,p):(typeof getAvailableDoctors==='function'?getAvailableDoctors(day,p):[]);byPeriod[p]=(list||[]).filter(function(doc){return doc&&!fahima.test(doc)&&!doctorIsOnLeaveForDay(doc,day)&&!(rotasticIsGaniName(doc)&&rotasticGaniOnLeave(day));});const used=existing(day),all=[];byPeriod.am.concat(byPeriod.pm).forEach(function(doc){const k=rotasticDoctorKey(doc);if(!all.some(function(x){return rotasticDoctorKey(x)===k;}))all.push(doc);});all.sort(function(a,b){return (/^Dr\.?\s+Abdulgafoor\b/i.test(a)?-1:0)-(/^Dr\.?\s+Abdulgafoor\b/i.test(b)?-1:0);});all.forEach(function(doc){const k=rotasticDoctorKey(doc);if(used.has(k))return;const eligible=[];if(byPeriod.am.some(function(x){return rotasticDoctorKey(x)===k;}))eligible.push('am');if(byPeriod.pm.some(function(x){return rotasticDoctorKey(x)===k;}))eligible.push('pm');for(const p of eligible){const sh=day&&day[p];if(!sh)continue;let rooms;if(rotasticIsFemalePhysician(doc))rooms=['21','22','24','25','26','27','39'];else if(/^Dr\.?\s+Abdulgafoor\b/i.test(doc))rooms=['39','21','22','24','25','26','27','14','13','12','10','9'];else rooms=['21','22','24','25','26','27','14','13','12','10','9','39'];for(const r of rooms){if(assignIfFreeRoom(sh,r,doc,'')){used.add(k);return;}}}const p=eligible[0],sh=p&&day&&day[p];if(sh){if(!sh.noRoomDocs)sh.noRoomDocs=[];if(!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;})){sh.noRoomDocs.push(doc);used.add(k);}}});});
+  (currentSchedule||[]).forEach(function(day){const byPeriod={am:[],pm:[]};['am','pm'].forEach(function(p){const list=typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,p):(typeof getAvailableDoctors==='function'?getAvailableDoctors(day,p):[]);byPeriod[p]=(list||[]).filter(function(doc){return doc&&!fahima.test(doc)&&!doctorIsOnLeaveForDay(doc,day);});});const used=existing(day),all=[];byPeriod.am.concat(byPeriod.pm).forEach(function(doc){const k=canonicalRotaName(doc);if(!all.some(function(x){return canonicalRotaName(x)===k;}))all.push(doc);});all.sort(function(a,b){return (/^Dr\.?\s+Abdulgafoor\b/i.test(a)?-1:0)-(/^Dr\.?\s+Abdulgafoor\b/i.test(b)?-1:0);});all.forEach(function(doc){const k=canonicalRotaName(doc);if(used.has(k))return;const eligible=[];if(byPeriod.am.some(function(x){return canonicalRotaName(x)===k;}))eligible.push('am');if(byPeriod.pm.some(function(x){return canonicalRotaName(x)===k;}))eligible.push('pm');for(const p of eligible){const sh=day&&day[p];if(!sh)continue;let rooms;if(rotasticIsFemalePhysician(doc))rooms=['21','22','24','25','26','27','39'];else if(/^Dr\.?\s+Abdulgafoor\b/i.test(doc))rooms=['39','21','22','24','25','26','27','14','13','12','10','9'];else rooms=['21','22','24','25','26','27','14','13','12','10','9','39'];for(const r of rooms){if(assignIfFreeRoom(sh,r,doc,'')){used.add(k);return;}}}const p=eligible[0],sh=p&&day&&day[p];if(sh){if(!sh.noRoomDocs)sh.noRoomDocs=[];if(!sh.noRoomDocs.some(function(x){return canonicalRotaName(x)===k;})){sh.noRoomDocs.push(doc);used.add(k);}}});});
 }
 
 '''
 s=s[:start]+block+s[end:]
-old="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
-new="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  (currentSchedule||[]).forEach(rotasticPurgeGaniIfOnLeave);\n  populateMoursiShiftDayOptions();"
+old="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
+new="  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticEnforceGaniGroup2Shift();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise SystemExit('Final invariant call order missing')
 for token in ['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.']:
   if token not in s:raise SystemExit('Missing Group 2 member: '+token)
-for token in ['function rotasticIsGaniName(v)','function rotasticGaniOnLeave(day)','function rotasticPurgeGaniIfOnLeave(day)','function rotasticEnforceGaniGroup2Shift()']:
-  if token not in s:raise SystemExit('Missing Gani invariant: '+token)
+if 'function rotasticEnforceGaniGroup2Shift()' not in s:raise SystemExit('Gani final Group 2 shift invariant missing')
 if "throw new Error('Invalid rota: Twilight physician also assigned WBC: '+k)" not in s:raise SystemExit('Twilight/WBC hard postcondition missing')
 if "sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':''" not in s:raise SystemExit('ANC room invariant missing')
 if "sh.wbcRoom=''" not in s:raise SystemExit('WBC room invariant missing')
 p.write_text(s,encoding='utf-8')
-print('Canonicalized all Dr Gani aliases as one Group 2 physician and enforced absolute leave exclusion; UI unchanged.')
+print('Applied final Dr Gani Group 2 shift enforcement plus rota invariants; UI unchanged.')
