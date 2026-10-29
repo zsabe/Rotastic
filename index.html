@@ -15015,9 +15015,15 @@ function getGroupForPeriod(dayIndex, period, selectedWedAM) {
 }
 function blankRooms(){ return {9:'-',10:'-',12:'-',13:'-',14:'-',39:'-',21:'-',22:'-',24:'-',25:'-',26:'-',27:'-'}; }
 function makeBlankShift(){ return {med:'',fed:'',ped:'',timed1Doc:'',timed2Doc:'',rooms:blankRooms(),noRoomDocs:[],smokingDoc:'',iucdDoc:'',sdiDoc:''}; }
-function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }
-function findFemale(list){ return list.filter(function(n){return DOCTOR_GENDER[n]==='female';}); }
-function findMale(list){ return list.filter(function(n){return DOCTOR_GENDER[n]==='male' || !DOCTOR_GENDER[n];}); }
+function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }
+function rotasticIsFemalePhysician(name) {
+  const canonical = canonicalRotaName(name);
+  if (DOCTOR_GENDER[canonical] === 'female') return true;
+  const first = String(canonical || name || '').replace(/^Dr\.?\s+/i,'').trim().split(/\s+/)[0].toLowerCase();
+  return ['rida','taysir','tayseer','ola','oula','saba','fazila','laila','layla','leila','maya','saima','fahima'].includes(first);
+}
+function findFemale(list){ return list.filter(function(n){return rotasticIsFemalePhysician(n);}); }
+function findMale(list){ return list.filter(function(n){return !rotasticIsFemalePhysician(n);}); }
 
 const ROTASTIC_MALE_SIDE_ROOMS = [9,10,12,13,14];
 const ROTASTIC_FEMALE_SIDE_ROOMS = [21,22,24,25,26,27];
@@ -15030,7 +15036,7 @@ function getDoctorSidePreference(doctorName, dayIndex, weekIdx) {
   //   • Male physicians rotate across male/female sides.
   //   • Dr M. Moursi and Dr Husam S. always remain on the male side.
   if (doctor === 'Dr Mohamed M.' || doctor === 'Dr Husam S') return 'male';
-  if (DOCTOR_GENDER[doctor] === 'female') return 'female';
+  if (rotasticIsFemalePhysician(doctor)) return 'female';
 
   const idx = Math.max(0, DOCTORS.findIndex(function(d){ return d.name === doctor; }));
   return ((idx + Number(dayIndex || 0) + Number(weekIdx || 0)) % 2 === 0)
@@ -15044,7 +15050,7 @@ function getSideRoomOrder(doctorName, dayIndex, weekIdx, preferredPattern) {
   const preferred = Array.isArray(preferredPattern) ? preferredPattern : [];
 
   // Female physicians must never spill onto the male side.
-  if (DOCTOR_GENDER[doctor] === 'female') {
+  if (rotasticIsFemalePhysician(doctor)) {
     const orderedFemale = [];
     preferred.forEach(function(room){
       if (ROTASTIC_FEMALE_SIDE_ROOMS.includes(Number(room)) && !orderedFemale.includes(Number(room))) orderedFemale.push(Number(room));
@@ -15283,7 +15289,7 @@ function pickANCDoctor(day, available, used, seed) {
   // Group membership, leave and explicit ANC exemptions are respected.
   let rotation = available.filter(function(name) {
     return (
-      DOCTOR_GENDER[name] === 'female' &&
+      rotasticIsFemalePhysician(name) &&
       canonicalRotaName(name) !== canonicalRotaName('Dr Saba T.') &&
       !dutyExempt(name, 'anc', day)
     );
@@ -15365,8 +15371,8 @@ function rotasticValidateGeneratedRotaRules(schedule) {
       const coverageRules = getAutoRotaRules();
       const coverageGroupNo = getGroupForPeriod(dayIndex, periodKey === 'am' ? 'AM' : 'PM', getWednesdayAMOBGroupValue() || 'Group 1');
       const coverageAvailable = uniqueAvailable(coverageGroupNo === 1 ? coverageRules.group1 : coverageRules.group2, day);
-      const eligiblePriorityFemale = coverageAvailable.some(function(n){ return n !== 'Dr Abdulgafoor K.' && DOCTOR_GENDER[canonicalRotaName(n)] === 'female'; });
-      const eligiblePriorityMale = coverageAvailable.some(function(n){ return n !== 'Dr Abdulgafoor K.' && DOCTOR_GENDER[canonicalRotaName(n)] !== 'female'; });
+      const eligiblePriorityFemale = coverageAvailable.some(function(n){ return n !== 'Dr Abdulgafoor K.' && rotasticIsFemalePhysician(n); });
+      const eligiblePriorityMale = coverageAvailable.some(function(n){ return n !== 'Dr Abdulgafoor K.' && !rotasticIsFemalePhysician(n); });
       if (eligiblePriorityFemale && !/\sP\s*$/i.test(String((shift.rooms || {})[27] || ''))) {
         issues.push(day.day + ' ' + periodKey.toUpperCase() + ': female Priority Room 27 is unassigned');
       }
@@ -15474,7 +15480,7 @@ function rotasticEnsurePriorityRooms(shift, available) {
     const key = String(roomNo);
     const currentRaw = String(shift.rooms[key] || '-');
     const currentDoctor = doctorInRoom(currentRaw);
-    const currentFits = currentDoctor && (gender === 'female' ? DOCTOR_GENDER[currentDoctor] === 'female' : DOCTOR_GENDER[currentDoctor] !== 'female');
+    const currentFits = currentDoctor && (gender === 'female' ? rotasticIsFemalePhysician(currentDoctor) : !rotasticIsFemalePhysician(currentDoctor));
     if (currentFits) {
       shift.rooms[key] = currentRaw.replace(/\sP\s*$/i,'').trim() + ' P';
       return true;
@@ -15482,7 +15488,7 @@ function rotasticEnsurePriorityRooms(shift, available) {
 
     const candidate = roster.find(function(name){
       if (name === 'Dr Abdulgafoor K.') return false;
-      const fits = gender === 'female' ? DOCTOR_GENDER[name] === 'female' : DOCTOR_GENDER[name] !== 'female';
+      const fits = gender === 'female' ? rotasticIsFemalePhysician(name) : !rotasticIsFemalePhysician(name);
       return fits && !!findDoctorRoom(name);
     });
     if (!candidate) return false;
@@ -15525,8 +15531,8 @@ function applyAutomaticRotaPopulation() {
       // Emergency roles first among duty-eligible doctors, but they do not consume their room allocation later.
       const emergencyUsed=new Set();
       shift.med=chooseRotating(male,seed,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
-      shift.fed=chooseRotating(female,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || chooseRotating(available,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
-      shift.ped=chooseRotating(available,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';
+      shift.fed=chooseRotating(male,seed+1,emergencyUsed,function(n){return !dutyExempt(n,'emergency',day);}) || 'To be determined';
+      shift.ped=chooseRotating(male,seed+2,emergencyUsed,function(n){return n!=='Dr Abdulgafoor K.' && !dutyExempt(n,'emergency',day);}) || 'To be determined';
 
       const clinic=getClinicPattern(day.day,period);
       if(clinic.wbc && rotasticWeeklyClinicEnabled('wbc')){
@@ -15536,7 +15542,7 @@ function applyAutomaticRotaPopulation() {
           // Prefer eligible males first; only fall back to another eligible doctor if no male is available.
           const wbcCandidates=available.filter(function(n){return n!=='Dr Abdulgafoor K.' && n!=='Dr Shadi T' && n!=='Dr Husam S' && !dutyExempt(n,'wellBaby',day);});
           const wbcMaleCandidates=wbcCandidates.filter(function(n){return DOCTOR_GENDER[canonicalRotaName(n)]!=='female';});
-          shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || chooseRotating(wbcCandidates,seed+3,used) || 'No Clinic';
+          shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';
         }
       }
       if(clinic.wbc && !rotasticWeeklyClinicEnabled('wbc')) shift.wbcDoc='No Clinic';
@@ -15548,12 +15554,12 @@ function applyAutomaticRotaPopulation() {
       // from the male side-rotation preference used for ordinary rooms.
       const sideCandidates = available.filter(function(n){ return !used.has(n) && n !== 'Dr Abdulgafoor K.'; });
       const femaleSidePriority = chooseRotating(
-        sideCandidates.filter(function(n){ return DOCTOR_GENDER[canonicalRotaName(n)] === 'female'; }),
+        sideCandidates.filter(function(n){ return rotasticIsFemalePhysician(n); }),
         seed+5, used
       );
       if(femaleSidePriority) assignIfFreeRoom(shift,27,femaleSidePriority,' P');
       const maleSidePriority = chooseRotating(
-        sideCandidates.filter(function(n){ return DOCTOR_GENDER[canonicalRotaName(n)] !== 'female'; }),
+        sideCandidates.filter(function(n){ return !rotasticIsFemalePhysician(n); }),
         seed+6, used
       );
       if(maleSidePriority) assignIfFreeRoom(shift,14,maleSidePriority,' P');
@@ -15638,10 +15644,7 @@ function applyAutomaticRotaPopulation() {
     }
 
     function rotasticIsFemaleTwilightDoctor(name) {
-      const canonical = canonicalRotaName(name);
-      if (DOCTOR_GENDER[canonical] === 'female') return true;
-      const first = String(canonical || name || '').replace(/^Dr\.?\s+/i,'').trim().split(/\s+/)[0].toLowerCase();
-      return ['rida','taysir','tayseer','ola','oula','saba','fazila','laila','layla','leila','maya','saima','fahima'].includes(first);
+      return rotasticIsFemalePhysician(name);
     }
 
     function uniquePlannedAvailableForTwilight(list, scheduleDay) {
