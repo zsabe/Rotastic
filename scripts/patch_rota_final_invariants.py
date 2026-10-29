@@ -58,6 +58,33 @@ function rotasticEnforceExclusiveShiftAssignments() {
     });
   });
 }
+function rotasticRepairWBCAndANC() {
+  (currentSchedule||[]).forEach(function(day){
+    ['am','pm'].forEach(function(period){
+      const sh=day&&day[period]; if(!sh)return;
+      const list=typeof getAvailableDoctorsForShift==='function'?getAvailableDoctorsForShift(day,period):(typeof getAvailableDoctors==='function'?getAvailableDoctors(day,period):[]);
+      const available=(list||[]).filter(function(doc){return doc&&!doctorIsOnLeaveForDay(doc,day);});
+      const occupied=new Set();
+      ['timed1Doc','timed2Doc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'].forEach(function(f){const k=rotasticDoctorKey(sh[f]);if(k)occupied.add(k);});
+      if(sh.rooms)Object.values(sh.rooms).forEach(function(v){const k=rotasticDoctorKey(v);if(k)occupied.add(k);});
+      const wbcEnabled=typeof rotasticWeeklyClinicEnabled!=='function'||rotasticWeeklyClinicEnabled('wbc');
+      const wbcKey=rotasticDoctorKey(sh.wbcDoc);
+      if(wbcEnabled && !wbcKey){
+        const next=available.find(function(doc){const k=canonicalRotaName(doc);return !rotasticIsFemalePhysician(doc)&&!occupied.has(k)&&!dutyExempt(doc,'wbc',day);});
+        if(next){sh.wbcDoc=next;occupied.add(canonicalRotaName(next));}
+      }
+      if(!wbcEnabled)sh.wbcDoc='No Clinic';
+      /* WBC is a named clinic with no room number. Remove any duplicate room placement. */
+      const finalWbc=rotasticDoctorKey(sh.wbcDoc);
+      if(finalWbc&&sh.rooms)Object.keys(sh.rooms).forEach(function(room){if(rotasticDoctorKey(sh.rooms[room])===finalWbc)sh.rooms[room]='-';});
+      /* ANC is exclusively Room 32. Keep the physician in ancDoc and remove any other room copy. */
+      const anc=rotasticDoctorKey(sh.ancDoc);
+      if(anc&&sh.rooms)Object.keys(sh.rooms).forEach(function(room){if(room!=='32'&&rotasticDoctorKey(sh.rooms[room])===anc)sh.rooms[room]='-';});
+      sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':'';
+      sh.wbcRoom='';
+    });
+  });
+}
 function rotasticAssignAllAvailablePhysicians() {
   const fahima=/^Dr\.?\s+Fahima\b/i;
   function existing(day){
@@ -96,13 +123,16 @@ function rotasticAssignAllAvailablePhysicians() {
 s = s[:start] + block + s[end:]
 
 old = "  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  populateMoursiShiftDayOptions();"
-if old not in s:
-    raise SystemExit('Final invariant call order missing')
+new = "  enforceFinalTwilightAssignments();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticRepairWBCAndANC();\n  populateMoursiShiftDayOptions();"
+if old in s:s=s.replace(old,new,1)
+elif new not in s:raise SystemExit('Final invariant call order missing')
 
 for token in ['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.']:
     if token not in s: raise SystemExit('Missing Group 2 member: '+token)
 if 'rotasticIsFemaleTwilightDoctor' not in s: raise SystemExit('Female Twilight guard missing')
 if "shift.wbcDoc=chooseRotating(wbcMaleCandidates,seed+3,used) || 'No Clinic';" not in s: raise SystemExit('WBC male-only guard missing')
+if "sh.ancRoom=sh.ancDoc&&sh.ancDoc!=='No Clinic'?'32':'';" not in s: raise SystemExit('ANC Room 32 invariant missing')
+if "sh.wbcRoom='';" not in s: raise SystemExit('WBC no-room invariant missing')
 
 p.write_text(s, encoding='utf-8')
-print('Applied day-wide normal-duty uniqueness and authoritative Group 2 including Dr Gani M.; UI unchanged.')
+print('Applied WBC fallback/no-room and ANC Room 32 invariants; UI design unchanged.')
