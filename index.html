@@ -15016,7 +15016,7 @@ function getGroupForPeriod(dayIndex, period, selectedWedAM) {
 function blankRooms(){ return {9:'-',10:'-',12:'-',13:'-',14:'-',39:'-',21:'-',22:'-',24:'-',25:'-',26:'-',27:'-'}; }
 function makeBlankShift(){ return {med:'',fed:'',ped:'',timed1Doc:'',timed2Doc:'',rooms:blankRooms(),noRoomDocs:[],smokingDoc:'',iucdDoc:'',sdiDoc:''}; }
 function assignIfFreeRoom(shift, room, doc, suffix){ if(!doc) return false; const roomNo=Number(room); if(Number.isFinite(roomNo) && roomNo>=9 && roomNo<=20 && rotasticIsFemalePhysician(doc)) return false; if(!shift.rooms) shift.rooms=blankRooms(); const v=shift.rooms[room]; if(v && v!=='-' && v!=='No Clinic') return false; shift.rooms[room]=doc+(suffix||''); return true; }
-const ROTASTIC_GROUP_2 = new Set(['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.'].map(canonicalRotaName));
+const ROTASTIC_GROUP_2 = new Set(['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.'].map(canonicalRotaName));
 function rotasticAuthoritativeGroup(name) { return ROTASTIC_GROUP_2.has(canonicalRotaName(name)) ? 2 : 1; }
 function rotasticIsFemalePhysician(name) {
   const canonical = canonicalRotaName(name);
@@ -16412,6 +16412,24 @@ function rotasticRemoveTwilightFromWBC() {
   });
 }
 
+function rotasticDoctorKey(v) {
+  if (!v || !/^Dr\.?\s+/i.test(String(v))) return '';
+  return canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,''));
+}
+function rotasticNormalFields() {
+  return ['timed1Doc','timed2Doc','wbcDoc','ancDoc','ncdDoc','wicDoc','hearingDoc','htDoc','isolationDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc'];
+}
+function rotasticClearNormalDoctor(sh, doctorKey, keepTwilight) {
+  if (!sh || !doctorKey) return;
+  rotasticNormalFields().forEach(function(field) {
+    if (keepTwilight && (field==='timed1Doc' || field==='timed2Doc')) return;
+    if (rotasticDoctorKey(sh[field])===doctorKey) sh[field] = field==='wbcDoc' ? 'No Clinic' : '';
+  });
+  if (sh.rooms && typeof sh.rooms==='object') Object.keys(sh.rooms).forEach(function(room) {
+    if (rotasticDoctorKey(sh.rooms[room])===doctorKey) sh.rooms[room]='-';
+  });
+  if (Array.isArray(sh.noRoomDocs)) sh.noRoomDocs=sh.noRoomDocs.filter(function(v){return rotasticDoctorKey(v)!==doctorKey;});
+}
 function rotasticDoctorKey(v) {
   if (!v || !/^Dr\.?\s+/i.test(String(v))) return '';
   return canonicalRotaName(String(v).replace(/\s*\([^)]*\)\s*$/,''));
