@@ -4,9 +4,12 @@ p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
 # Scheduling-only hotfix. UI markup/styles are intentionally untouched.
-start=s.find('function rotasticAssignAllAvailablePhysicians(){')
+# This patch is intentionally idempotent: an already-integrated index is accepted.
+start=s.find('function rotasticDayISO(day){')
+if start < 0:
+    start=s.find('function rotasticAssignAllAvailablePhysicians(){')
 end=s.find('\n}\n\nfunction enforceFinalTwilightAssignments() {',start)
-if start<0 or end<0: raise SystemExit('assign-all invariant anchor missing')
+if start<0 or end<0: raise SystemExit('final invariant block anchor missing')
 end += 2
 
 block=r'''function rotasticDayISO(day){
@@ -51,10 +54,12 @@ function rotasticSurfaceMissingPhysicians(){
 '''
 s=s[:start]+block+s[end:]
 
-needle="  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);\n  populateMoursiShiftDayOptions();"
-replacement="  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);\n  (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);\n  populateMoursiShiftDayOptions();"
-if needle not in s: raise SystemExit('final call-order anchor missing')
-s=s.replace(needle,replacement,1)
+old="  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);\n  populateMoursiShiftDayOptions();"
+new="  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);\n  (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);\n  populateMoursiShiftDayOptions();"
+if old in s:
+  s=s.replace(old,new,1)
+elif new not in s:
+  raise SystemExit('final call-order anchor missing')
 for token in ['rotasticExplicitOff','rotasticPurgeExplicitOff','rotasticSurfaceMissingPhysicians','Dr Bilal C.','Dr Rida C.','Dr Saima N.','Dr Imran A.']:
   if token not in s: raise SystemExit('missing invariant '+token)
 p.write_text(s,encoding='utf-8')
