@@ -9,6 +9,7 @@ function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+
  './rota-permanent-rules.js?v=16',
  './rotastic-fixed-physician-rules.js?v=1',
  './rotastic-latest-scheduling-rules.js?v=1',
+ './rotastic-zaid-er-hard-block.js?v=1',
  './rotastic-weekly-clinic-selector.js?v=8',
  './rotastic-smartbox-integration.js?v=8',
  './rotastic-schedule-name-normalization.js?v=2',
