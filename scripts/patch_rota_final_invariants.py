@@ -4,14 +4,7 @@ p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
 # Scheduling-only hotfix. UI markup/styles are intentionally untouched.
-# This patch is intentionally idempotent: an already-integrated index is accepted.
-start=s.find('function rotasticDayISO(day){')
-if start < 0:
-    start=s.find('function rotasticAssignAllAvailablePhysicians(){')
-end=s.find('\n}\n\nfunction enforceFinalTwilightAssignments() {',start)
-if start<0 or end<0: raise SystemExit('final invariant block anchor missing')
-end += 2
-
+# Do not depend on the name of the function that follows this invariant block.
 block=r'''function rotasticDayISO(day){
   const raw=day&&(day.isoDate||day.date||day.dayDate||day.dateStr||day.dateString);
   if(!raw)return '';
@@ -52,15 +45,27 @@ function rotasticSurfaceMissingPhysicians(){
   targets.forEach(function(doc){if(visible(doc)>0)return;const k=rotasticDoctorKey(doc);for(const day of (currentSchedule||[])){if(rotasticExplicitOff(doc,day)||rotasticDoctorUnavailable(doc,day))continue;for(const p of ['am','pm']){const sh=day&&day[p];if(!sh||!Array.isArray(sh.noRoomDocs)||!sh.noRoomDocs.some(function(x){return rotasticDoctorKey(x)===k;}))continue;const rooms=rotasticIsFemalePhysician(doc)?['21','22','24','25','26','27','39']:['21','22','24','25','26','27','14','13','12','10','9','39'];for(const r of rooms){const displaced=sh.rooms&&sh.rooms[r];if(!rotasticDoctorKey(displaced))continue;if(visible(displaced)<2)continue;sh.rooms[r]=doc;sh.noRoomDocs=sh.noRoomDocs.filter(function(x){return rotasticDoctorKey(x)!==k;});sh.noRoomDocs.push(displaced);return;}}}});
 }
 '''
-s=s[:start]+block+s[end:]
 
-old="  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);\n  populateMoursiShiftDayOptions();"
-new="  rotasticAssignAllAvailablePhysicians();\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);\n  (currentSchedule||[]).forEach(rotasticPurgeUnavailableGani);\n  populateMoursiShiftDayOptions();"
-if old in s:
-  s=s.replace(old,new,1)
-elif new not in s:
-  raise SystemExit('final call-order anchor missing')
-for token in ['rotasticExplicitOff','rotasticPurgeExplicitOff','rotasticSurfaceMissingPhysicians','Dr Bilal C.','Dr Rida C.','Dr Saima N.','Dr Imran A.']:
+# First integration: replace only the existing assign-all function. The next top-level
+# function declaration is the boundary, so this does not care what that function is named.
+if 'function rotasticDayISO(day){' not in s:
+    start=s.find('function rotasticAssignAllAvailablePhysicians(){')
+    if start < 0: raise SystemExit('assign-all invariant anchor missing')
+    end=s.find('\nfunction ', start + len('function rotasticAssignAllAvailablePhysicians(){'))
+    if end < 0: raise SystemExit('next-function boundary missing')
+    s=s[:start]+block+s[end+1:]
+
+# Make the final call sequence idempotent without relying on surrounding functions.
+call='  rotasticAssignAllAvailablePhysicians();'
+pos=s.find(call)
+if pos < 0: raise SystemExit('assign-all call missing')
+insert='\n  rotasticEnforceExclusiveShiftAssignments();\n  rotasticSurfaceMissingPhysicians();\n  (currentSchedule||[]).forEach(rotasticPurgeExplicitOff);'
+window=s[pos:pos+700]
+if 'rotasticSurfaceMissingPhysicians();' not in window:
+    line_end=s.find('\n',pos)
+    s=s[:line_end]+insert+s[line_end:]
+
+for token in ['function rotasticDayISO(day){','rotasticExplicitOff','rotasticPurgeExplicitOff','rotasticSurfaceMissingPhysicians','Dr Bilal C.','Dr Rida C.','Dr Saima N.','Dr Imran A.']:
   if token not in s: raise SystemExit('missing invariant '+token)
 p.write_text(s,encoding='utf-8')
 print('Applied explicit November OFF purge and weekly visibility repair; UI unchanged.')
