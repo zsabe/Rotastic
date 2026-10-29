@@ -23,7 +23,7 @@ jobs:
         run: python3 scripts/patch_rota_planner_v5.py
       - name: Patch generator rules and weekly clinic controls
         run: python3 scripts/patch_communications_loader.py
-      - name: Enforce final day-wide rota invariants
+      - name: Enforce final day-wide rota invariants including Dr Gani as Group 2
         run: python3 scripts/patch_rota_final_invariants.py
       - name: Commit rendered page
         run: |
