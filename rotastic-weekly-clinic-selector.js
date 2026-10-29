@@ -10,25 +10,41 @@ const CLINICS=[
 const state=Object.fromEntries(CLINICS.map(c=>[c.id,true]));
 const enabled=id=>state[id]!==false;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function findGenerateButton(){
- const buttons=[...document.querySelectorAll('button,input[type="button"],input[type="submit"]')];
- return buttons.find(b=>/generateDutyScheduleFromPlanner/i.test(String(b.getAttribute('onclick')||'')))
-  ||buttons.find(b=>/^\s*generate\s+schedule\s*$/i.test(String(b.textContent||b.value||'').replace(/\s+/g,' ').trim()))
-  ||buttons.find(b=>/^\s*generate\s+rota\s*$/i.test(String(b.textContent||b.value||'').replace(/\s+/g,' ').trim()));
+const text=e=>String(e?.textContent||e?.value||'').replace(/\s+/g,' ').trim();
+function generateButtons(){
+ const all=[...document.querySelectorAll('button,input[type="button"],input[type="submit"],[role="button"]')];
+ return all.filter(b=>{
+  const t=text(b), oc=String(b.getAttribute?.('onclick')||''), id=String(b.id||''), al=String(b.getAttribute?.('aria-label')||'');
+  return /generateDutyScheduleFromPlanner|generateSchedule|generateRota/i.test(oc)||/generate/i.test(id)||/generate/i.test(al)||/\bgenerate\b/i.test(t);
+ });
 }
-function installUI(){
- if(document.getElementById('rotastic-weekly-clinics'))return true;
- const btn=findGenerateButton();if(!btn||!btn.parentElement)return false;
- const cell=btn.parentElement;
+function scoreButton(b){
+ let n=0,t=text(b),oc=String(b.getAttribute?.('onclick')||'');
+ if(/generateDutyScheduleFromPlanner/i.test(oc))n+=100;
+ if(/^generate\s+(rota|schedule|duty schedule)$/i.test(t))n+=60;
+ if(/generate/i.test(t))n+=20;
+ let p=b;for(let i=0;i<6&&p;i++,p=p.parentElement){const s=text(p).slice(0,1200);if(/generate/i.test(s))n+=5;if(/planner|rota|schedule/i.test(s))n+=5;}
+ return n;
+}
+function findGenerateButton(){return generateButtons().sort((a,b)=>scoreButton(b)-scoreButton(a))[0]||null}
+function makeBox(){
  const box=document.createElement('div');box.id='rotastic-weekly-clinics';box.className='mb-3';
  box.innerHTML=`<div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800"><div class="text-[10px] uppercase tracking-wider font-bold text-slate-300 mb-2">Clinics running this week</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${CLINICS.map(c=>`<label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" data-clinic="${esc(c.id)}" ${enabled(c.id)?'checked':''} class="accent-teal-500"><span>${esc(c.label)}</span></label>`).join('')}</div></div>`;
- cell.insertBefore(box,btn);
- box.querySelectorAll('input[data-clinic]').forEach(i=>i.addEventListener('change',()=>{state[i.dataset.clinic]=i.checked}));return true;
+ box.querySelectorAll('input[data-clinic]').forEach(i=>i.addEventListener('change',()=>{state[i.dataset.clinic]=i.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}}));return box;
+}
+function installUI(){
+ let box=document.getElementById('rotastic-weekly-clinics');const btn=findGenerateButton();if(!btn)return false;
+ if(!box)box=makeBox();
+ /* Put the selector immediately before the actual Generate control. If the button is nested in a small action wrapper, insert before that wrapper instead. */
+ let anchor=btn;const parent=btn.parentElement;if(parent&&parent.children.length<=3&&!/^(BODY|MAIN|SECTION)$/i.test(parent.tagName))anchor=parent;
+ const host=anchor.parentElement;if(!host)return false;
+ if(box.parentElement!==host||box.nextElementSibling!==anchor)host.insertBefore(box,anchor);
+ return true;
 }
 function closedClinicForText(s){s=String(s||'');return CLINICS.find(c=>!enabled(c.id)&&c.patterns.some(r=>r.test(s)))}
 function closeShift(shift){if(!shift||typeof shift!=='object')return;for(const c of CLINICS){if(enabled(c.id))continue;for(const f of c.fields)if(f in shift)shift[f]='No Clinic';if(shift.rooms&&typeof shift.rooms==='object')for(const k of Object.keys(shift.rooms)){const v=shift.rooms[k];if(closedClinicForText(k)||closedClinicForText(v?.clinic||v?.label||v?.duty||'')){if(v&&typeof v==='object'){if('doctor'in v)v.doctor='No Clinic';if('physician'in v)v.physician='No Clinic';if('name'in v)v.name='No Clinic'}else shift.rooms[k]='No Clinic'}}}
 function apply(schedule){const root=schedule||window.currentSchedule;if(!root)return root;const days=Array.isArray(root)?root:(Array.isArray(root.days)?root.days:[]);for(const d of days){closeShift(d?.am);closeShift(d?.pm);for(const k of Object.keys(d||{})){const c=closedClinicForText(k);if(c&&typeof d[k]==='string')d[k]='No Clinic'}}return root}
-function installGuards(){['generateDutyScheduleFromPlanner','generateSchedule','generateRota','buildSchedule','buildRota','createSchedule','createRota'].forEach(name=>{const fn=window[name];if(typeof fn!=='function'||fn.__rotasticWeeklyClinics)return;const wrapped=function(...args){window.ROTASTIC_WEEKLY_CLINICS={...state};const out=fn.apply(this,args);if(out&&typeof out.then==='function')return out.then(v=>{apply(v);apply(window.currentSchedule);window.renderSchedule?.();return v});apply(out);apply(window.currentSchedule);window.renderSchedule?.();return out};wrapped.__rotasticWeeklyClinics=true;window[name]=wrapped})}
-window.rotasticWeeklyClinics=state;window.rotasticClinicEnabled=enabled;window.rotasticApplyWeeklyClinicClosures=apply;
+function installGuards(){['generateDutyScheduleFromPlanner','generateSchedule','generateRota','buildSchedule','buildRota','createSchedule','createRota'].forEach(name=>{const fn=window[name];if(typeof fn!=='function'||fn.__rotasticWeeklyClinics)return;const wrapped=function(...args){window.ROTASTIC_WEEKLY_CLINICS={...state};const out=fn.apply(this,args);if(out&&typeof out.then==='function')return out.then(v=>{apply(v);apply(window.currentSchedule);window.rotasticEnforcePermanentRules?.(v);window.rotasticEnforcePermanentRules?.(window.currentSchedule);window.renderSchedule?.();return v});apply(out);apply(window.currentSchedule);window.rotasticEnforcePermanentRules?.(out);window.rotasticEnforcePermanentRules?.(window.currentSchedule);window.renderSchedule?.();return out};wrapped.__rotasticWeeklyClinics=true;window[name]=wrapped})}
+window.rotasticWeeklyClinics=state;window.ROTASTIC_WEEKLY_CLINICS={...state};window.rotasticClinicEnabled=enabled;window.rotasticApplyWeeklyClinicClosures=apply;
 const boot=()=>{installUI();installGuards()};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,100),{once:true});else setTimeout(boot,100);new MutationObserver(boot).observe(document.documentElement,{childList:true,subtree:true});setInterval(boot,500);
 })();
