@@ -12,7 +12,7 @@ const isFemale=n=>female.has(first(n));
 const isAbdul=n=>first(n)==='abdulgafoor';
 const blockedCB=n=>['abdulgafoor','maher','mohammed','salah','zaid'].includes(first(n));
 const blockedER=n=>['abdulgafoor','zaid'].includes(first(n));
-const nameKey=n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'');
+const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^qaisar/,'muhammadk');
 const normaliseOff=(input,dayIndex)=>Array.isArray(input)?input:(input?.[dayIndex]||[]);
 function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
@@ -29,7 +29,7 @@ function generate(options={}){
    const leave=normaliseOff(leaveByDate[dates[i]],i);
    const excluded=new Set([...off,...leave,'Dr Fahima N.'].map(nameKey));
    const doctors=contract.groups[group].filter(n=>!excluded.has(nameKey(n)));
-   const shift={group,session,rooms:{},specialClinics:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[]};
+   const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[]};
    const remaining=[...doctors];
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
    const fixed=remaining.find(isAbdul);
@@ -42,9 +42,22 @@ function generate(options={}){
     candidates.sort((a,b)=>(usage.get(a)||0)-(usage.get(b)||0)||a.localeCompare(b));
     const doctor=candidates[0];shift.rooms[room]=doctor;take(doctor);usage.set(doctor,(usage.get(doctor)||0)+1);
    }
-   // All additional eligible physicians are explicitly visible as clinic overflow;
-   // never silently drop them when the printed template has insufficient rooms.
-   for(const doctor of remaining){shift.unassigned.push(doctor);errors.push(dates[i]+' '+session+': no available clinic slot for '+doctor)}
+   // Twilight is an exclusive assignment; never double-book the same doctor.
+   // The workbook provides two Twilight cells per session (C7:C8 / H7:H8).
+   for(let t=0;t<2;t++){
+    const doctor=remaining.find(n=>!isFemale(n)&&!isAbdul(n));
+    if(!doctor)break;
+    shift.twilight.push(doctor);take(doctor);
+   }
+   // Extra non-room clinics are explicitly represented by workbook C9/C11 or H9/H11.
+   // Do not invent a clinic or quietly discard an unplaced doctor.
+   const clinicKinds=['ANC','WBC'];
+   for(const kind of clinicKinds){
+    const doctor=remaining.find(n=>kind==='ANC'?isFemale(n):!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
+    if(!doctor)continue;
+    shift.specialClinics.push({kind,doctor});take(doctor);
+   }
+   for(const doctor of remaining){shift.unassigned.push(doctor);errors.push(dates[i]+' '+session+': no valid workbook assignment for '+doctor)}
    const assigned=Object.values(shift.rooms);
    function erPick(kind,used){
     return assigned.find(n=>!used.has(n)&&!blockedER(n)&&(kind==='male'?!isFemale(n):kind==='female'?isFemale(n):true))||null;
@@ -53,7 +66,7 @@ function generate(options={}){
    for(const kind of ['male','female','paeds']){const n=erPick(kind,usedER);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
-   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.unassigned].map(doctor=>({doctor})),off,leave});
+   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor)].map(doctor=>({doctor})),off,leave});
    if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
    shift.audit=audit;
    day.shifts[session]=shift;
@@ -74,6 +87,8 @@ function toWorkbookCells(result){
   }
   for(const [role,offset] of [['male',1],['female',2],['paeds',3]])
    if(s.er[role])cells[erCol+(base+offset)]=s.er[role];
+  for(let i=0;i<s.twilight.length;i++)cells[erCol+(base+4+i)]=s.twilight[i];
+  for(const clinic of s.specialClinics){const offset=clinic.kind==='ANC'?6:8;cells[erCol+(base+offset)]=clinic.doctor;}
   // Workbook: AM Code Blue L4:L6, PM L10:L12, repeated every 12 rows.
   const cbBase=base+(session==='AM'?1:7);
   for(const [role,offset] of [['TL',0],['TM2',1],['TM3',2]])
