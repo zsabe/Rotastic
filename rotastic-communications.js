@@ -4,6 +4,9 @@ if(window.__rotasticCommunicationsInitialized)return;window.__rotasticCommunicat
 /* Critical rota modules are plain IIFEs. Load them as direct classic scripts rather than dynamic imports so mobile/PWA execution cannot silently skip them. */
 function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+src.split('?')[0]+'"]'))return;const s=document.createElement('script');s.src=src;s.async=false;s.dataset.rotasticSrc=src.split('?')[0];s.onerror=()=>console.error('ROTASTIC script failed:',src);(document.head||document.documentElement).appendChild(s)}
 [
+ './rotastic-excel-rota-contract.js?v=1',
+ './rotastic-excel-rota-engine.js?v=4',
+ './rotastic-excel-rota-bridge.js?v=1',
  './rotastic-codeblue-hard-block.js?v=2',
  './rotastic-clinic-gender-hard-block.js?v=2',
  './rota-permanent-rules.js?v=16',
