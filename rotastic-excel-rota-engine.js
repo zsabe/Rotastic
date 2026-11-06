@@ -65,12 +65,12 @@ function generate(options={}){
 function toWorkbookCells(result){
  const cells={};
  for(const day of result.days)for(const session of ['AM','PM']){
-  const s=day.shifts[session],base=DAY_ROWS[day.dayIndex],nameCol=session==='AM'?'C':'H';
-  // Source workbook: clinic rooms appear in E/J; doctors are entered in C/H.
+  const s=day.shifts[session],base=DAY_ROWS[day.dayIndex],nameCol=session==='AM'?'D':'I';
+  // Source workbook: clinic rooms appear in E/J; doctors are entered in D/I.
   const roomOffsets={9:0,10:1,12:2,13:3,14:4,39:5,21:6,22:7,24:8,25:9,26:10,27:11};
   for(const [room,doctor] of Object.entries(s.rooms))cells[nameCol+(base+roomOffsets[room])]=doctor;
-  // Emergency names are in D/I, adjacent to the duty labels in B/G.
-  const erCol=session==='AM'?'D':'I';
+  // Emergency names are in C/H, adjacent to the duty labels in B/G.
+  const erCol=session==='AM'?'C':'H';
   for(const [role,offset] of [['male',1],['female',2],['paeds',3]])if(s.er[role])cells[erCol+(base+offset)]=s.er[role];
   const cbBase=base+(session==='AM'?1:7);
   for(const [role,offset] of [['TL',0],['TM2',1],['TM3',2]])if(s.codeBlue[role])cells['L'+(cbBase+offset)]=s.codeBlue[role];
