@@ -46,7 +46,8 @@ function install(){
   const date=window.rotasticExcelWeekStart||document.querySelector('input[type="date"]')?.value||'';
   if(!date){alert('Select a Sunday week-start date before generating.');return}
   try{
-   const inputs=window.rotasticExcelWeeklyInputs||{};
+   const inputs=window.rotasticExcelWeeklyInputs;
+   if(!inputs||!inputs.offByDate||!inputs.leaveByDate)throw Error('Weekly OFF and leave inputs must be supplied before Excel generation.');
    const result=generateAndDisplay({...inputs,weekStart:date});
    alert('Excel-template rota generated and validated: '+result.days.length+' days. Check Rota View before exporting.');
   }catch(e){console.error('Excel generation rejected',e);alert('Excel generation stopped: '+e.message+' Existing rota has not been replaced.')}
