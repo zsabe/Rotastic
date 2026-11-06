@@ -63,19 +63,34 @@ function generate(options={}){
  return {weekStart,dates,days,valid:errors.length===0,errors};
 }
 function toWorkbookCells(result){
+ if(!result||!Array.isArray(result.days))throw Error('Expected generated rota days');
  const cells={};
+ const offsets={9:0,10:1,12:2,13:3,14:4,39:5,21:6,22:7,24:8,25:9,26:10,27:11};
  for(const day of result.days)for(const session of ['AM','PM']){
-  const s=day.shifts[session],base=DAY_ROWS[day.dayIndex],nameCol=session==='AM'?'D':'I';
-  // Source workbook: clinic rooms appear in E/J; doctors are entered in D/I.
-  const roomOffsets={9:0,10:1,12:2,13:3,14:4,39:5,21:6,22:7,24:8,25:9,26:10,27:11};
-  for(const [room,doctor] of Object.entries(s.rooms))cells[nameCol+(base+roomOffsets[room])]=doctor;
-  // Emergency names are in C/H, adjacent to the duty labels in B/G.
-  const erCol=session==='AM'?'C':'H';
-  for(const [role,offset] of [['male',1],['female',2],['paeds',3]])if(s.er[role])cells[erCol+(base+offset)]=s.er[role];
+  const s=day.shifts[session],base=DAY_ROWS[day.dayIndex],clinicCol=session==='AM'?'D':'I',erCol=session==='AM'?'C':'H';
+  for(const [room,doctor] of Object.entries(s.rooms)){
+   if(!(room in offsets))throw Error('Room '+room+' not present in workbook');
+   cells[clinicCol+(base+offsets[room])]=doctor;
+  }
+  for(const [role,offset] of [['male',1],['female',2],['paeds',3]])
+   if(s.er[role])cells[erCol+(base+offset)]=s.er[role];
+  // Workbook: AM Code Blue L4:L6, PM L10:L12, repeated every 12 rows.
   const cbBase=base+(session==='AM'?1:7);
-  for(const [role,offset] of [['TL',0],['TM2',1],['TM3',2]])if(s.codeBlue[role])cells['L'+(cbBase+offset)]=s.codeBlue[role];
+  for(const [role,offset] of [['TL',0],['TM2',1],['TM3',2]])
+   if(s.codeBlue[role])cells['L'+(cbBase+offset)]=s.codeBlue[role];
  }
  return cells;
 }
-root.rotasticExcelRotaEngine=Object.freeze({generate,toWorkbookCells,source:'Book 1 (1).xlsx Sheet1',roomRows:ROOMS});
+function assertValid(result){
+ if(!result?.valid)throw Error('Rota failed validation: '+(result?.errors||['Missing result']).join('; '));
+ for(const day of result.days)for(const session of ['AM','PM']){
+  const shift=day.shifts[session];
+  if(shift.unassigned.length)throw Error(day.date+' '+session+': unassigned doctors '+shift.unassigned.join(', '));
+  if(!Object.values(shift.er).every(Boolean)||!Object.values(shift.codeBlue).every(Boolean))
+   throw Error(day.date+' '+session+': incomplete emergency or Code Blue');
+ }
+ return result;
+}
+
+root.rotasticExcelRotaEngine=Object.freeze({generate,toWorkbookCells,assertValid,source:'Book 1 (1).xlsx Sheet1',roomRows:ROOMS});
 })(typeof window!=='undefined'?window:globalThis);
