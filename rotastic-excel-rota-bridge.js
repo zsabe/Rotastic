@@ -25,13 +25,25 @@ function generateAndDisplay(options){
  const result=engine.generate(options);
  engine.assertValid(result);
  const days=mapSchedule(result);
- // Only commit validated, fully populated output; existing UI functions remain intact.
- window.__rotasticExcelModeActive=true;
- window.currentSchedule=days;
- window.rotasticExcelGeneratedResult=result;
- window.rotasticPatchExportActualRota?.();
- if(typeof window.renderSchedule==='function')window.renderSchedule();
- if(typeof window.renderScheduleView==='function')window.renderScheduleView();
+ const previous={schedule:window.currentSchedule,mode:window.__rotasticExcelModeActive,result:window.rotasticExcelGeneratedResult};
+ if(typeof window.renderSchedule!=='function'&&typeof window.renderScheduleView!=='function')
+  throw Error('Rota View renderer is unavailable; existing schedule preserved');
+ // Transactional publish: restore the previous rota if rendering throws.
+ try{
+  window.__rotasticExcelModeActive=true;
+  window.currentSchedule=days;
+  window.rotasticExcelGeneratedResult=result;
+  window.rotasticPatchExportActualRota?.();
+  if(typeof window.renderSchedule==='function')window.renderSchedule();
+  if(typeof window.renderScheduleView==='function')window.renderScheduleView();
+  if(window.currentSchedule!==days)throw Error('Another module replaced the Excel-generated rota');
+ }catch(e){
+  window.currentSchedule=previous.schedule;
+  window.__rotasticExcelModeActive=previous.mode;
+  window.rotasticExcelGeneratedResult=previous.result;
+  try{window.renderSchedule?.();window.renderScheduleView?.()}catch(_ignored){}
+  throw Error('Rota View update failed; original rota restored: '+e.message);
+ }
  return result;
 }
 function install(){
@@ -48,6 +60,7 @@ function install(){
   try{
    const inputs=window.rotasticExcelWeeklyInputs;
    if(!inputs||!inputs.offByDate||!inputs.leaveByDate)throw Error('Weekly OFF and leave inputs must be supplied before Excel generation.');
+   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))throw Error('Select a valid Sunday week-start date.');
    const result=generateAndDisplay({...inputs,weekStart:date});
    alert('Excel-template rota generated and validated: '+result.days.length+' days. Check Rota View before exporting.');
   }catch(e){console.error('Excel generation rejected',e);alert('Excel generation stopped: '+e.message+' Existing rota has not been replaced.')}
