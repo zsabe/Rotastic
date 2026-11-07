@@ -17,7 +17,7 @@ function mapShift(s,clinics={}){
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
   cmcDoc:clinics.cmc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='CMC')?.doctor||''),
-  noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.supporting||[]).map(x=>x+' (Supporting duty)')]};
+  noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.noClinic||[]).map(x=>x+' (No Clinic)')]};
 }
 function mapSchedule(result,clinics={}){
  return result.days.map(d=>({
@@ -28,8 +28,27 @@ function mapSchedule(result,clinics={}){
 }
 function enhanceExcelRotaView(){
  const container=document.getElementById('scheduleMatrixContainer');
- container?.querySelector('#rotastic-supporting-roster')?.remove();
- container?.querySelectorAll('.rotastic-excel-extra-duties').forEach(el=>el.remove());
+ if(!container)return;
+ container.querySelector('#rotastic-supporting-roster')?.remove();
+ container.querySelectorAll('.rotastic-excel-extra-duties').forEach(el=>el.remove());
+ if(!window.__rotasticExcelModeActive||!Array.isArray(window.currentSchedule))return;
+ const sheets=[...container.querySelectorAll('.rotastic-day-sheet')];
+ for(const [i,sheet] of sheets.entries()){
+  const heading=sheet.querySelector('.rotastic-day-sheet-head')?.textContent||'';
+  const day=window.currentSchedule.find(d=>heading.includes(d.isoDate))||window.currentSchedule[i];
+  if(!day)continue;
+  const panels=[...sheet.querySelectorAll('.rotastic-shift-panel')];
+  for(const [j,panel] of panels.entries()){
+   const shift=day[j===0?'am':'pm'];if(!shift)continue;
+   const names=(shift.noRoomDocs||[]).filter(x=>x.endsWith('(No Clinic)'));
+   if(!names.length)continue;
+   const target=panel.querySelector('.rotastic-clinics, .rotastic-special-clinics, .rotastic-clinic-section')||panel;
+   const box=document.createElement('div');box.className='rotastic-excel-extra-duties';
+   box.style.cssText='padding:8px 0;color:#5eead4;font-size:13px;line-height:1.6';
+   for(const name of names){const row=document.createElement('div');row.textContent=name;box.appendChild(row)}
+   target.appendChild(box);
+  }
+ }
 }
 function installRotaViewEnhancement(){
  if(window.__rotasticExcelViewEnhanced)return;
