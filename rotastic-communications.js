@@ -6,7 +6,7 @@ function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+
 [
  './rotastic-excel-rota-contract.js?v=1',
  './rotastic-excel-rota-engine.js?v=10',
- './rotastic-excel-rota-bridge.js?v=6',
+ './rotastic-excel-rota-bridge.js?v=7',
  './rotastic-codeblue-hard-block.js?v=2',
  './rotastic-clinic-gender-hard-block.js?v=2',
  './rota-permanent-rules.js?v=16',
