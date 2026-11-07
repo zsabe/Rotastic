@@ -38,19 +38,20 @@ function generate(options={}){
    else if(!najahOff&&i===4&&session==='AM'&&clinics.cmc===false)errors.push(dates[i]+' AM: Najah fixed CMC is closed; select an alternative duty');
    if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
-   if(i===0&&session==='PM'&&clinics.anc!==false){
+   if(dates[i]==='2026-11-01'&&session==='PM'&&clinics.anc!==false){
     const saba=remaining.find(n=>first(n)==='saba');
     if(saba){shift.specialClinics.push({kind:'ANC',doctor:saba});take(saba)}
     else errors.push(dates[i]+' PM: required Sunday ANC physician Saba is unavailable');
    }
-   // Monday IUCD/SDI alternate: never assign both automatically.
+   // Monday specialties: only one specialty across both shifts.
+   // Oula handles IUCD; Rida handles SDI, subject to availability and their shift.
    if(i===1){
-    const kind=clinics.iud!==false?'IUCD':clinics.sdi!==false?'SDI':null;
-    if(kind){
-     const preferred=kind==='IUCD'?'oula':'rida';
-     const doctor=remaining.find(n=>first(n)===preferred);
-     if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
-    }
+    const weekNumber=Math.floor((Date.parse(weekStart+'T12:00:00Z')-Date.parse('2026-11-01T12:00:00Z'))/604800000);
+    const alternate=weekNumber%2===0?'IUCD':'SDI';
+    const kind=alternate==='IUCD'?(clinics.iud!==false?'IUCD':clinics.sdi!==false?'SDI':null):(clinics.sdi!==false?'SDI':clinics.iud!==false?'IUCD':null);
+    const preferred=kind==='IUCD'?'oula':'rida';
+    const doctor=kind?remaining.find(n=>first(n)===preferred):null;
+    if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
    }
    // Assign ANC and WBC before rooms so required clinic doctors cannot disappear.
    for(const kind of ['ANC','WBC']){
