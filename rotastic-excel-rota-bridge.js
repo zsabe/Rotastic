@@ -46,6 +46,27 @@ function generateAndDisplay(options){
  }
  return result;
 }
+function sundayOf(value){
+ const text=String(value||'').slice(0,10);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return '';
+ const d=new Date(text+'T12:00:00Z');
+ if(!Number.isFinite(d.getTime()))return '';
+ d.setUTCDate(d.getUTCDate()-d.getUTCDay());
+ return d.toISOString().slice(0,10);
+}
+function resolveWeekStart(){
+ const explicit=window.rotasticExcelWeekStart;
+ if(explicit)return sundayOf(explicit);
+ const dateFields=[...document.querySelectorAll('input[type="date"]')];
+ const active=dateFields.find(el=>el.offsetParent!==null&&el.value)||dateFields.find(el=>el.value);
+ if(active)return sundayOf(active.value);
+ const fromPlanner=window.currentSchedule?.[0]?.isoDate||window.currentSchedule?.[0]?.date||
+  window.rotasticCurrentSchedule?.[0]?.isoDate||window.rotasticCurrentSchedule?.[0]?.date;
+ if(fromPlanner)return sundayOf(fromPlanner);
+ // Default to the upcoming Sunday; no hidden historical date is assumed.
+ const today=new Date(),local=new Date(today.getFullYear(),today.getMonth(),today.getDate()+((7-today.getDay())%7));
+ return [local.getFullYear(),String(local.getMonth()+1).padStart(2,'0'),String(local.getDate()).padStart(2,'0')].join('-');
+}
 function install(){
  if(document.getElementById('rotastic-excel-generate'))return;
  const candidates=[...document.querySelectorAll('button')];
@@ -55,8 +76,8 @@ function install(){
  const button=document.createElement('button');button.type='button';button.id='rotastic-excel-generate';
  button.className=target.className;button.textContent='Generate from Excel template';
  button.addEventListener('click',()=>{
-  const date=window.rotasticExcelWeekStart||document.querySelector('input[type="date"]')?.value||'';
-  if(!date){alert('Select a Sunday week-start date before generating.');return}
+  const date=resolveWeekStart();
+  if(!date){alert('Unable to determine the selected rota week.');return}
   try{
    const inputs=window.rotasticExcelWeeklyInputs;
    if(!inputs||!inputs.offByDate||!inputs.leaveByDate)throw Error('Weekly OFF and leave inputs must be supplied before Excel generation.');
@@ -69,5 +90,6 @@ function install(){
 }
 window.rotasticGenerateFromExcelTemplate=generateAndDisplay;
 window.rotasticExcelMapSchedule=mapSchedule;
+window.rotasticExcelResolveWeekStart=resolveWeekStart;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
