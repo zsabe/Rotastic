@@ -65,6 +65,14 @@ function generate(options={}){
     if(doctor){shift.specialClinics.push({kind:'WBC',doctor});take(doctor);wbcUsage.set(doctor,(wbcUsage.get(doctor)||0)+1);previousWBC=doctor}
     else errors.push(dates[i]+' '+session+': no eligible male doctor available for Well Baby Clinic');
    }
+   // ANC runs Monday AM, Tuesday AM/PM and Thursday AM only.
+   // Room 32 is reserved for ANC on these sessions, unless CMC already uses it.
+   const ancSession=(i===1&&session==='AM')||(i===2)||(i===4&&session==='AM');
+   if(ancSession&&clinics.anc!==false&&!shift.specialClinics.some(x=>x.kind==='CMC'||x.kind==='ANC')){
+    const doctor=remaining.find(n=>!isAbdul(n));
+    if(doctor){shift.specialClinics.push({kind:'ANC',doctor});take(doctor)}
+    else errors.push(dates[i]+' '+session+': no eligible doctor available for ANC');
+   }
    const fixed=remaining.find(isAbdul);
    if(fixed){shift.rooms[39]=fixed;take(fixed)}
    // Preserve the workbook clinic footprint. Female physicians cannot use 9–20.
