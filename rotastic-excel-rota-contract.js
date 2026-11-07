@@ -5,8 +5,8 @@
 (function(root){
 'use strict';
 const groups={
-  group1:['Dr Abdulgafoor K.','Dr Aminullah Z.','Dr Fahima N.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T'],
-  group2:['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.']
+  group1:['Dr Aminullah Z.','Dr Fahima N.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T','Dr Gani M.'],
+  group2:['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Abdulgafoor K.']
 };
 const key=n=>String(n||'').toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'');
 const aliases={'ghan im':'ganim','ghanim':'ganim','muhammadk':'muhammadk','qaisar':'muhammadk','qaisark':'muhammadk','mohamedsayed':'mohammeds','mohammedsayed':'mohammeds'};
