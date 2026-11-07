@@ -5,8 +5,8 @@ if(window.__rotasticCommunicationsInitialized)return;window.__rotasticCommunicat
 function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+src.split('?')[0]+'"]'))return;const s=document.createElement('script');s.src=src;s.async=false;s.dataset.rotasticSrc=src.split('?')[0];s.onerror=()=>console.error('ROTASTIC script failed:',src);(document.head||document.documentElement).appendChild(s)}
 [
  './rotastic-excel-rota-contract.js?v=1',
- './rotastic-excel-rota-engine.js?v=8',
- './rotastic-excel-rota-bridge.js?v=4',
+ './rotastic-excel-rota-engine.js?v=9',
+ './rotastic-excel-rota-bridge.js?v=5',
  './rotastic-codeblue-hard-block.js?v=2',
  './rotastic-clinic-gender-hard-block.js?v=2',
  './rota-permanent-rules.js?v=16',
@@ -14,7 +14,7 @@ function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+
  './rotastic-latest-scheduling-rules.js?v=1',
  './rotastic-zaid-er-hard-block.js?v=1',
  './rotastic-full-roster-coverage.js?v=1',
- './rotastic-weekly-clinic-selector.js?v=10',
+ './rotastic-weekly-clinic-selector.js?v=11',
  './rotastic-smartbox-integration.js?v=8',
  './rotastic-schedule-name-normalization.js?v=2',
  './rotastic-export-exact-source.js?v=3',
