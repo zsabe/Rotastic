@@ -12,7 +12,7 @@ const isFemale=n=>female.has(first(n));
 const isAbdul=n=>first(n)==='abdulgafoor';
 const blockedCB=n=>['abdulgafoor','maher','salah','zaid'].includes(first(n))||/^mohammed\\s/i.test(n.replace(/^dr\\.?\\s*/i,''));
 const blockedER=n=>first(n)==='zaid';
-const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^qaisar/,'muhammadk');
+const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
 const normaliseOff=(input,dayIndex)=>Array.isArray(input)?input:(input?.[dayIndex]||[]);
 function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
