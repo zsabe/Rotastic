@@ -15,7 +15,7 @@ function mapShift(s,clinics={}){
   sdiDoc:clinics.sdi===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SDI')?.doctor||''),
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
-  cmcDoc:s.specialClinics.find(x=>x.kind==='CMC')?.doctor||'',
+  cmcDoc:clinics.cmc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='CMC')?.doctor||''),
   noRoomDocs:s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed evening)'))};
 }
 function mapSchedule(result,clinics={}){
