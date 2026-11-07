@@ -9,11 +9,9 @@ function enforce(){
  if(!Array.isArray(days))return;
  for(const day of days)for(const period of ['am','pm']){
   const shift=day?.[period];if(!shift||!shift.rooms)continue;
-  shift.ancDoc='No Clinic';
-  if(Array.isArray(shift.specialAssignments))shift.specialAssignments=shift.specialAssignments.filter(x=>String(x.clinic||'').toUpperCase()!=='ANC');
-  const exclusive=[shift.wbcDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
+  const exclusive=[shift.wbcDoc,shift.ancDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','ANC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
   const blocked=new Set(exclusive.map(key));
-  if(!blocked.size)continue;
+  
   // Refill vacated rooms from the same shift's unroomed, eligible doctors.
   const vacated=Object.keys(shift.rooms).filter(room=>blocked.has(key(shift.rooms[room])));
   for(const room of vacated)shift.rooms[room]='-';
@@ -68,7 +66,8 @@ function showNoRoom(){
   box.style.cssText='margin-top:12px;padding:10px;border:1px solid rgba(45,212,191,.3);border-radius:12px;color:#99f6e4;font-size:12px';
   const title=document.createElement('strong');title.textContent='Doctors without rooms';title.style.display='block';box.appendChild(title);
   for(const name of names){const row=document.createElement('div');row.textContent=name;box.appendChild(row)}
-  panel.appendChild(box);
+  const right=panel.querySelector('.rotastic-shift-fit-grid > .rotastic-shift-fit-col:last-child');
+  if(right)right.appendChild(box);else panel.appendChild(box);
  }
 }
 function install(){
