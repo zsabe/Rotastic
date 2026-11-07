@@ -5,7 +5,9 @@ const CLINICS=[
  {id:'anc',label:'ANC',fields:['ancDoc'],patterns:[/\bANC\b/i]},
  {id:'wbc',label:'Well Baby Clinic',fields:['wbcDoc','wicDoc'],patterns:[/well\s*baby|\bWBC\b/i]},
  {id:'iud',label:'IUD / IUCD',fields:['iudDoc','iucdDoc'],patterns:[/\bIUD\b|\bIUCD\b/i]},
- {id:'ncd',label:'NCD',fields:['ncdDoc'],patterns:[/\bNCD\b/i]}
+ {id:'ncd',label:'NCD',fields:['ncdDoc'],patterns:[/\bNCD\b/i]},
+ {id:'sdi',label:'SDI',fields:['sdiDoc'],patterns:[/\bSDI\b|subdermal/i]},
+ {id:'smoking',label:'Smoking Cessation',fields:['smokingDoc'],patterns:[/smoking\s*cessation/i]}
 ];
 const state=Object.fromEntries(CLINICS.map(c=>[c.id,true]));
 const enabled=id=>state[id]!==false;
