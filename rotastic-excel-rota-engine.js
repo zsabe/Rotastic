@@ -11,9 +11,9 @@ const first=n=>String(n).replace(/^dr\.?\s*/i,'').split(' ')[0].toLowerCase();
 const isFemale=n=>female.has(first(n));
 const isAbdul=n=>first(n)==='abdulgafoor';
 // Source: Book 1 (1).xlsx, Sheet1 AB3:AB8 (TL) and AB11:AB27 (team).
-const CB_LEAD=new Set(['imran','ganim','enan','fazila','laith','abdulrashid']);
-const CB_TEAM=new Set(['qaisar','faisal','shadi','fazila','imran','ganim','enan','selman','husam','syed','tayseer','bilal','oula','maher','laith','abdulrashid']);
-const cbIdentity=n=>{const k=String(n||'').toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'');if(k.startsWith('ghani')||k==='gshafi')return 'ganim';if(k==='arashid'||k==='abdulrashids')return 'abdulrashid';if(k==='nislam'||k==='syedi')return 'syed';if(k==='muhammadk'||k==='qaisark')return 'qaisar';return k.replace(/(m|a|k|c|s|t|e)$/,'')};
+const CB_LEAD=new Set(['imran','gshafi','enan','fazila','laith','abdulrashid']);
+const CB_TEAM=new Set(['qaisar','faisal','shadi','fazila','imran','gshafi','enan','selman','husam','syed','tayseer','bilal','oula','maher','laith','abdulrashid']);
+const cbIdentity=n=>{const k=String(n||'').toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'');if(k==='gshafi')return 'gshafi';if(k==='arashid'||k==='abdulrashids')return 'abdulrashid';if(k==='nislam'||k==='syedi')return 'syed';if(k==='muhammadk'||k==='qaisark')return 'qaisar';return k.replace(/(m|a|k|c|s|t|e)$/,'')};
 const blockedCB=n=>['abdulgafoor','maher','salah','zaid'].includes(first(n))||/^mohammed\\s/i.test(n.replace(/^dr\\.?\\s*/i,''));
 const blockedER=n=>first(n)==='zaid';
 const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
