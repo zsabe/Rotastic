@@ -34,7 +34,7 @@ function wrap(){
    const wish=WISHES[hash%WISHES.length];
    const duties=window.collectEmergencyDuties?.(shift,doctor)||[];
    const blue=window.collectCodeBlueDuties?.(timing.period==='am'?day.cbAM:day.cbPM,doctor)||[];
-   return `<div class="clean-card my-shift-presence-card rounded-2xl p-5 sm:p-6 border border-sky-500/20">
+   return `<div class="clean-card my-shift-presence-card rotastic-duty-poster rounded-2xl p-5 sm:p-6 border border-sky-500/20">
     <div class="text-[10px] uppercase tracking-widest text-sky-300 font-black">Personal View · ${escapeHTML(dateLabel)}</div>
     <div class="flex items-center justify-between gap-4 mt-4 pb-4 border-b border-slate-800">
       <div><div class="text-xl font-black text-white">${timing.period==='am'?'AM':'PM'} Shift</div><div class="text-sm text-slate-300 mt-1">${escapeHTML(hours)}</div></div>
@@ -53,6 +53,9 @@ function wrap(){
  replacement.__rotasticCompact=true;
  window.buildMyShiftMainView=replacement;
 }
+const style=document.createElement('style');
+style.textContent=`.rotastic-duty-poster{position:relative;isolation:isolate;overflow:hidden;min-height:340px;background:linear-gradient(125deg,rgba(8,24,44,.82),rgba(7,27,43,.87) 55%,rgba(11,34,43,.92)),radial-gradient(ellipse at 75% 15%,#43b9b1 0%,transparent 52%),linear-gradient(150deg,#12364d,#07101e)!important;box-shadow:inset 0 0 0 1px rgba(116,232,216,.12),0 15px 45px rgba(0,0,0,.16)}.rotastic-duty-poster:before{content:'';position:absolute;z-index:-1;right:-55px;top:-80px;width:310px;height:310px;border-radius:50%;border:24px solid rgba(107,220,201,.12);box-shadow:0 0 0 50px rgba(115,206,225,.045),0 0 0 105px rgba(115,206,225,.035)}.rotastic-duty-poster:after{content:'✦';position:absolute;z-index:-1;right:28px;bottom:18px;font-size:130px;line-height:1;color:rgba(142,227,211,.09);transform:rotate(-14deg)}.rotastic-duty-poster>div{position:relative}`;
+(document.head||document.documentElement).appendChild(style);
 wrap();
 document.addEventListener('DOMContentLoaded',wrap,{once:true});
 setTimeout(wrap,500);
