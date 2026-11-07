@@ -5,12 +5,12 @@
 (function(root){
 'use strict';
 const groups={
-  group1:['Dr Aminullah Z.','Dr Fahima N.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr M Syed','Dr Qaisar','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T','Dr Gani M.'],
+  group1:['Dr Aminullah Z.','Dr Fahima N.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr M Syed','Dr Qaisar','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T','Dr G Shafi'],
   group2:['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Abdulgafoor K.']
 };
 const key=n=>String(n||'').toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'');
-const aliases={'ghan im':'ganim','ghanim':'ganim','muhammadk':'muhammadk','qaisar':'muhammadk','qaisark':'muhammadk','mohamedsayed':'msyed','mohammedsayed':'msyed','mohammeds':'msyed'};
-function identity(n){let k=key(n);if(/^ghani/.test(k))return 'ganim';return aliases[k]||k;}
+const aliases={'ghan im':'ganim','ghanim':'gshafi','muhammadk':'muhammadk','qaisar':'muhammadk','qaisark':'muhammadk','mohamedsayed':'msyed','mohammedsayed':'msyed','mohammeds':'msyed'};
+function identity(n){let k=key(n);if(/^ghani/.test(k)||k==='gshafi')return 'gshafi';return aliases[k]||k;}
 const roster=[...groups.group1,...groups.group2];
 const allKeys=new Set(roster.map(identity));
 function sessionGroup(dayIndex,session){if(!Number.isInteger(dayIndex)||dayIndex<0||dayIndex>4||!['AM','PM'].includes(session))throw Error('Invalid day/session');return (dayIndex<3)===(session==='AM')?'group1':'group2';}
