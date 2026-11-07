@@ -20,16 +20,52 @@ function mapShift(s,clinics={}){
 }
 function mapSchedule(result,clinics={}){
  return result.days.map(d=>({
-  date:d.date,dayIndex:d.dayIndex,am:mapShift(d.shifts.AM,clinics),pm:mapShift(d.shifts.PM,clinics),
+  date:d.date,isoDate:d.date,day:['Sunday','Monday','Tuesday','Wednesday','Thursday'][d.dayIndex],dayIndex:d.dayIndex,am:mapShift(d.shifts.AM,clinics),pm:mapShift(d.shifts.PM,clinics),
   cbAM:{tl:d.shifts.AM.codeBlue.TL,tm2:d.shifts.AM.codeBlue.TM2,tm3:d.shifts.AM.codeBlue.TM3},
   cbPM:{tl:d.shifts.PM.codeBlue.TL,tm2:d.shifts.PM.codeBlue.TM2,tm3:d.shifts.PM.codeBlue.TM3}
  }));
+}
+function enhanceExcelRotaView(){
+ if(!window.__rotasticExcelModeActive||!Array.isArray(window.currentSchedule))return;
+ const container=document.getElementById('scheduleMatrixContainer');
+ if(!container)return;
+ const sheets=[...container.querySelectorAll('.rotastic-day-sheet')];
+ for(const sheet of sheets){
+  const heading=sheet.querySelector('.rotastic-day-sheet-head');
+  const headingText=heading?.textContent||'';
+  const day=window.currentSchedule.find(d=>headingText.includes(d.isoDate)||headingText.includes(d.day));
+  if(!day)continue;
+  const panels=[...sheet.querySelectorAll('.rotastic-shift-panel')];
+  for(let j=0;j<panels.length;j++){
+   const panel=panels[j],shift=day[j===0?'am':'pm'];
+   if(!shift)continue;
+   panel.querySelector('.rotastic-excel-extra-duties')?.remove();
+   const names=shift.noRoomDocs||[];
+   const closed=[['ANC',shift.ancDoc],['WBC',shift.wbcDoc],['IUCD',shift.iucdDoc],['SDI',shift.sdiDoc],['NCD',shift.ncdDoc],['Smoking Cessation',shift.smokingDoc],['CMC',shift.cmcDoc]].filter(x=>x[1]==='No Clinic');
+   if(!names.length&&!closed.length)continue;
+   const extra=document.createElement('div');
+   extra.className='rotastic-excel-extra-duties';
+   extra.style.cssText='padding:10px 12px;border-top:1px solid #334155;font-size:12px;line-height:1.8';
+   const title=document.createElement('div');title.textContent='Additional assigned doctors';title.style.cssText='color:#5eead4;font-weight:700;text-transform:uppercase';extra.appendChild(title);
+   for(const name of names){const line=document.createElement('div');line.textContent=name;line.style.color='#f8fafc';extra.appendChild(line)}
+   for(const [clinic] of closed){const line=document.createElement('div');line.textContent=clinic+': No Clinic';line.style.cssText='color:#facc15;font-weight:700';extra.appendChild(line)}
+   panel.appendChild(extra);
+  }
+ }
+}
+function installRotaViewEnhancement(){
+ if(window.__rotasticExcelViewEnhanced)return;
+ const fn=window.renderScheduleView;
+ if(typeof fn!=='function')return;
+ window.renderScheduleView=function(...args){const result=fn.apply(this,args);enhanceExcelRotaView();return result};
+ window.__rotasticExcelViewEnhanced=true;
 }
 function generateAndDisplay(options){
  const engine=getEngine();if(!engine)throw Error('Excel scheduling engine has not loaded');
  const result=engine.generate(options);
  engine.assertValid(result);
  const days=mapSchedule(result,options?.clinics||{});
+ installRotaViewEnhancement();
  // A generated doctor must be represented in the actual Rota View adapter.
  for(const day of result.days)for(const session of ['AM','PM']){
   const shift=day.shifts[session],mapped=days[day.dayIndex][session.toLowerCase()];
@@ -48,6 +84,7 @@ function generateAndDisplay(options){
   window.rotasticPatchExportActualRota?.();
   if(typeof window.renderSchedule==='function')window.renderSchedule();
   if(typeof window.renderScheduleView==='function')window.renderScheduleView();
+  enhanceExcelRotaView();
   if(window.currentSchedule!==days)throw Error('Another module replaced the Excel-generated rota');
  }catch(e){
   window.currentSchedule=previous.schedule;
@@ -131,5 +168,6 @@ window.rotasticGenerateFromExcelTemplate=generateAndDisplay;
 window.rotasticExcelMapSchedule=mapSchedule;
 window.rotasticExcelResolveWeekStart=resolveWeekStart;
 window.rotasticExcelReadWeeklyInputs=weeklyInputs;
+window.rotasticExcelEnhanceRotaView=enhanceExcelRotaView;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
