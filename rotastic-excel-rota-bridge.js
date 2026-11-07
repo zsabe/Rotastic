@@ -74,7 +74,7 @@ function install(){
   candidates.find(b=>/^generate\s+(rota|schedule|duty schedule)$/i.test((b.textContent||'').trim()));
  if(!target)return;
  const button=document.createElement('button');button.type='button';button.id='rotastic-excel-generate';
- button.className=target.className;button.textContent='Generate from Excel template';
+ button.className=target.className;button.textContent='Generate schedule';
  button.addEventListener('click',()=>{
   const date=resolveWeekStart();
   if(!date){alert('Unable to determine the selected rota week.');return}
@@ -86,7 +86,8 @@ function install(){
    alert('Excel-template rota generated and validated: '+result.days.length+' days. Check Rota View before exporting.');
   }catch(e){console.error('Excel generation rejected',e);alert('Excel generation stopped: '+e.message+' Existing rota has not been replaced.')}
  });
- target.insertAdjacentElement('afterend',button);
+ // Replace only the original generator control; preserve the surrounding layout.
+ target.replaceWith(button);
 }
 window.rotasticGenerateFromExcelTemplate=generateAndDisplay;
 window.rotasticExcelMapSchedule=mapSchedule;
