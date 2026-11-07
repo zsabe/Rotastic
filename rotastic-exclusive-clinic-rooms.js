@@ -28,7 +28,7 @@ function enforce(){
   // The legacy generator can omit working doctors entirely. Recover them from
   // the actual shift cohort rather than silently losing them from the rota.
   const candidates=[...listed,...cohort].filter((name,i,arr)=>/^dr\.?\s/i.test(name)&&arr.findIndex(n=>key(n)===key(name))===i)
-   .filter(name=>cohortKeys.has(key(name))&&!used.has(key(name))&&key(name)!=='abdulgafoork')
+   .filter(name=>cohortKeys.has(key(name))&&!used.has(key(name))&&key(name)!=='abdulgafoork'&&key(name)!=='fahiman')
    .filter(name=>!(window.rotasticDoctorIsOnDisplayedLeave?.(name,day)));
   const roomsToFill=[...new Set([...vacated,...Object.keys(shift.rooms).filter(room=>!shift.rooms[room]||shift.rooms[room]==='-')])];
   for(const room of roomsToFill){
@@ -42,7 +42,7 @@ function enforce(){
   const assignedKeys=new Set([...roomKeys,...otherAssignments.map(key),...blocked]);
   const cb=period==='am'?day.cbAM:day.cbPM;
   for(const name of Object.values(cb||{}))assignedKeys.add(key(name));
-  shift.noRoomDocs=cohort.filter(name=>!assignedKeys.has(key(name))&&!window.rotasticDoctorIsOnDisplayedLeave?.(name,day)).map(name=>name+' (No Room)');
+  shift.noRoomDocs=cohort.filter(name=>key(name)!=='fahiman'&&!assignedKeys.has(key(name))&&!window.rotasticDoctorIsOnDisplayedLeave?.(name,day)).map(name=>name+' (No Room)');
   // WBC, ANC and CMC are exclusive clinical assignments, not ER/Twilight duties.
   for(const field of ['med','fed','ped','timed1Doc','timed2Doc'])if(blocked.has(key(shift[field])))shift[field]='';
   if(cb)for(const field of ['tl','tm2','tm3'])if(blocked.has(key(cb[field])))cb[field]='';
