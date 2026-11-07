@@ -11,6 +11,7 @@ function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+
  './rotastic-shift-totals.js?v=1',
  './rotastic-exclusive-clinic-rooms.js?v=8',
  './rotastic-twilight-visual-sync.js?v=1',
+ './rotastic-day-header-shift-count.js?v=1',
  './rotastic-codeblue-hard-block.js?v=2',
  './rotastic-clinic-gender-hard-block.js?v=2',
  './rota-permanent-rules.js?v=16',
