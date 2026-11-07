@@ -18,7 +18,7 @@ function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
  const dates=Array.from({length:5},(_,i)=>{const d=new Date(weekStart+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
  if(new Date(weekStart+'T12:00:00Z').getUTCDay()!==0)throw Error('Week must start on Sunday');
- const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{cmc:true,wbc:true,iud:true,sdi:true,ncd:true,smoking:true,cmc:true};
+ const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{anc:true,cmc:true,wbc:true,iud:true,sdi:true,smoking:true};
  const days=[],errors=[];
  const usage=new Map();
  const paedsUsage=new Map();
@@ -69,7 +69,7 @@ function generate(options={}){
    if(fixed){shift.rooms[39]=fixed;take(fixed)}
    // Preserve the workbook clinic footprint. Female physicians cannot use 9–20.
    const roomOrder=(session==='AM'?[10,12,13,14,21,22,24,25,26,27,38]:[9,10,12,13,14,21,22,24,25,26,27,38]);
-   if(!shift.specialClinics.some(x=>x.kind==='CMC'))roomOrder.push(32);
+   if(!shift.specialClinics.some(x=>x.kind==='CMC'||x.kind==='ANC'))roomOrder.push(32);
    for(const room of roomOrder){
     const candidates=remaining.filter(n=>room>20||!isFemale(n));
     if(!candidates.length)continue;
@@ -86,7 +86,7 @@ function generate(options={}){
    }
    // Extra non-room clinics are explicitly represented by workbook C9/C11 or H9/H11.
    // Do not invent a clinic or quietly discard an unplaced doctor.
-   const clinicKinds=[...(clinics.ncd===false?[]:['NCD']),...(clinics.smoking===false||i!==2?[]:['SMOKING'])];
+   const clinicKinds=[...(clinics.smoking===false||i!==2?[]:['SMOKING'])];
    for(const kind of clinicKinds){
     if(shift.specialClinics.some(x=>x.kind===kind))continue;
     const doctor=remaining.find(n=>!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
