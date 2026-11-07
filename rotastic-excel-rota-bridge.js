@@ -9,17 +9,17 @@ function mapShift(s,clinics={}){
  const rooms={};for(const [room,name] of Object.entries(s.rooms))rooms[room]=name;
  const exclusive=new Set(s.specialClinics.filter(x=>['WBC','ANC','CMC'].includes(x.kind)).map(x=>x.doctor));
  for(const [room,name] of Object.entries(rooms))if(exclusive.has(name))delete rooms[room];
- const room32=s.specialClinics.find(x=>x.kind==='CMC'||x.kind==='ANC');if(room32)rooms[32]=room32.doctor;
+ const room32=s.specialClinics.find(x=>x.kind==='CMC');if(room32)rooms[32]=room32.doctor;
  return {rooms,med:s.er.male||'',fed:s.er.female||'',ped:s.er.paeds||'',
   timed1Doc:s.twilight[0]||'',timed2Doc:s.twilight[1]||'',
-  ancDoc:clinics.anc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='ANC')?.doctor||''),
+  ancDoc:'No Clinic',
   wbcDoc:clinics.wbc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='WBC')?.doctor||''),
   iucdDoc:clinics.iud===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='IUCD')?.doctor||''),
   sdiDoc:clinics.sdi===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SDI')?.doctor||''),
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
   cmcDoc:clinics.cmc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='CMC')?.doctor||''),
-  specialAssignments:s.specialClinics.filter(x=>x.kind!=='FIXED').map(x=>({clinic:x.kind,doctor:x.doctor,room:(x.kind==='ANC'||x.kind==='CMC')?32:null})),
+  specialAssignments:s.specialClinics.filter(x=>x.kind!=='FIXED').map(x=>({clinic:x.kind,doctor:x.doctor,room:x.kind==='CMC'?32:null})),
   noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.noClinic||[]).map(x=>x+' (No Room)')]};
 }
 function mapSchedule(result,clinics={}){
