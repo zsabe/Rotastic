@@ -12,16 +12,16 @@ const canonical={
  'faisalc':'Dr Faisal','shadit':'Dr Shadi','ganim':'Dr G Shafi','ghanim':'Dr G Shafi','gshafi':'Dr G Shafi',
  'qaisar':'Dr Qaisar','qaisark':'Dr Qaisar','muhammadk':'Dr Qaisar',
  'ridac':'Dr Rida','mayas':'Dr Maya','lailaa':'Dr Laila','aminullahz':'Dr Amin',
- 'salahm':'Dr Saleh','salehm':'Dr Saleh','moursi':'Dr Moursi','mmoursi':'Dr Moursi',
+ 'salahm':'Dr Saleh','salehm':'Dr Saleh','moursi':'Dr Moursi','mmoursi':'Dr Moursi','mohamedm':'Dr Moursi',
  'nislam':'Dr N Islam','sabat':'Dr Saba'
 };
 const normalize=n=>String(n||'').toLowerCase().replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'');
 function display(v){if(typeof v!=='string')return v;return v.replace(/Dr\.?\s+[A-Za-z]+(?:\s+[A-Za-z]+)?\.?/g,m=>canonical[normalize(m)]||m)}
 window.rotasticExcelCanonicalDoctorName=n=>canonical[normalize(n)]||n;
 function update(){
- const root=document.getElementById('scheduleMatrixContainer');if(!root)return;
+ const root=document.body;if(!root)return;
  const walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
- while((n=walk.nextNode())){const v=display(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v}
+ while((n=walk.nextNode())){if(n.parentElement?.closest('script,style,textarea,input,select,option,[contenteditable],code,pre'))continue;const v=display(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v}
 }
 let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});document.addEventListener('DOMContentLoaded',update);setTimeout(update,600);
 })();
