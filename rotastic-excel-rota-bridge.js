@@ -7,6 +7,7 @@ const getEngine=()=>window.rotasticExcelRotaEngine;
 const dateKey=d=>String(d?.date||d?.isoDate||d?.dayDate||'').slice(0,10);
 function mapShift(s,clinics={}){
  const rooms={};for(const [room,name] of Object.entries(s.rooms))rooms[room]=name;
+ const room32=s.specialClinics.find(x=>x.kind==='CMC'||x.kind==='ANC');if(room32)rooms[32]=room32.doctor;
  return {rooms,med:s.er.male||'',fed:s.er.female||'',ped:s.er.paeds||'',
   timed1Doc:s.twilight[0]||'',timed2Doc:s.twilight[1]||'',
   ancDoc:clinics.anc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='ANC')?.doctor||''),
@@ -26,45 +27,9 @@ function mapSchedule(result,clinics={}){
  }));
 }
 function enhanceExcelRotaView(){
- if(!window.__rotasticExcelModeActive||!Array.isArray(window.currentSchedule))return;
  const container=document.getElementById('scheduleMatrixContainer');
- if(!container)return;
- // Always expose supporting assignments even when a day panel cannot be matched.
- let summary=container.querySelector('#rotastic-supporting-roster');
- if(!summary){summary=document.createElement('section');summary.id='rotastic-supporting-roster';summary.style.cssText='margin:12px 0;padding:12px;border:2px solid #14b8a6;border-radius:10px;background:#0f172a;color:#f8fafc;font-size:13px';container.prepend(summary)}
- const lines=[];
- for(const d of window.currentSchedule)for(const [label,shift] of [['AM',d.am],['PM',d.pm]]){
-  for(const name of (shift?.noRoomDocs||[]))lines.push(d.day+' '+d.isoDate+' '+label+': '+name);
- }
- summary.replaceChildren();
- const heading=document.createElement('strong');heading.textContent='Supporting and fixed-duty doctors';summary.appendChild(heading);
- if(!lines.length){const p=document.createElement('div');p.textContent='No supporting or fixed-duty assignments this week';summary.appendChild(p)}
- for(const line of lines){const p=document.createElement('div');p.textContent=line;p.style.marginTop='4px';summary.appendChild(p)}
- const sheets=[...container.querySelectorAll('.rotastic-day-sheet')];
- for(const sheet of sheets){
-  const heading=sheet.querySelector('.rotastic-day-sheet-head');
-  const headingText=heading?.textContent||'';
-  const dated=window.currentSchedule.filter(d=>d.isoDate&&headingText.includes(d.isoDate));
-  const named=window.currentSchedule.filter(d=>d.day&&new RegExp('\\b'+d.day+'\\b','i').test(headingText));
-  const day=dated.length===1?dated[0]:named.length===1?named[0]:null;
-  if(!day)continue;
-  const panels=[...sheet.querySelectorAll('.rotastic-shift-panel')];
-  for(let j=0;j<panels.length;j++){
-   const panel=panels[j],shift=day[j===0?'am':'pm'];
-   if(!shift)continue;
-   panel.querySelector('.rotastic-excel-extra-duties')?.remove();
-   const names=shift.noRoomDocs||[];
-   const closed=[['ANC',shift.ancDoc],['WBC',shift.wbcDoc],['IUCD',shift.iucdDoc],['SDI',shift.sdiDoc],['NCD',shift.ncdDoc],['Smoking Cessation',shift.smokingDoc],['CMC',shift.cmcDoc]].filter(x=>x[1]==='No Clinic');
-   if(!names.length&&!closed.length)continue;
-   const extra=document.createElement('div');
-   extra.className='rotastic-excel-extra-duties';
-   extra.style.cssText='padding:10px 12px;border-top:1px solid #334155;font-size:12px;line-height:1.8';
-   const title=document.createElement('div');title.textContent='Additional assigned doctors';title.style.cssText='color:#5eead4;font-weight:700;text-transform:uppercase';extra.appendChild(title);
-   for(const name of names){const line=document.createElement('div');line.textContent=name;line.style.color='#f8fafc';extra.appendChild(line)}
-   for(const [clinic] of closed){const line=document.createElement('div');line.textContent=clinic+': No Clinic';line.style.cssText='color:#facc15;font-weight:700';extra.appendChild(line)}
-   panel.appendChild(extra);
-  }
- }
+ container?.querySelector('#rotastic-supporting-roster')?.remove();
+ container?.querySelectorAll('.rotastic-excel-extra-duties').forEach(el=>el.remove());
 }
 function installRotaViewEnhancement(){
  if(window.__rotasticExcelViewEnhanced)return;
