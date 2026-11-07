@@ -119,7 +119,7 @@ function install(){
   if(!date){alert('Unable to determine the selected rota week.');return}
   try{
    const inputs=weeklyInputs(date);
-   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))throw Error('Select a valid Sunday week-start date.');
+   if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date))throw Error('Select a valid Sunday week-start date.');
    const result=generateAndDisplay({...inputs,weekStart:date});
    alert('Excel-template rota generated and validated: '+result.days.length+' days. Check Rota View before exporting.');
   }catch(e){console.error('Excel generation rejected',e);alert('Excel generation stopped: '+e.message+' Existing rota has not been replaced.')}
