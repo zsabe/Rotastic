@@ -18,7 +18,7 @@ function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
  const dates=Array.from({length:5},(_,i)=>{const d=new Date(weekStart+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
  if(new Date(weekStart+'T12:00:00Z').getUTCDay()!==0)throw Error('Week must start on Sunday');
- const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{anc:true,wbc:true,iud:true,ncd:true};
+ const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{anc:true,wbc:true,iud:true,sdi:true,ncd:true,smoking:true,cmc:true};
  const days=[],errors=[];
  const usage=new Map();
  for(let i=0;i<5;i++){
@@ -31,12 +31,33 @@ function generate(options={}){
    const doctors=contract.groups[group].filter(n=>!excluded.has(nameKey(n)));
    const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[]};
    const remaining=[...doctors];
+   const najahOff=excluded.has(nameKey('Dr Najah'));
+   if(!najahOff&&((i===1&&session==='PM')||(i===4&&session==='AM'))&&clinics.cmc!==false)shift.specialClinics.push({kind:'CMC',doctor:'Dr Najah'});
+   else if(!najahOff&&(i===2||i===3)&&session==='PM')shift.specialClinics.push({kind:'FIXED',doctor:'Dr Najah'});
+   else if(!najahOff&&i===1&&session==='PM'&&clinics.cmc===false)errors.push(dates[i]+' PM: Najah fixed CMC is closed; select an alternative duty');
+   else if(!najahOff&&i===4&&session==='AM'&&clinics.cmc===false)errors.push(dates[i]+' AM: Najah fixed CMC is closed; select an alternative duty');
    if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
    if(i===0&&session==='PM'&&clinics.anc!==false){
     const saba=remaining.find(n=>first(n)==='saba');
     if(saba){shift.specialClinics.push({kind:'ANC',doctor:saba});take(saba)}
     else errors.push(dates[i]+' PM: required Sunday ANC physician Saba is unavailable');
+   }
+   // Monday IUCD/SDI alternate: never assign both automatically.
+   if(i===1){
+    const kind=clinics.iud!==false?'IUCD':clinics.sdi!==false?'SDI':null;
+    if(kind){
+     const preferred=kind==='IUCD'?'oula':'rida';
+     const doctor=remaining.find(n=>first(n)===preferred);
+     if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
+    }
+   }
+   // Assign ANC and WBC before rooms so required clinic doctors cannot disappear.
+   for(const kind of ['ANC','WBC']){
+    if(kind==='ANC'&&clinics.anc===false||kind==='WBC'&&clinics.wbc===false)continue;
+    if(shift.specialClinics.some(x=>x.kind===kind))continue;
+    const doctor=remaining.find(n=>kind==='NCD'?true:kind==='SMOKING'?['selman','enan'].includes(first(n)):false);
+    if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
    }
    const fixed=remaining.find(isAbdul);
    if(fixed){shift.rooms[39]=fixed;take(fixed)}
@@ -57,7 +78,7 @@ function generate(options={}){
    }
    // Extra non-room clinics are explicitly represented by workbook C9/C11 or H9/H11.
    // Do not invent a clinic or quietly discard an unplaced doctor.
-   const clinicKinds=[...(clinics.anc===false?[]:['ANC']),...(clinics.wbc===false?[]:['WBC'])];
+   const clinicKinds=[...(clinics.ncd===false?[]:['NCD']),...(clinics.smoking===false||i!==2?[]:['SMOKING'])];
    for(const kind of clinicKinds){
     if(shift.specialClinics.some(x=>x.kind===kind))continue;
     const doctor=remaining.find(n=>kind==='ANC'?isFemale(n):!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
@@ -95,7 +116,8 @@ function toWorkbookCells(result){
   for(const [role,offset] of [['male',1],['female',2],['paeds',3]])
    if(s.er[role])cells[erCol+(base+offset)]=s.er[role];
   for(let i=0;i<s.twilight.length;i++)cells[erCol+(base+4+i)]=s.twilight[i];
-  for(const clinic of s.specialClinics){const offset=clinic.kind==='ANC'?6:8;cells[erCol+(base+offset)]=clinic.doctor;}
+  // Specialty clinics have separate named fields in Rota View; do not overwrite
+  // unrelated Excel template cells with CMC/IUCD/SDI/NCD names.
   // Workbook: AM Code Blue L4:L6, PM L10:L12, repeated every 12 rows.
   const cbBase=base+(session==='AM'?1:7);
   for(const [role,offset] of [['TL',0],['TM2',1],['TM3',2]])
