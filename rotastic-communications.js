@@ -18,7 +18,7 @@ function loadScript(src){if(document.querySelector('script[data-rotastic-src="'+
  './rotastic-smartbox-integration.js?v=8',
  './rotastic-schedule-name-normalization.js?v=2',
  './rotastic-export-exact-source.js?v=3',
- './rotastic-export-template.js?v=8',
+ './rotastic-export-template.js?v=9',
  './rotastic-export-actual-rota.js?v=4',
  './rotastic-export-polish.js?v=4'
 ].forEach(loadScript);
