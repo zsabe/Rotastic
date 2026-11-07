@@ -33,7 +33,9 @@ function enhanceExcelRotaView(){
  for(const sheet of sheets){
   const heading=sheet.querySelector('.rotastic-day-sheet-head');
   const headingText=heading?.textContent||'';
-  const day=window.currentSchedule.find(d=>headingText.includes(d.isoDate)||headingText.includes(d.day));
+  const dated=window.currentSchedule.filter(d=>d.isoDate&&headingText.includes(d.isoDate));
+  const named=window.currentSchedule.filter(d=>d.day&&new RegExp('\\b'+d.day+'\\b','i').test(headingText));
+  const day=dated.length===1?dated[0]:named.length===1?named[0]:null;
   if(!day)continue;
   const panels=[...sheet.querySelectorAll('.rotastic-shift-panel')];
   for(let j=0;j<panels.length;j++){
