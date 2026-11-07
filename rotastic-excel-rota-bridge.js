@@ -17,7 +17,7 @@ function mapShift(s,clinics={}){
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
   cmcDoc:clinics.cmc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='CMC')?.doctor||''),
-  noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.noClinic||[]).map(x=>x+' (No Clinic)')]};
+  noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.noClinic||[]).map(x=>x+' (No Room)')]};
 }
 function mapSchedule(result,clinics={}){
  return result.days.map(d=>({
@@ -40,7 +40,7 @@ function enhanceExcelRotaView(){
   const panels=[...sheet.querySelectorAll('.rotastic-shift-panel')];
   for(const [j,panel] of panels.entries()){
    const shift=day[j===0?'am':'pm'];if(!shift)continue;
-   const names=(shift.noRoomDocs||[]).filter(x=>x.endsWith('(No Clinic)'));
+   const names=(shift.noRoomDocs||[]).filter(x=>x.endsWith('(No Room)'));
    if(!names.length)continue;
    const target=panel.querySelector('.rotastic-clinics, .rotastic-special-clinics, .rotastic-clinic-section')||panel;
    const box=document.createElement('div');box.className='rotastic-excel-extra-duties';
