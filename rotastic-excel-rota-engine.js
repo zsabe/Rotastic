@@ -11,7 +11,7 @@ const first=n=>String(n).replace(/^dr\.?\s*/i,'').split(' ')[0].toLowerCase();
 const isFemale=n=>female.has(first(n));
 const isAbdul=n=>first(n)==='abdulgafoor';
 const blockedCB=n=>['abdulgafoor','maher','salah','zaid'].includes(first(n))||/^mohammed\\s/i.test(n.replace(/^dr\\.?\\s*/i,''));
-const blockedER=n=>['abdulgafoor','zaid'].includes(first(n));
+const blockedER=n=>first(n)==='zaid';
 const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^qaisar/,'muhammadk');
 const normaliseOff=(input,dayIndex)=>Array.isArray(input)?input:(input?.[dayIndex]||[]);
 function generate(options={}){
@@ -96,7 +96,7 @@ function generate(options={}){
     return assigned.find(n=>!used.has(n)&&!blockedER(n)&&(kind==='male'?!isFemale(n):kind==='female'?isFemale(n):true))||null;
    }
    const usedER=new Set();
-   for(const kind of ['male','female','paeds']){const n=erPick(kind,usedER);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
+   for(const kind of ['male','female','paeds']){const n=kind==='paeds'&&assigned.some(x=>isAbdul(x)&&!usedER.has(x))?assigned.find(x=>isAbdul(x)):erPick(kind,usedER);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
    const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.supporting].map(doctor=>({doctor})),off,leave});
