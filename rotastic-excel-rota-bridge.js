@@ -17,6 +17,7 @@ function mapShift(s,clinics={}){
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
   cmcDoc:clinics.cmc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='CMC')?.doctor||''),
+  specialAssignments:s.specialClinics.filter(x=>x.kind!=='FIXED').map(x=>({clinic:x.kind,doctor:x.doctor,room:(x.kind==='ANC'||x.kind==='CMC')?32:null})),
   noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.noClinic||[]).map(x=>x+' (No Room)')]};
 }
 function mapSchedule(result,clinics={}){
