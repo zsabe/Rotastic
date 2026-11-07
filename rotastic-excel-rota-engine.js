@@ -4,7 +4,7 @@
 'use strict';
 const contract=root.rotasticExcelRotaContract;
 if(!contract)throw Error('Load rotastic-excel-rota-contract.js first');
-const ROOMS=[9,10,12,13,14,39,21,22,24,25,26,27,38];
+const ROOMS=[9,10,12,13,14,39,21,22,24,25,26,27,32,38];
 const DAY_ROWS=[3,15,27,39,51];
 const female=new Set(['fazila','laila','maya','saima','rida','oula','tayseer','saba','fahima']);
 const first=n=>String(n).replace(/^dr\.?\s*/i,'').split(' ')[0].toLowerCase();
@@ -69,6 +69,7 @@ function generate(options={}){
    if(fixed){shift.rooms[39]=fixed;take(fixed)}
    // Preserve the workbook clinic footprint. Female physicians cannot use 9–20.
    const roomOrder=(session==='AM'?[10,12,13,14,21,22,24,25,26,27,38]:[9,10,12,13,14,21,22,24,25,26,27,38]);
+   if(!shift.specialClinics.some(x=>x.kind==='CMC'))roomOrder.push(32);
    for(const room of roomOrder){
     const candidates=remaining.filter(n=>room>20||!isFemale(n));
     if(!candidates.length)continue;
@@ -126,7 +127,7 @@ function toWorkbookCells(result){
  for(const day of result.days)for(const session of ['AM','PM']){
   const s=day.shifts[session],base=DAY_ROWS[day.dayIndex],clinicCol=session==='AM'?'D':'I',erCol=session==='AM'?'C':'H';
   for(const [room,doctor] of Object.entries(s.rooms)){
-   if(!(room in offsets))throw Error('Room '+room+' not present in workbook');
+   if(!(room in offsets)){if(Number(room)===32)continue;throw Error('Room '+room+' not present in workbook');}
    cells[clinicCol+(base+offsets[room])]=doctor;
   }
   for(const [role,offset] of [['male',1],['female',2],['paeds',3]])
