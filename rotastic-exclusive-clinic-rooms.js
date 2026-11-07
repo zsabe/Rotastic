@@ -9,7 +9,7 @@ function enforce(){
  if(!Array.isArray(days))return;
  for(const day of days)for(const period of ['am','pm']){
   const shift=day?.[period];if(!shift||!shift.rooms)continue;
-  const exclusive=[shift.wbcDoc,shift.ancDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','ANC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
+  const exclusive=[shift.wbcDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
   const blocked=new Set(exclusive.map(key));
   if(!blocked.size)continue;
   // Refill vacated rooms from the same shift's unroomed, eligible doctors.
