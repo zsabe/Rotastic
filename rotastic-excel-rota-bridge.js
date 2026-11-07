@@ -5,17 +5,22 @@
 if(window.__rotasticExcelBridgeInstalled)return;window.__rotasticExcelBridgeInstalled=true;
 const getEngine=()=>window.rotasticExcelRotaEngine;
 const dateKey=d=>String(d?.date||d?.isoDate||d?.dayDate||'').slice(0,10);
-function mapShift(s){
+function mapShift(s,clinics={}){
  const rooms={};for(const [room,name] of Object.entries(s.rooms))rooms[room]=name;
  return {rooms,med:s.er.male||'',fed:s.er.female||'',ped:s.er.paeds||'',
   timed1Doc:s.twilight[0]||'',timed2Doc:s.twilight[1]||'',
-  ancDoc:s.specialClinics.find(x=>x.kind==='ANC')?.doctor||'',
-  wbcDoc:s.specialClinics.find(x=>x.kind==='WBC')?.doctor||'',
+  ancDoc:clinics.anc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='ANC')?.doctor||''),
+  wbcDoc:clinics.wbc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='WBC')?.doctor||''),
+  iucdDoc:clinics.iud===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='IUCD')?.doctor||''),
+  sdiDoc:clinics.sdi===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SDI')?.doctor||''),
+  ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
+  smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
+  cmcDoc:s.specialClinics.find(x=>x.kind==='CMC')?.doctor||'',
   noRoomDocs:[]};
 }
-function mapSchedule(result){
+function mapSchedule(result,clinics={}){
  return result.days.map(d=>({
-  date:d.date,dayIndex:d.dayIndex,am:mapShift(d.shifts.AM),pm:mapShift(d.shifts.PM),
+  date:d.date,dayIndex:d.dayIndex,am:mapShift(d.shifts.AM,clinics),pm:mapShift(d.shifts.PM,clinics),
   cbAM:{tl:d.shifts.AM.codeBlue.TL,tm2:d.shifts.AM.codeBlue.TM2,tm3:d.shifts.AM.codeBlue.TM3},
   cbPM:{tl:d.shifts.PM.codeBlue.TL,tm2:d.shifts.PM.codeBlue.TM2,tm3:d.shifts.PM.codeBlue.TM3}
  }));
@@ -24,7 +29,7 @@ function generateAndDisplay(options){
  const engine=getEngine();if(!engine)throw Error('Excel scheduling engine has not loaded');
  const result=engine.generate(options);
  engine.assertValid(result);
- const days=mapSchedule(result);
+ const days=mapSchedule(result,options?.clinics||{});
  const previous={schedule:window.currentSchedule,mode:window.__rotasticExcelModeActive,result:window.rotasticExcelGeneratedResult};
  if(typeof window.renderSchedule!=='function'&&typeof window.renderScheduleView!=='function')
   throw Error('Rota View renderer is unavailable; existing schedule preserved');
