@@ -67,6 +67,33 @@ function resolveWeekStart(){
  const today=new Date(),local=new Date(today.getFullYear(),today.getMonth(),today.getDate()+((7-today.getDay())%7));
  return [local.getFullYear(),String(local.getMonth()+1).padStart(2,'0'),String(local.getDate()).padStart(2,'0')].join('-');
 }
+function weeklyInputs(weekStart){
+ const dates=Array.from({length:5},(_,i)=>{const d=new Date(weekStart+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
+ const offByDate=Object.fromEntries(dates.map(d=>[d,[]]));
+ const leaveByDate=Object.fromEntries(dates.map(d=>[d,[]]));
+ const add=(dest,date,name)=>{if(!dest[date]||!name)return;if(!dest[date].includes(name))dest[date].push(name)};
+ const statusOf=r=>String(r?.status||r?.type||r?.reason||'').toLowerCase();
+ const nameOf=r=>r?.doctor||r?.name||r?.physician||'';
+ const stored=['rotastic_leave_submissions','rotastic_absences','rotastic_off_doctors'];
+ for(const key of stored){
+  let rows=[];try{rows=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){throw Error('Cannot read '+key+' absence data')}
+  if(!Array.isArray(rows))throw Error('Invalid '+key+' absence data');
+  for(const item of rows){
+   const name=nameOf(item),status=statusOf(item);
+   const date=String(item?.date||item?.isoDate||'').slice(0,10);
+   const dest=/\boff\b/.test(status)||key==='rotastic_off_doctors'?offByDate:leaveByDate;
+   if(date)add(dest,date,name);
+   else if(item?.wholeWeek===true||item?.allWeek===true)for(const d of dates)add(dest,d,name);
+   // An undated absence must never be assumed to apply to every week.
+  }
+ }
+ // Preserve explicit input from planner/Smart Box if already exposed.
+ const manual=window.rotasticExcelWeeklyInputs||{};
+ for(const [source,target] of [[manual.offByDate,offByDate],[manual.leaveByDate,leaveByDate]])
+  if(source&&typeof source==='object')for(const d of dates)for(const name of (Array.isArray(source[d])?source[d]:[]))add(target,d,name);
+ const clinics={...window.ROTASTIC_WEEKLY_CLINICS,...window.rotasticWeeklyClinics};
+ return {offByDate,leaveByDate,clinics};
+}
 function install(){
  if(document.getElementById('rotastic-excel-generate'))return;
  const candidates=[...document.querySelectorAll('button')];
@@ -79,8 +106,7 @@ function install(){
   const date=resolveWeekStart();
   if(!date){alert('Unable to determine the selected rota week.');return}
   try{
-   const inputs=window.rotasticExcelWeeklyInputs;
-   if(!inputs||!inputs.offByDate||!inputs.leaveByDate)throw Error('Weekly OFF and leave inputs must be supplied before Excel generation.');
+   const inputs=weeklyInputs(date);
    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))throw Error('Select a valid Sunday week-start date.');
    const result=generateAndDisplay({...inputs,weekStart:date});
    alert('Excel-template rota generated and validated: '+result.days.length+' days. Check Rota View before exporting.');
@@ -92,5 +118,6 @@ function install(){
 window.rotasticGenerateFromExcelTemplate=generateAndDisplay;
 window.rotasticExcelMapSchedule=mapSchedule;
 window.rotasticExcelResolveWeekStart=resolveWeekStart;
+window.rotasticExcelReadWeeklyInputs=weeklyInputs;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
