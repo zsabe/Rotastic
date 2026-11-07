@@ -18,7 +18,7 @@ function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
  const dates=Array.from({length:5},(_,i)=>{const d=new Date(weekStart+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
  if(new Date(weekStart+'T12:00:00Z').getUTCDay()!==0)throw Error('Week must start on Sunday');
- const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{anc:true,wbc:true,iud:true,sdi:true,ncd:true,smoking:true,cmc:true};
+ const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{cmc:true,wbc:true,iud:true,sdi:true,ncd:true,smoking:true,cmc:true};
  const days=[],errors=[];
  const usage=new Map();
  const paedsUsage=new Map();
@@ -46,11 +46,6 @@ function generate(options={}){
     shift.specialClinics.push({kind:'FIXED',doctor:'Dr Najah'});
    if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
-   if(dates[i]==='2026-11-01'&&session==='PM'&&clinics.anc!==false&&!shift.specialClinics.some(x=>x.kind==='CMC')){
-    const saba=remaining.find(n=>first(n)==='saba');
-    if(saba){shift.specialClinics.push({kind:'ANC',doctor:saba});take(saba)}
-    else errors.push(dates[i]+' PM: required Sunday ANC physician Saba is unavailable');
-   }
    // Monday specialties: only one specialty across both shifts.
    // Oula handles IUCD; Rida handles SDI, subject to availability and their shift.
    if(i===1){
@@ -69,13 +64,6 @@ function generate(options={}){
     const doctor=candidates[0];
     if(doctor){shift.specialClinics.push({kind:'WBC',doctor});take(doctor);wbcUsage.set(doctor,(wbcUsage.get(doctor)||0)+1);previousWBC=doctor}
     else errors.push(dates[i]+' '+session+': no eligible male doctor available for Well Baby Clinic');
-   }
-   // Other clinics are assigned independently of WBC.
-   for(const kind of ['ANC']){
-    if(kind==='ANC'&&(clinics.anc===false||shift.specialClinics.some(x=>x.kind==='CMC')))continue;
-    if(shift.specialClinics.some(x=>x.kind===kind))continue;
-    const doctor=remaining.find(n=>kind==='NCD'?true:kind==='SMOKING'?['selman','enan'].includes(first(n)):false);
-    if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
    }
    const fixed=remaining.find(isAbdul);
    if(fixed){shift.rooms[39]=fixed;take(fixed)}
@@ -100,7 +88,7 @@ function generate(options={}){
    const clinicKinds=[...(clinics.ncd===false?[]:['NCD']),...(clinics.smoking===false||i!==2?[]:['SMOKING'])];
    for(const kind of clinicKinds){
     if(shift.specialClinics.some(x=>x.kind===kind))continue;
-    const doctor=remaining.find(n=>kind==='ANC'?isFemale(n):!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
+    const doctor=remaining.find(n=>!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
     if(!doctor)continue;
     shift.specialClinics.push({kind,doctor});take(doctor);
    }
