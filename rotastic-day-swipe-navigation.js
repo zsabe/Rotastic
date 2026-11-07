@@ -3,7 +3,7 @@
 'use strict';
 if(window.__rotasticDaySwipeNav)return;window.__rotasticDaySwipeNav=true;
 const css=document.createElement('style');css.textContent=`
-body.rotastic-rota-view-active .rotastic-day-sheet-head{position:relative!important;padding-left:46px!important;padding-right:46px!important}
+body.rotastic-rota-view-active #rotaDaySelector{display:none!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet-head{position:relative!important;padding-left:46px!important;padding-right:46px!important}
 .rotastic-day-nav-arrow{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:46px;border:0;border-radius:10px;color:#a5f3fc;background:rgba(15,23,42,.7);font-size:29px;line-height:1;cursor:pointer;z-index:3}
 .rotastic-day-nav-arrow.prev{left:5px}.rotastic-day-nav-arrow.next{right:5px}
 .rotastic-day-nav-arrow:disabled{opacity:.25;cursor:default}
@@ -15,7 +15,7 @@ function update(){
  const root=document.getElementById('scheduleMatrixContainer');if(!root||!document.body.classList.contains('rotastic-rota-view-active'))return;
  const sheets=[...root.querySelectorAll('.rotastic-day-sheet')];if(!sheets.length)return;
  const days=window.currentSchedule||[];
- if(sheets.length===1){const d=days.findIndex(x=>sheets[0].textContent.includes(x.isoDate||x.date));if(d>=0)current=d}
+ if(sheets.length===1){const d=days.findIndex(x=>sheets[0].textContent.includes(x.isoDate||x.date));if(d>=0)current=d;else if(typeof window.activeDayIndex==='number'&&window.activeDayIndex>=0)current=window.activeDayIndex}
  current=Math.max(0,Math.min(days.length-1,current));
  if(sheets.length>1){sheets.forEach((s,i)=>s.style.display=i===current?'':'none')}
  for(const sheet of sheets){const head=sheet.querySelector('.rotastic-day-sheet-head');if(!head)continue;
@@ -29,7 +29,7 @@ function update(){
 function go(dir){const days=window.currentSchedule||[];const next=current+dir;if(next<0||next>=days.length)return;current=next;
  const root=document.getElementById('scheduleMatrixContainer');
  if(root?.querySelectorAll('.rotastic-day-sheet').length===1){
-  if(typeof window.activeDayIndex==='number'&&typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView();return}\n  // Prefer the app's own day filter so the correct data is rendered.
+  if(typeof window.filterDay==='function'){window.filterDay(next);return}\n  if(typeof window.activeDayIndex==='number'&&typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView();return}\n  // Prefer the app's own day filter so the correct data is rendered.
   const buttons=[...document.querySelectorAll('[data-day-index],.rotastic-day-tab')];
   const match=buttons.find(b=>Number(b.dataset.dayIndex)===next);
   if(match){match.click();return}
