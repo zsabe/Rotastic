@@ -16,7 +16,7 @@ function mapShift(s,clinics={}){
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
   cmcDoc:s.specialClinics.find(x=>x.kind==='CMC')?.doctor||'',
-  noRoomDocs:[]};
+  noRoomDocs:s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed evening)'))};
 }
 function mapSchedule(result,clinics={}){
  return result.days.map(d=>({
@@ -30,6 +30,13 @@ function generateAndDisplay(options){
  const result=engine.generate(options);
  engine.assertValid(result);
  const days=mapSchedule(result,options?.clinics||{});
+ // A generated doctor must be represented in the actual Rota View adapter.
+ for(const day of result.days)for(const session of ['AM','PM']){
+  const shift=day.shifts[session],mapped=days[day.dayIndex][session.toLowerCase()];
+  const shown=JSON.stringify(mapped).toLowerCase();
+  for(const doctor of [...Object.values(shift.rooms),...shift.twilight,...shift.specialClinics.map(x=>x.doctor)])
+   if(!shown.includes(doctor.toLowerCase()))throw Error(day.date+' '+session+': '+doctor+' missing from Rota View data');
+ }
  const previous={schedule:window.currentSchedule,mode:window.__rotasticExcelModeActive,result:window.rotasticExcelGeneratedResult};
  if(typeof window.renderSchedule!=='function'&&typeof window.renderScheduleView!=='function')
   throw Error('Rota View renderer is unavailable; existing schedule preserved');
