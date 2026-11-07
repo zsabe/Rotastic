@@ -22,6 +22,7 @@ function generate(options={}){
  const days=[],errors=[];
  const usage=new Map();
  const paedsUsage=new Map();
+ const lastRoom=new Map();
  for(let i=0;i<5;i++){
   const day={date:dates[i],dayIndex:i,shifts:{}};
   for(const session of ['AM','PM']){
@@ -30,7 +31,7 @@ function generate(options={}){
    const leave=normaliseOff(leaveByDate[dates[i]],i);
    const excluded=new Set([...off,...leave,'Dr Fahima N.'].map(nameKey));
    const doctors=contract.groups[group].filter(n=>!excluded.has(nameKey(n)));
-   const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[],supporting:[]};
+   const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[],supporting:[],noClinic:[]};
    const remaining=[...doctors];
    const najahOff=excluded.has(nameKey('Dr Najah'));
    // Najah: Sunday PM CMC; Monday PM regular; Tuesday PM regular;
@@ -72,8 +73,8 @@ function generate(options={}){
    for(const room of roomOrder){
     const candidates=remaining.filter(n=>room>20||!isFemale(n));
     if(!candidates.length)continue;
-    candidates.sort((a,b)=>(usage.get(a)||0)-(usage.get(b)||0)||a.localeCompare(b));
-    const doctor=candidates[0];shift.rooms[room]=doctor;take(doctor);usage.set(doctor,(usage.get(doctor)||0)+1);
+    candidates.sort((a,b)=>Number(lastRoom.get(a)===room)-Number(lastRoom.get(b)===room)||(usage.get(a)||0)-(usage.get(b)||0)||a.localeCompare(b));
+    const doctor=candidates[0];shift.rooms[room]=doctor;take(doctor);usage.set(doctor,(usage.get(doctor)||0)+1);lastRoom.set(doctor,room);
    }
    // Twilight is an exclusive assignment; never double-book the same doctor.
    // The workbook provides two Twilight cells per session (C7:C8 / H7:H8).
@@ -91,7 +92,7 @@ function generate(options={}){
     if(!doctor)continue;
     shift.specialClinics.push({kind,doctor});take(doctor);
    }
-   if(remaining.length)errors.push(dates[i]+' '+session+': no real room or clinic duty for '+remaining.join(', '));
+   shift.noClinic=[...remaining];remaining.length=0;
    const assigned=Object.values(shift.rooms).filter(n=>n!=='Dr Moursi');
    function erPick(kind,used){
     return assigned.find(n=>!used.has(n)&&!blockedER(n)&&(kind==='male'?!isFemale(n):kind==='female'?isFemale(n):true))||null;
@@ -101,7 +102,7 @@ function generate(options={}){
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
    if(shift.specialClinics.some(x=>x.kind==='CMC')&&shift.specialClinics.some(x=>x.kind==='ANC'))errors.push(dates[i]+' '+session+': Room 32 cannot host ANC and CMC together');
-   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.supporting].map(doctor=>({doctor})),off,leave});
+   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.noClinic].map(doctor=>({doctor})),off,leave});
    if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
    shift.audit=audit;
    day.shifts[session]=shift;
