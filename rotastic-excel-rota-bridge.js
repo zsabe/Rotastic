@@ -60,12 +60,32 @@ function installRotaViewEnhancement(){
  window.renderScheduleView=function(...args){const result=fn.apply(this,args);enhanceExcelRotaView();return result};
  window.__rotasticExcelViewEnhanced=true;
 }
+function installExportLabels(){
+ if(window.__rotasticExcelExportLabelsInstalled)return;
+ const fn=window.populatePdfExportTable;
+ if(typeof fn!=='function')return;
+ window.populatePdfExportTable=function(...args){
+  const result=fn.apply(this,args);
+  if(window.__rotasticExcelModeActive){
+   const body=document.getElementById('pdfTableBody');
+   if(body)for(const cell of body.querySelectorAll('td.export-duty')){
+    const label=cell.querySelector('span');
+    if(!label)continue;
+    const t=label.textContent.trim();
+    if(t==='Male'||t==='Female'||t==='Paeds')label.textContent=t+' ER';
+   }
+  }
+  return result;
+ };
+ window.__rotasticExcelExportLabelsInstalled=true;
+}
 function generateAndDisplay(options){
  const engine=getEngine();if(!engine)throw Error('Excel scheduling engine has not loaded');
  const result=engine.generate(options);
  engine.assertValid(result);
  const days=mapSchedule(result,options?.clinics||{});
  installRotaViewEnhancement();
+ installExportLabels();
  // A generated doctor must be represented in the actual Rota View adapter.
  for(const day of result.days)for(const session of ['AM','PM']){
   const shift=day.shifts[session],mapped=days[day.dayIndex][session.toLowerCase()];
