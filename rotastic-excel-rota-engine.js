@@ -96,7 +96,7 @@ function generate(options={}){
     return assigned.find(n=>!used.has(n)&&!blockedER(n)&&(kind==='male'?!isFemale(n):kind==='female'?isFemale(n):true))||null;
    }
    const usedER=new Set();
-   for(const kind of ['male','female','paeds']){const n=kind==='paeds'&&assigned.some(x=>isAbdul(x)&&!usedER.has(x))?assigned.find(x=>isAbdul(x)):erPick(kind,usedER);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
+   for(const kind of ['male','female','paeds']){const n=kind==='paeds'&&i%2===0&&assigned.some(x=>isAbdul(x)&&!usedER.has(x))?assigned.find(x=>isAbdul(x)):erPick(kind,usedER);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
    const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.supporting].map(doctor=>({doctor})),off,leave});
