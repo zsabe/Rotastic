@@ -29,6 +29,17 @@ function enhanceExcelRotaView(){
  if(!window.__rotasticExcelModeActive||!Array.isArray(window.currentSchedule))return;
  const container=document.getElementById('scheduleMatrixContainer');
  if(!container)return;
+ // Always expose supporting assignments even when a day panel cannot be matched.
+ let summary=container.querySelector('#rotastic-supporting-roster');
+ if(!summary){summary=document.createElement('section');summary.id='rotastic-supporting-roster';summary.style.cssText='margin:12px 0;padding:12px;border:2px solid #14b8a6;border-radius:10px;background:#0f172a;color:#f8fafc;font-size:13px';container.prepend(summary)}
+ const lines=[];
+ for(const d of window.currentSchedule)for(const [label,shift] of [['AM',d.am],['PM',d.pm]]){
+  for(const name of (shift?.noRoomDocs||[]))lines.push(d.day+' '+d.isoDate+' '+label+': '+name);
+ }
+ summary.replaceChildren();
+ const heading=document.createElement('strong');heading.textContent='Supporting and fixed-duty doctors';summary.appendChild(heading);
+ if(!lines.length){const p=document.createElement('div');p.textContent='No supporting or fixed-duty assignments this week';summary.appendChild(p)}
+ for(const line of lines){const p=document.createElement('div');p.textContent=line;p.style.marginTop='4px';summary.appendChild(p)}
  const sheets=[...container.querySelectorAll('.rotastic-day-sheet')];
  for(const sheet of sheets){
   const heading=sheet.querySelector('.rotastic-day-sheet-head');
