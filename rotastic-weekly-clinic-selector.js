@@ -5,12 +5,11 @@ const CLINICS=[
  {id:'anc',label:'ANC',fields:['ancDoc'],patterns:[/\bANC\b/i]},
  {id:'wbc',label:'Well Baby Clinic',fields:['wbcDoc','wicDoc'],patterns:[/well\s*baby|\bWBC\b/i]},
  {id:'iud',label:'IUD / IUCD',fields:['iudDoc','iucdDoc'],patterns:[/\bIUD\b|\bIUCD\b/i]},
- {id:'ncd',label:'NCD',fields:['ncdDoc'],patterns:[/\bNCD\b/i]},
  {id:'sdi',label:'SDI',fields:['sdiDoc'],patterns:[/\bSDI\b|subdermal/i]},
  {id:'smoking',label:'Smoking Cessation',fields:['smokingDoc'],patterns:[/smoking\s*cessation/i]},
  {id:'cmc',label:'CMC',fields:['cmcDoc'],patterns:[/\bCMC\b/i]}
 ];
-const state={...Object.fromEntries(CLINICS.map(c=>[c.id,true])),anc:false};
+const state={...Object.fromEntries(CLINICS.map(c=>[c.id,true]))};
 const enabled=id=>state[id]!==false;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text=e=>String(e?.textContent||e?.value||'').replace(/\s+/g,' ').trim();
@@ -46,7 +45,7 @@ function installUI(){
  return true;
 }
 function closedClinicForText(s){s=String(s||'');return CLINICS.find(c=>!enabled(c.id)&&c.patterns.some(r=>r.test(s)))}
-function closeShift(shift){if(!shift||typeof shift!=='object')return;shift.ancDoc='No Clinic';if(Array.isArray(shift.specialAssignments))shift.specialAssignments=shift.specialAssignments.filter(x=>String(x.clinic||'').toUpperCase()!=='ANC');for(const c of CLINICS){if(enabled(c.id))continue;for(const f of c.fields)if(f in shift)shift[f]='No Clinic';if(shift.rooms&&typeof shift.rooms==='object')for(const k of Object.keys(shift.rooms)){const v=shift.rooms[k];if(closedClinicForText(k)||closedClinicForText(v?.clinic||v?.label||v?.duty||'')){if(v&&typeof v==='object'){if('doctor'in v)v.doctor='No Clinic';if('physician'in v)v.physician='No Clinic';if('name'in v)v.name='No Clinic'}else shift.rooms[k]='No Clinic'}}}
+function closeShift(shift){if(!shift||typeof shift!=='object')return;if(!enabled('anc')){shift.ancDoc='No Clinic';if(Array.isArray(shift.specialAssignments))shift.specialAssignments=shift.specialAssignments.filter(x=>String(x.clinic||'').toUpperCase()!=='ANC');}for(const c of CLINICS){if(enabled(c.id))continue;for(const f of c.fields)if(f in shift)shift[f]='No Clinic';if(shift.rooms&&typeof shift.rooms==='object')for(const k of Object.keys(shift.rooms)){const v=shift.rooms[k];if(closedClinicForText(k)||closedClinicForText(v?.clinic||v?.label||v?.duty||'')){if(v&&typeof v==='object'){if('doctor'in v)v.doctor='No Clinic';if('physician'in v)v.physician='No Clinic';if('name'in v)v.name='No Clinic'}else shift.rooms[k]='No Clinic'}}}
 function apply(schedule){const root=schedule||window.currentSchedule;if(!root)return root;const days=Array.isArray(root)?root:(Array.isArray(root.days)?root.days:[]);for(const d of days){closeShift(d?.am);closeShift(d?.pm);for(const k of Object.keys(d||{})){const c=closedClinicForText(k);if(c&&typeof d[k]==='string')d[k]='No Clinic'}}return root}
 function installGuards(){['generateDutyScheduleFromPlanner','generateSchedule','generateRota','buildSchedule','buildRota','createSchedule','createRota'].forEach(name=>{const fn=window[name];if(typeof fn!=='function'||fn.__rotasticWeeklyClinics)return;const wrapped=function(...args){window.ROTASTIC_WEEKLY_CLINICS={...state};const out=fn.apply(this,args);if(out&&typeof out.then==='function')return out.then(v=>{apply(v);apply(window.currentSchedule);window.rotasticEnforcePermanentRules?.(v);window.rotasticEnforcePermanentRules?.(window.currentSchedule);window.renderSchedule?.();return v});apply(out);apply(window.currentSchedule);window.rotasticEnforcePermanentRules?.(out);window.rotasticEnforcePermanentRules?.(window.currentSchedule);window.renderSchedule?.();return out};wrapped.__rotasticWeeklyClinics=true;window[name]=wrapped})}
 window.rotasticWeeklyClinics=state;window.ROTASTIC_WEEKLY_CLINICS={...state};window.rotasticClinicEnabled=enabled;window.rotasticApplyWeeklyClinicClosures=apply;
