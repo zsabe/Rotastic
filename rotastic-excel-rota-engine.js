@@ -31,11 +31,17 @@ function generate(options={}){
    const doctors=contract.groups[group].filter(n=>!excluded.has(nameKey(n)));
    const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[]};
    const remaining=[...doctors];
+   if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
+   if(i===0&&session==='PM'){
+    const saba=remaining.find(n=>first(n)==='saba');
+    if(saba){shift.specialClinics.push({kind:'ANC',doctor:saba});take(saba)}
+    else errors.push(dates[i]+' PM: required Sunday ANC physician Saba is unavailable');
+   }
    const fixed=remaining.find(isAbdul);
    if(fixed){shift.rooms[39]=fixed;take(fixed)}
    // Preserve the workbook clinic footprint. Female physicians cannot use 9–20.
-   const roomOrder=[9,10,12,13,14,21,22,24,25,26,27];
+   const roomOrder=(session==='AM'?[10,12,13,14,21,22,24,25,26,27]:[9,10,12,13,14,21,22,24,25,26,27]);
    for(const room of roomOrder){
     const candidates=remaining.filter(n=>room>20||!isFemale(n));
     if(!candidates.length)continue;
@@ -53,12 +59,13 @@ function generate(options={}){
    // Do not invent a clinic or quietly discard an unplaced doctor.
    const clinicKinds=['ANC','WBC'];
    for(const kind of clinicKinds){
+    if(shift.specialClinics.some(x=>x.kind===kind))continue;
     const doctor=remaining.find(n=>kind==='ANC'?isFemale(n):!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
     if(!doctor)continue;
     shift.specialClinics.push({kind,doctor});take(doctor);
    }
    for(const doctor of remaining){shift.unassigned.push(doctor);errors.push(dates[i]+' '+session+': no valid workbook assignment for '+doctor)}
-   const assigned=Object.values(shift.rooms);
+   const assigned=Object.values(shift.rooms).filter(n=>n!=='Dr Moursi');
    function erPick(kind,used){
     return assigned.find(n=>!used.has(n)&&!blockedER(n)&&(kind==='male'?!isFemale(n):kind==='female'?isFemale(n):true))||null;
    }
