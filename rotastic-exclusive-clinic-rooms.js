@@ -15,25 +15,36 @@ function enforce(){
   // Refill vacated rooms from the same shift's unroomed, eligible doctors.
   const vacated=Object.keys(shift.rooms).filter(room=>blocked.has(key(shift.rooms[room])));
   for(const room of vacated)shift.rooms[room]='-';
+  const normalizeName=raw=>String(raw||'').replace(/\s*\([^)]*\)\s*$/,'').trim();
   const occupied=new Set(Object.values(shift.rooms).map(key).filter(Boolean));
   const otherClinicFields=['ncdDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc','hearingDoc','wicDoc','htDoc'];
   const unavailable=new Set([...blocked,...otherClinicFields.map(field=>key(shift[field])).filter(Boolean)]);
-  const eligibleCohort=window.rotasticGetShiftGroupDoctors?.(day,period,true)||[];
-  const cohortKeys=new Set(eligibleCohort.map(key));
+  const cohort=window.rotasticExcelRotaContract?.groups?.[window.rotasticExcelRotaContract.sessionGroup(day.dayIndex??days.indexOf(day),period.toUpperCase())]||window.rotasticGetShiftGroupDoctors?.(day,period,true)||[];
+  const cohortKeys=new Set(cohort.map(key));
   const women=new Set(['fazila','laila','maya','saima','rida','oula','tayseer','saba','fahima']);
-  const female=name=>women.has(String(name).replace(/^dr\\.?\\s*/i,'').split(' ')[0].toLowerCase());
-  const candidates=(shift.noRoomDocs||[]).map(raw=>({raw,name:String(raw).replace(/\\s*\\([^)]*\\)\\s*$/,'').trim()}))
-    .filter(x=>/^dr\\.?\\s/i.test(x.name)&&cohortKeys.has(key(x.name))&&!occupied.has(key(x.name))&&!unavailable.has(key(x.name))&&key(x.name)!=='abdulgafoork');
-  for(const room of vacated){
-   const index=candidates.findIndex(x=>(Number(room)>20||!female(x.name))&&(Number(room)!==39||key(x.name)==='abdulgafoork'));
+  const female=name=>women.has(String(name).replace(/^dr\.?\s*/i,'').split(' ')[0].toLowerCase());
+  const used=new Set([...occupied,...unavailable]);
+  const listed=(shift.noRoomDocs||[]).map(normalizeName);
+  // The legacy generator can omit working doctors entirely. Recover them from
+  // the actual shift cohort rather than silently losing them from the rota.
+  const candidates=[...listed,...cohort].filter((name,i,arr)=>/^dr\.?\s/i.test(name)&&arr.findIndex(n=>key(n)===key(name))===i)
+   .filter(name=>cohortKeys.has(key(name))&&!used.has(key(name))&&key(name)!=='abdulgafoork')
+   .filter(name=>!(window.rotasticDoctorIsOnDisplayedLeave?.(name,day)));
+  const roomsToFill=[...new Set([...vacated,...Object.keys(shift.rooms).filter(room=>!shift.rooms[room]||shift.rooms[room]==='-')])];
+  for(const room of roomsToFill){
+   const index=candidates.findIndex(name=>(Number(room)>20||!female(name))&&(Number(room)!==39||key(name)==='abdulgafoork'));
    if(index<0)continue;
    const chosen=candidates.splice(index,1)[0];
-   shift.rooms[room]=chosen.name;occupied.add(key(chosen.name));
-   shift.noRoomDocs=shift.noRoomDocs.filter(x=>x!==chosen.raw);
+   shift.rooms[room]=chosen;used.add(key(chosen));
   }
+  const roomKeys=new Set(Object.values(shift.rooms).map(key));
+  const otherAssignments=[shift.med,shift.fed,shift.ped,shift.timed1Doc,shift.timed2Doc,...otherClinicFields.map(field=>shift[field])];
+  const assignedKeys=new Set([...roomKeys,...otherAssignments.map(key),...blocked]);
+  const cb=period==='am'?day.cbAM:day.cbPM;
+  for(const name of Object.values(cb||{}))assignedKeys.add(key(name));
+  shift.noRoomDocs=cohort.filter(name=>!assignedKeys.has(key(name))&&!window.rotasticDoctorIsOnDisplayedLeave?.(name,day)).map(name=>name+' (No Room)');
   // WBC, ANC and CMC are exclusive clinical assignments, not ER/Twilight duties.
   for(const field of ['med','fed','ped','timed1Doc','timed2Doc'])if(blocked.has(key(shift[field])))shift[field]='';
-  const cb=period==='am'?day.cbAM:day.cbPM;
   if(cb)for(const field of ['tl','tm2','tm3'])if(blocked.has(key(cb[field])))cb[field]='';
  }
 }
