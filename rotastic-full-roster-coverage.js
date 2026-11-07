@@ -1,10 +1,10 @@
 (()=>{
 'use strict';
 if(window.__rotasticFullRosterCoverage)return;window.__rotasticFullRosterCoverage=true;
-const GROUP1=['Dr Abdulgafoor K.','Dr Aminullah Z.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Muhammad K.','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T'];
+const GROUP1=['Dr Abdulgafoor K.','Dr Aminullah Z.','Dr Enan M.','Dr Faisal C.','Dr Fazila K.','Dr Imran A.','Dr Laila A.','Dr Maya S.','Dr Mohamed M.','Dr Mohammed S.','Dr Qaisar','Dr Rida C.','Dr Saima N.','Dr Salah M.','Dr Shadi T'];
 const GROUP2=['Dr Husam S','Dr Maher A.','Dr Zaid SE.','Dr Selman E.','Dr Syed I.','Dr Abdulrashid S.','Dr Oula T.','Dr Tayseer A.','Dr Saba T.','Dr Bilal C.','Dr Laith A.','Dr Gani M.'];
 // Dr Fahima N. is intentionally not in the working roster because her existing permanent rule is no shifts.
-const key=v=>String(v||'').trim().toLowerCase().replace(/\./g,'').replace(/^dr\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
+const key=v=>{const k=String(v||'').trim().toLowerCase().replace(/\./g,'').replace(/^dr\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();return /^(muhammad|mohammed|mohammad|mohamed) k$/.test(k)||/^qaisar(?: k)?$/.test(k)?'qaisar':k};
 const doctorOf=v=>typeof v==='string'?v:(v?.doctor||v?.name||v?.physician||'');
 const female=v=>['fazila','maya','oula','ola','tayseer','taysir','saima','rida','laila','layla','leila','saba'].includes(key(v).split(' ')[0]);
 const saba=v=>/^saba(?:h)?(?:\s|$)/.test(key(v));
