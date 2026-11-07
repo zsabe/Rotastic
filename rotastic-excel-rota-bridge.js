@@ -7,6 +7,8 @@ const getEngine=()=>window.rotasticExcelRotaEngine;
 const dateKey=d=>String(d?.date||d?.isoDate||d?.dayDate||'').slice(0,10);
 function mapShift(s,clinics={}){
  const rooms={};for(const [room,name] of Object.entries(s.rooms))rooms[room]=name;
+ const exclusive=new Set(s.specialClinics.filter(x=>['WBC','ANC','CMC'].includes(x.kind)).map(x=>x.doctor));
+ for(const [room,name] of Object.entries(rooms))if(exclusive.has(name))delete rooms[room];
  const room32=s.specialClinics.find(x=>x.kind==='CMC'||x.kind==='ANC');if(room32)rooms[32]=room32.doctor;
  return {rooms,med:s.er.male||'',fed:s.er.female||'',ped:s.er.paeds||'',
   timed1Doc:s.twilight[0]||'',timed2Doc:s.twilight[1]||'',
