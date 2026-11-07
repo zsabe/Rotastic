@@ -24,7 +24,7 @@ function wrap(){
    const rooms=window.getRoomAssignmentsForDoctor?.(shift,doctor)||[];
    const specials=Array.isArray(shift.specialAssignments)?shift.specialAssignments.filter(x=>same(x.doctor,doctor)).map(x=>x.clinic):[];
    const clinics=specials.length?specials:(window.collectSpecialClinicDuties?.(shift,doctor)||[]);
-   const uniqueClinics=[...new Set(clinics.map(x=>String(x).trim()).filter(Boolean))];
+   const uniqueClinics=[...new Set(clinics.map(x=>String(x).trim().replace(/^WBC$/i,'Well Baby').replace(/\s*clinic\s*$/i,'').replace(/[👶🤰🩺]/gu,'').trim()).filter(Boolean))];
    const lead=day[timing.period==='am'?'shiftLeadAM':'shiftLeadPM']||shift.shiftLead||'';
    const windowInfo=window.getActiveUserShiftWindowForDay?.(day,doctor);
    const hours=windowInfo?.label||(timing.period==='am'?'07:00–14:00':'16:00–22:00');
