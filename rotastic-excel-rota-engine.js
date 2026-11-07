@@ -113,6 +113,12 @@ function generate(options={}){
    for(const kind of ['male','female','paeds']){const n=kind==='paeds'?(assigned.filter(x=>!usedER.has(x)&&!blockedER(x)).sort((a,b)=>(paedsUsage.get(a)||0)-(paedsUsage.get(b)||0)||a.localeCompare(b))[0]||null):erPick(kind,usedER);if(kind==='paeds'&&n)paedsUsage.set(n,(paedsUsage.get(n)||0)+1);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
+   // WBC/ANC/CMC are exclusive clinic allocations: no ordinary room or other duty.
+   for(const clinic of shift.specialClinics.filter(x=>['WBC','ANC','CMC'].includes(x.kind))){
+    const doctor=clinic.doctor;
+    if(Object.values(shift.rooms).includes(doctor)||shift.twilight.includes(doctor)||Object.values(shift.er).includes(doctor)||Object.values(shift.codeBlue).includes(doctor)||shift.specialClinics.some(x=>x!==clinic&&x.doctor===doctor))
+     errors.push(dates[i]+' '+session+': '+clinic.kind+' doctor '+doctor+' has overlapping duties');
+   }
    const wbc=shift.specialClinics.find(x=>x.kind==='WBC');
    if(wbc&&(Object.values(shift.rooms).includes(wbc.doctor)||shift.twilight.includes(wbc.doctor)||Object.values(shift.er).includes(wbc.doctor)||Object.values(shift.codeBlue).includes(wbc.doctor)||shift.specialClinics.some(x=>x!==wbc&&x.doctor===wbc.doctor)))errors.push(dates[i]+' '+session+': WBC doctor double-booked');
    if(shift.specialClinics.some(x=>x.kind==='CMC')&&shift.specialClinics.some(x=>x.kind==='ANC'))errors.push(dates[i]+' '+session+': Room 32 cannot host ANC and CMC together');
