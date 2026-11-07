@@ -12,7 +12,25 @@ function enforce(){
   const exclusive=[shift.wbcDoc,shift.ancDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','ANC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
   const blocked=new Set(exclusive.map(key));
   if(!blocked.size)continue;
-  for(const room of Object.keys(shift.rooms))if(blocked.has(key(shift.rooms[room])))shift.rooms[room]='-';
+  // Refill vacated rooms from the same shift's unroomed, eligible doctors.
+  const vacated=Object.keys(shift.rooms).filter(room=>blocked.has(key(shift.rooms[room])));
+  for(const room of vacated)shift.rooms[room]='-';
+  const occupied=new Set(Object.values(shift.rooms).map(key).filter(Boolean));
+  const otherClinicFields=['ncdDoc','isoDoc','smokingDoc','iucdDoc','sdiDoc','hearingDoc','wicDoc','htDoc'];
+  const unavailable=new Set([...blocked,...otherClinicFields.map(field=>key(shift[field])).filter(Boolean)]);
+  const eligibleCohort=window.rotasticGetShiftGroupDoctors?.(day,period,true)||[];
+  const cohortKeys=new Set(eligibleCohort.map(key));
+  const women=new Set(['fazila','laila','maya','saima','rida','oula','tayseer','saba','fahima']);
+  const female=name=>women.has(String(name).replace(/^dr\\.?\\s*/i,'').split(' ')[0].toLowerCase());
+  const candidates=(shift.noRoomDocs||[]).map(raw=>({raw,name:String(raw).replace(/\\s*\\([^)]*\\)\\s*$/,'').trim()}))
+    .filter(x=>/^dr\\.?\\s/i.test(x.name)&&cohortKeys.has(key(x.name))&&!occupied.has(key(x.name))&&!unavailable.has(key(x.name))&&key(x.name)!=='abdulgafoork');
+  for(const room of vacated){
+   const index=candidates.findIndex(x=>(Number(room)>20||!female(x.name))&&(Number(room)!==39||key(x.name)==='abdulgafoork'));
+   if(index<0)continue;
+   const chosen=candidates.splice(index,1)[0];
+   shift.rooms[room]=chosen.name;occupied.add(key(chosen.name));
+   shift.noRoomDocs=shift.noRoomDocs.filter(x=>x!==chosen.raw);
+  }
   // WBC, ANC and CMC are exclusive clinical assignments, not ER/Twilight duties.
   for(const field of ['med','fed','ped','timed1Doc','timed2Doc'])if(blocked.has(key(shift[field])))shift[field]='';
   const cb=period==='am'?day.cbAM:day.cbPM;
