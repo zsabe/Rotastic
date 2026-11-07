@@ -13,7 +13,7 @@ const canonical={
  'qaisar':'Dr Qaisar','qaisark':'Dr Qaisar','muhammadk':'Dr Qaisar',
  'ridac':'Dr Rida','mayas':'Dr Maya','lailaa':'Dr Laila','aminullahz':'Dr Amin',
  'salahm':'Dr Saleh','salehm':'Dr Saleh','moursi':'Dr Moursi','mmoursi':'Dr Moursi',
- 'syedi':'Dr N Islam','nislam':'Dr N Islam','sabat':'Dr Saba'
+ 'nislam':'Dr N Islam','sabat':'Dr Saba'
 };
 const normalize=n=>String(n||'').toLowerCase().replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'');
 function display(v){if(typeof v!=='string')return v;return v.replace(/Dr\.?\s+[A-Za-z]+(?:\s+[A-Za-z]+)?\.?/g,m=>canonical[normalize(m)]||m)}
