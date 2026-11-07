@@ -22,6 +22,8 @@ function generate(options={}){
  const days=[],errors=[];
  const usage=new Map();
  const paedsUsage=new Map();
+ const wbcUsage=new Map();
+ let previousWBC=null;
  const lastRoom=new Map();
  for(let i=0;i<5;i++){
   const day={date:dates[i],dayIndex:i,shifts:{}};
@@ -59,9 +61,18 @@ function generate(options={}){
     const doctor=kind?remaining.find(n=>first(n)===preferred):null;
     if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
    }
-   // Assign ANC and WBC before rooms so required clinic doctors cannot disappear.
-   for(const kind of ['ANC','WBC']){
-    if(kind==='ANC'&&(clinics.anc===false||shift.specialClinics.some(x=>x.kind==='CMC'))||kind==='WBC'&&clinics.wbc===false)continue;
+   // Well Baby Clinic runs only at its seven designated sessions and is exclusive.
+   const wbcSession=(i===0&&session==='AM')||(i===1||i===2)||(i===3&&session==='AM')||(i===4&&session==='PM');
+   if(wbcSession&&clinics.wbc!==false){
+    const candidates=remaining.filter(n=>!isFemale(n)&&!isAbdul(n));
+    candidates.sort((a,b)=>(wbcUsage.get(a)||0)-(wbcUsage.get(b)||0)||Number(a===previousWBC)-Number(b===previousWBC)||a.localeCompare(b));
+    const doctor=candidates[0];
+    if(doctor){shift.specialClinics.push({kind:'WBC',doctor});take(doctor);wbcUsage.set(doctor,(wbcUsage.get(doctor)||0)+1);previousWBC=doctor}
+    else errors.push(dates[i]+' '+session+': no eligible male doctor available for Well Baby Clinic');
+   }
+   // Other clinics are assigned independently of WBC.
+   for(const kind of ['ANC']){
+    if(kind==='ANC'&&(clinics.anc===false||shift.specialClinics.some(x=>x.kind==='CMC')))continue;
     if(shift.specialClinics.some(x=>x.kind===kind))continue;
     const doctor=remaining.find(n=>kind==='NCD'?true:kind==='SMOKING'?['selman','enan'].includes(first(n)):false);
     if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
@@ -102,6 +113,8 @@ function generate(options={}){
    for(const kind of ['male','female','paeds']){const n=kind==='paeds'?(assigned.filter(x=>!usedER.has(x)&&!blockedER(x)).sort((a,b)=>(paedsUsage.get(a)||0)-(paedsUsage.get(b)||0)||a.localeCompare(b))[0]||null):erPick(kind,usedER);if(kind==='paeds'&&n)paedsUsage.set(n,(paedsUsage.get(n)||0)+1);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
+   const wbc=shift.specialClinics.find(x=>x.kind==='WBC');
+   if(wbc&&(Object.values(shift.rooms).includes(wbc.doctor)||shift.twilight.includes(wbc.doctor)||Object.values(shift.er).includes(wbc.doctor)||Object.values(shift.codeBlue).includes(wbc.doctor)||shift.specialClinics.some(x=>x!==wbc&&x.doctor===wbc.doctor)))errors.push(dates[i]+' '+session+': WBC doctor double-booked');
    if(shift.specialClinics.some(x=>x.kind==='CMC')&&shift.specialClinics.some(x=>x.kind==='ANC'))errors.push(dates[i]+' '+session+': Room 32 cannot host ANC and CMC together');
    const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.specialClinics.map(x=>x.doctor),...shift.noClinic].map(doctor=>({doctor})),off,leave});
    if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
