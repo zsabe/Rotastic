@@ -32,6 +32,8 @@ function enforce(){
   const candidates=[...listed,...cohort].filter((name,i,arr)=>/^dr\.?\s/i.test(name)&&arr.findIndex(n=>key(n)===key(name))===i)
    .filter(name=>cohortKeys.has(key(name))&&!used.has(key(name))&&key(name)!=='abdulgafoork'&&key(name)!=='fahiman')
    .filter(name=>!(window.rotasticDoctorIsOnDisplayedLeave?.(name,day)));
+  const cmcActive=Boolean(shift.cmcDoc&&/^dr\\.?\\s/i.test(String(shift.cmcDoc)))||(shift.specialAssignments||[]).some(x=>String(x.clinic).toUpperCase()==='CMC');
+  if(!cmcActive&&(!shift.rooms[32]||shift.rooms[32]==='-'))shift.rooms[32]='-';
   const roomsToFill=[...new Set([...vacated,...Object.keys(shift.rooms).filter(room=>!shift.rooms[room]||shift.rooms[room]==='-')])];
   for(const room of roomsToFill){
    const index=candidates.findIndex(name=>(Number(room)>20||!female(name))&&(Number(room)!==39||key(name)==='abdulgafoork'));
