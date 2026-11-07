@@ -9,6 +9,8 @@ function enforce(){
  if(!Array.isArray(days))return;
  for(const day of days)for(const period of ['am','pm']){
   const shift=day?.[period];if(!shift||!shift.rooms)continue;
+  shift.ancDoc='No Clinic';
+  if(Array.isArray(shift.specialAssignments))shift.specialAssignments=shift.specialAssignments.filter(x=>String(x.clinic||'').toUpperCase()!=='ANC');
   const exclusive=[shift.wbcDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
   const blocked=new Set(exclusive.map(key));
   if(!blocked.size)continue;
