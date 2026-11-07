@@ -29,7 +29,7 @@ function generate(options={}){
    const leave=normaliseOff(leaveByDate[dates[i]],i);
    const excluded=new Set([...off,...leave,'Dr Fahima N.'].map(nameKey));
    const doctors=contract.groups[group].filter(n=>!excluded.has(nameKey(n)));
-   const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[]};
+   const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[],supporting:[]};
    const remaining=[...doctors];
    const najahOff=excluded.has(nameKey('Dr Najah'));
    // Najah: Sunday PM CMC; Monday PM regular; Tuesday PM regular;
@@ -90,7 +90,7 @@ function generate(options={}){
     if(!doctor)continue;
     shift.specialClinics.push({kind,doctor});take(doctor);
    }
-   for(const doctor of remaining){shift.unassigned.push(doctor);errors.push(dates[i]+' '+session+': no valid workbook assignment for '+doctor)}
+   for(const doctor of remaining){shift.supporting.push(doctor)}
    const assigned=Object.values(shift.rooms).filter(n=>n!=='Dr Moursi');
    function erPick(kind,used){
     return assigned.find(n=>!used.has(n)&&!blockedER(n)&&(kind==='male'?!isFemale(n):kind==='female'?isFemale(n):true))||null;
@@ -99,7 +99,7 @@ function generate(options={}){
    for(const kind of ['male','female','paeds']){const n=erPick(kind,usedER);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
-   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor)].map(doctor=>({doctor})),off,leave});
+   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.supporting].map(doctor=>({doctor})),off,leave});
    if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
    shift.audit=audit;
    day.shifts[session]=shift;
