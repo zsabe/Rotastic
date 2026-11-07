@@ -3,7 +3,7 @@
 'use strict';
 if(window.__rotasticExclusiveClinicRoomsInstalled)return;
 window.__rotasticExclusiveClinicRoomsInstalled=true;
-const key=s=>String(s||'').toLowerCase().replace(/^dr\.?\s*/,'').replace(/\s*\([^)]*\)\s*$/,'').replace(/[^a-z0-9]/g,'').replace(/^mohammeds$/,'msyed');
+const key=s=>String(s||'').toLowerCase().replace(/^dr\.?\s*/,'').replace(/\s*\([^)]*\)\s*$/,'').replace(/[^a-z0-9]/g,'').replace(/^mohammeds$/,'msyed').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
 function enforce(){
  const days=window.currentSchedule||[];
  if(!Array.isArray(days))return;
