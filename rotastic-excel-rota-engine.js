@@ -18,7 +18,7 @@ function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
  const dates=Array.from({length:5},(_,i)=>{const d=new Date(weekStart+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
  if(new Date(weekStart+'T12:00:00Z').getUTCDay()!==0)throw Error('Week must start on Sunday');
- const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},special=options.special||{};
+ const offByDate=options.offByDate||{},leaveByDate=options.leaveByDate||{},clinics=options.clinics||{anc:true,wbc:true,iud:true,ncd:true};
  const days=[],errors=[];
  const usage=new Map();
  for(let i=0;i<5;i++){
@@ -33,7 +33,7 @@ function generate(options={}){
    const remaining=[...doctors];
    if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
-   if(i===0&&session==='PM'){
+   if(i===0&&session==='PM'&&clinics.anc!==false){
     const saba=remaining.find(n=>first(n)==='saba');
     if(saba){shift.specialClinics.push({kind:'ANC',doctor:saba});take(saba)}
     else errors.push(dates[i]+' PM: required Sunday ANC physician Saba is unavailable');
@@ -57,7 +57,7 @@ function generate(options={}){
    }
    // Extra non-room clinics are explicitly represented by workbook C9/C11 or H9/H11.
    // Do not invent a clinic or quietly discard an unplaced doctor.
-   const clinicKinds=['ANC','WBC'];
+   const clinicKinds=[...(clinics.anc===false?[]:['ANC']),...(clinics.wbc===false?[]:['WBC'])];
    for(const kind of clinicKinds){
     if(shift.specialClinics.some(x=>x.kind===kind))continue;
     const doctor=remaining.find(n=>kind==='ANC'?isFemale(n):!isFemale(n)&&!['shadi','husam','abdulgafoor'].includes(first(n)));
