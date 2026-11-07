@@ -7,7 +7,8 @@ const CLINICS=[
  {id:'iud',label:'IUD / IUCD',fields:['iudDoc','iucdDoc'],patterns:[/\bIUD\b|\bIUCD\b/i]},
  {id:'ncd',label:'NCD',fields:['ncdDoc'],patterns:[/\bNCD\b/i]},
  {id:'sdi',label:'SDI',fields:['sdiDoc'],patterns:[/\bSDI\b|subdermal/i]},
- {id:'smoking',label:'Smoking Cessation',fields:['smokingDoc'],patterns:[/smoking\s*cessation/i]}
+ {id:'smoking',label:'Smoking Cessation',fields:['smokingDoc'],patterns:[/smoking\s*cessation/i]},
+ {id:'cmc',label:'CMC',fields:['cmcDoc'],patterns:[/\bCMC\b/i]}
 ];
 const state=Object.fromEntries(CLINICS.map(c=>[c.id,true]));
 const enabled=id=>state[id]!==false;
