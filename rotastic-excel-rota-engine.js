@@ -32,10 +32,14 @@ function generate(options={}){
    const shift={group,session,rooms:{},specialClinics:[],twilight:[],er:{male:null,female:null,paeds:null},codeBlue:{TL:null,TM2:null,TM3:null},unassigned:[]};
    const remaining=[...doctors];
    const najahOff=excluded.has(nameKey('Dr Najah'));
-   if(!najahOff&&((i===1&&session==='PM')||(i===4&&session==='AM'))&&clinics.cmc!==false)shift.specialClinics.push({kind:'CMC',doctor:'Dr Najah'});
-   else if(!najahOff&&(i===2||i===3)&&session==='PM')shift.specialClinics.push({kind:'FIXED',doctor:'Dr Najah'});
-   else if(!najahOff&&i===1&&session==='PM'&&clinics.cmc===false)errors.push(dates[i]+' PM: Najah fixed CMC is closed; select an alternative duty');
-   else if(!najahOff&&i===4&&session==='AM'&&clinics.cmc===false)errors.push(dates[i]+' AM: Najah fixed CMC is closed; select an alternative duty');
+   // Najah: Sunday PM CMC; Monday PM regular; Tuesday PM regular;
+   // Wednesday AM CMC; Thursday AM regular. Never double-book.
+   const najahCMC=(i===0&&session==='PM')||(i===3&&session==='AM');
+   const najahRegular=(i===1||i===2)&&session==='PM'||i===4&&session==='AM';
+   if(!najahOff&&najahCMC&&clinics.cmc!==false)
+    shift.specialClinics.push({kind:'CMC',doctor:'Dr Najah'});
+   else if(!najahOff&&(najahRegular||(najahCMC&&clinics.cmc===false)))
+    shift.specialClinics.push({kind:'FIXED',doctor:'Dr Najah'});
    if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
    if(dates[i]==='2026-11-01'&&session==='PM'&&clinics.anc!==false){
