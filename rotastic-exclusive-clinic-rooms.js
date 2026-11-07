@@ -9,6 +9,18 @@ function enforce(){
  if(!Array.isArray(days))return;
  for(const day of days)for(const period of ['am','pm']){
   const shift=day?.[period];if(!shift||!shift.rooms)continue;
+  // Never put clinic-status text in a consultation room.
+  for(const room of Object.keys(shift.rooms))if(/^(no clinic|no room|unused)$/i.test(String(shift.rooms[room]||'').trim()))shift.rooms[room]='-';
+  // ANC: Monday AM, Tuesday AM/PM, Thursday AM. No Sunday ANC.
+  const date=String(day.isoDate||day.date||'').slice(0,10);
+  const weekday=/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?new Date(date+'T12:00:00Z').getUTCDay():-1;
+  const ancScheduled=(weekday===1&&period==='am')||weekday===2||(weekday===4&&period==='am');
+  if(!ancScheduled){
+   const oldAnc=shift.ancDoc;
+   shift.ancDoc='No Clinic';
+   if(Array.isArray(shift.specialAssignments))shift.specialAssignments=shift.specialAssignments.filter(x=>String(x.clinic||'').toUpperCase()!=='ANC');
+   if(key(oldAnc)&&key(oldAnc)!=='noclinic'&&key(shift.rooms[32])===key(oldAnc))shift.rooms[32]='-';
+  }
   const exclusive=[shift.wbcDoc,shift.ancDoc,shift.cmcDoc,...(shift.specialAssignments||[]).filter(x=>['WBC','ANC','CMC'].includes(String(x.clinic).toUpperCase())).map(x=>x.doctor)].filter(x=>/^dr\.?\s/i.test(String(x||'')));
   const blocked=new Set(exclusive.map(key));
   
