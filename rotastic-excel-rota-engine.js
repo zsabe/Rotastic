@@ -43,7 +43,7 @@ function generate(options={}){
     shift.specialClinics.push({kind:'FIXED',doctor:'Dr Najah'});
    if(session==='AM')shift.rooms[9]='Dr Moursi';
    function take(n){const j=remaining.indexOf(n);if(j>=0){remaining.splice(j,1);return true}return false}
-   if(dates[i]==='2026-11-01'&&session==='PM'&&clinics.anc!==false){
+   if(dates[i]==='2026-11-01'&&session==='PM'&&clinics.anc!==false&&!shift.specialClinics.some(x=>x.kind==='CMC')){
     const saba=remaining.find(n=>first(n)==='saba');
     if(saba){shift.specialClinics.push({kind:'ANC',doctor:saba});take(saba)}
     else errors.push(dates[i]+' PM: required Sunday ANC physician Saba is unavailable');
@@ -60,7 +60,7 @@ function generate(options={}){
    }
    // Assign ANC and WBC before rooms so required clinic doctors cannot disappear.
    for(const kind of ['ANC','WBC']){
-    if(kind==='ANC'&&clinics.anc===false||kind==='WBC'&&clinics.wbc===false)continue;
+    if(kind==='ANC'&&(clinics.anc===false||shift.specialClinics.some(x=>x.kind==='CMC'))||kind==='WBC'&&clinics.wbc===false)continue;
     if(shift.specialClinics.some(x=>x.kind===kind))continue;
     const doctor=remaining.find(n=>kind==='NCD'?true:kind==='SMOKING'?['selman','enan'].includes(first(n)):false);
     if(doctor){shift.specialClinics.push({kind,doctor});take(doctor)}
@@ -100,6 +100,7 @@ function generate(options={}){
    for(const kind of ['male','female','paeds']){const n=kind==='paeds'?(assigned.filter(x=>!usedER.has(x)&&!blockedER(x)).sort((a,b)=>(paedsUsage.get(a)||0)-(paedsUsage.get(b)||0)||a.localeCompare(b))[0]||null):erPick(kind,usedER);if(kind==='paeds'&&n)paedsUsage.set(n,(paedsUsage.get(n)||0)+1);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
+   if(shift.specialClinics.some(x=>x.kind==='CMC')&&shift.specialClinics.some(x=>x.kind==='ANC'))errors.push(dates[i]+' '+session+': Room 32 cannot host ANC and CMC together');
    const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.supporting].map(doctor=>({doctor})),off,leave});
    if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
    shift.audit=audit;
