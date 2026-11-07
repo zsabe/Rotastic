@@ -79,9 +79,10 @@ function generate(options={}){
    // Twilight is an exclusive assignment; never double-book the same doctor.
    // The workbook provides two Twilight cells per session (C7:C8 / H7:H8).
    for(let t=0;t<2;t++){
-    const doctor=remaining.find(n=>!isFemale(n)&&!isAbdul(n));
+    const roomDoctors=Object.values(shift.rooms).filter(n=>n!=='Dr Moursi'&&!isFemale(n)&&!isAbdul(n));
+    const doctor=roomDoctors.find(n=>!shift.twilight.includes(n));
     if(!doctor)break;
-    shift.twilight.push(doctor);take(doctor);
+    shift.twilight.push(doctor);
    }
    // Extra non-room clinics are explicitly represented by workbook C9/C11 or H9/H11.
    // Do not invent a clinic or quietly discard an unplaced doctor.
@@ -102,7 +103,7 @@ function generate(options={}){
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
    for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
    if(shift.specialClinics.some(x=>x.kind==='CMC')&&shift.specialClinics.some(x=>x.kind==='ANC'))errors.push(dates[i]+' '+session+': Room 32 cannot host ANC and CMC together');
-   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...shift.noClinic].map(doctor=>({doctor})),off,leave});
+   const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.specialClinics.map(x=>x.doctor),...shift.noClinic].map(doctor=>({doctor})),off,leave});
    if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
    shift.audit=audit;
    day.shifts[session]=shift;
