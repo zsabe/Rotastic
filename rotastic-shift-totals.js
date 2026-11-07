@@ -14,7 +14,7 @@ function install(){
    const extras=(window.rotasticCollectShiftDoctors?.(day,period)||[]).filter(n=>!groupKeys.has(canonical(n)));
    const all=new Set([...group,...extras].map(canonical).filter(Boolean));
    const leave=new Set();
-   const submissions=window.Storage?.getJSON?.('rotastic_leave_submissions',[])||[];
+   let submissions=[];try{submissions=JSON.parse(localStorage.getItem('rotastic_leave_submissions')||'[]')}catch(_){}
    const date=day?.isoDate||'';
    const matches=(item)=>{const v=String(item?.shift||'').toUpperCase();return !v||v==='ALL'||v==='BOTH'||(period==='am'?/AM|09:00|9-4/.test(v):/PM|14:00|16:00|2-8/.test(v))};
    for(const item of submissions){
