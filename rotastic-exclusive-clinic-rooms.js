@@ -48,10 +48,29 @@ function enforce(){
   if(cb)for(const field of ['tl','tm2','tm3'])if(blocked.has(key(cb[field])))cb[field]='';
  }
 }
+function showNoRoom(){
+ const container=document.getElementById('scheduleMatrixContainer');if(!container)return;
+ container.querySelectorAll('.rotastic-exclusive-no-room').forEach(el=>el.remove());
+ const days=window.currentSchedule||[];
+ const panels=[...container.querySelectorAll('.rotastic-shift-panel')];
+ for(const panel of panels){
+  const sheet=panel.closest('.rotastic-day-sheet');
+  const heading=sheet?.querySelector('.rotastic-day-sheet-head')?.textContent||'';
+  const day=days.find(d=>heading.includes(d.isoDate))||days[0];
+  const period=panel.dataset.shiftPeriod|| (panel.classList.contains('rotastic-shift-pm')?'pm':'am');
+  const names=day?.[period]?.noRoomDocs||[];
+  if(!names.length)continue;
+  const box=document.createElement('div');box.className='rotastic-exclusive-no-room';
+  box.style.cssText='margin-top:12px;padding:10px;border:1px solid rgba(45,212,191,.3);border-radius:12px;color:#99f6e4;font-size:12px';
+  const title=document.createElement('strong');title.textContent='Doctors without rooms';title.style.display='block';box.appendChild(title);
+  for(const name of names){const row=document.createElement('div');row.textContent=name;box.appendChild(row)}
+  panel.appendChild(box);
+ }
+}
 function install(){
  const fn=window.renderScheduleView;
  if(typeof fn!=='function'||fn.__rotasticExclusiveClinicRooms)return;
- const wrapper=function(...args){enforce();return fn.apply(this,args)};
+ const wrapper=function(...args){enforce();const result=fn.apply(this,args);showNoRoom();return result};
  wrapper.__rotasticExclusiveClinicRooms=true;
  window.renderScheduleView=wrapper;
 }
