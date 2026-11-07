@@ -29,7 +29,7 @@ function scoreButton(b){
  let p=b;for(let i=0;i<6&&p;i++,p=p.parentElement){const s=text(p).slice(0,1200);if(/generate/i.test(s))n+=5;if(/planner|rota|schedule/i.test(s))n+=5;}
  return n;
 }
-function findGenerateButton(){return generateButtons().sort((a,b)=>scoreButton(b)-scoreButton(a))[0]||null}
+function findGenerateButton(){return document.getElementById('rotastic-excel-generate')||generateButtons().sort((a,b)=>scoreButton(b)-scoreButton(a))[0]||null}
 function makeBox(){
  const box=document.createElement('div');box.id='rotastic-weekly-clinics';box.className='mb-3';
  box.innerHTML=`<div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800"><div class="text-[10px] uppercase tracking-wider font-bold text-slate-300 mb-2">Clinics running this week</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${CLINICS.map(c=>`<label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" data-clinic="${esc(c.id)}" ${enabled(c.id)?'checked':''} class="accent-teal-500"><span>${esc(c.label)}</span></label>`).join('')}</div></div>`;
@@ -42,6 +42,7 @@ function installUI(){
  let anchor=btn;const parent=btn.parentElement;if(parent&&parent.children.length<=3&&!/^(BODY|MAIN|SECTION)$/i.test(parent.tagName))anchor=parent;
  const host=anchor.parentElement;if(!host)return false;
  if(box.parentElement!==host||box.nextElementSibling!==anchor)host.insertBefore(box,anchor);
+ box.style.display='block';box.style.visibility='visible';
  return true;
 }
 function closedClinicForText(s){s=String(s||'');return CLINICS.find(c=>!enabled(c.id)&&c.patterns.some(r=>r.test(s)))}
