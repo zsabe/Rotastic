@@ -10,7 +10,7 @@ const female=new Set(['fazila','laila','maya','saima','rida','oula','tayseer','s
 const first=n=>String(n).replace(/^dr\.?\s*/i,'').split(' ')[0].toLowerCase();
 const isFemale=n=>female.has(first(n));
 const isAbdul=n=>first(n)==='abdulgafoor';
-const blockedCB=n=>['abdulgafoor','maher','mohammed','salah','zaid'].includes(first(n));
+const blockedCB=n=>['abdulgafoor','maher','salah','zaid'].includes(first(n))||/^mohammed\\s/i.test(n.replace(/^dr\\.?\\s*/i,''));
 const blockedER=n=>['abdulgafoor','zaid'].includes(first(n));
 const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^qaisar/,'muhammadk');
 const normaliseOff=(input,dayIndex)=>Array.isArray(input)?input:(input?.[dayIndex]||[]);
