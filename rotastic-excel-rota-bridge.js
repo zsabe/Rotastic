@@ -16,7 +16,7 @@ function mapShift(s,clinics={}){
   ncdDoc:clinics.ncd===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='NCD')?.doctor||''),
   smokingDoc:clinics.smoking===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='SMOKING')?.doctor||''),
   cmcDoc:clinics.cmc===false?'No Clinic':(s.specialClinics.find(x=>x.kind==='CMC')?.doctor||''),
-  noRoomDocs:s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed evening)'))};
+  noRoomDocs:[...s.specialClinics.filter(x=>x.kind==='CMC'||x.kind==='FIXED').map(x=>x.doctor+(x.kind==='CMC'?' (CMC)':' (Fixed duty)')),...(s.supporting||[]).map(x=>x+' (Supporting duty)')]};
 }
 function mapSchedule(result,clinics={}){
  return result.days.map(d=>({
@@ -34,7 +34,7 @@ function generateAndDisplay(options){
  for(const day of result.days)for(const session of ['AM','PM']){
   const shift=day.shifts[session],mapped=days[day.dayIndex][session.toLowerCase()];
   const shown=JSON.stringify(mapped).toLowerCase();
-  for(const doctor of [...Object.values(shift.rooms),...shift.twilight,...shift.specialClinics.map(x=>x.doctor)])
+  for(const doctor of [...Object.values(shift.rooms),...shift.twilight,...shift.specialClinics.map(x=>x.doctor),...(shift.supporting||[])])
    if(!shown.includes(doctor.toLowerCase()))throw Error(day.date+' '+session+': '+doctor+' missing from Rota View data');
  }
  const previous={schedule:window.currentSchedule,mode:window.__rotasticExcelModeActive,result:window.rotasticExcelGeneratedResult};
