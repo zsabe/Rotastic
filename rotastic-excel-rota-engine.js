@@ -10,6 +10,10 @@ const female=new Set(['fazila','laila','maya','saima','rida','oula','tayseer','s
 const first=n=>String(n).replace(/^dr\.?\s*/i,'').split(' ')[0].toLowerCase();
 const isFemale=n=>female.has(first(n));
 const isAbdul=n=>first(n)==='abdulgafoor';
+// Source: Book 1 (1).xlsx, Sheet1 AB3:AB8 (TL) and AB11:AB27 (team).
+const CB_LEAD=new Set(['imran','ganim','enan','fazila','laith','abdulrashid']);
+const CB_TEAM=new Set(['qaisar','faisal','shadi','fazila','imran','ganim','enan','selman','husam','syed','tayseer','bilal','oula','maher','laith','abdulrashid']);
+const cbIdentity=n=>{const k=String(n||'').toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'');if(k.startsWith('ghani')||k==='gshafi')return 'ganim';if(k==='arashid'||k==='abdulrashids')return 'abdulrashid';if(k==='nislam'||k==='syedi')return 'syed';if(k==='muhammadk'||k==='qaisark')return 'qaisar';return k.replace(/(m|a|k|c|s|t|e)$/,'')};
 const blockedCB=n=>['abdulgafoor','maher','salah','zaid'].includes(first(n))||/^mohammed\\s/i.test(n.replace(/^dr\\.?\\s*/i,''));
 const blockedER=n=>first(n)==='zaid';
 const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^ghani/,'gani').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
@@ -109,7 +113,11 @@ function generate(options={}){
    const usedER=new Set();
    for(const kind of ['male','female','paeds']){const n=kind==='paeds'?(assigned.filter(x=>!usedER.has(x)&&!blockedER(x)).sort((a,b)=>(paedsUsage.get(a)||0)-(paedsUsage.get(b)||0)||a.localeCompare(b))[0]||null):erPick(kind,usedER);if(kind==='paeds'&&n)paedsUsage.set(n,(paedsUsage.get(n)||0)+1);shift.er[kind]=n;if(n)usedER.add(n);else errors.push(dates[i]+' '+session+': cannot fill '+kind+' ER')}
    const cbCandidates=assigned.filter(n=>!blockedCB(n)).sort((a,b)=>Number(usedER.has(a))-Number(usedER.has(b))||a.localeCompare(b));
-   for(const [j,role] of ['TL','TM2','TM3'].entries()){shift.codeBlue[role]=cbCandidates[j]||null;if(!cbCandidates[j])errors.push(dates[i]+' '+session+': cannot fill Code Blue '+role)}
+   const leader=cbCandidates.find(n=>CB_LEAD.has(cbIdentity(n)));
+   shift.codeBlue.TL=leader||null;
+   if(!leader)errors.push(dates[i]+' '+session+': no workbook-eligible Code Blue leader');
+   const team=cbCandidates.filter(n=>n!==leader&&CB_TEAM.has(cbIdentity(n)));
+   for(const [j,role] of ['TM2','TM3'].entries()){shift.codeBlue[role]=team[j]||null;if(!team[j])errors.push(dates[i]+' '+session+': no workbook-eligible Code Blue '+role)}
    // WBC/ANC/CMC are exclusive clinic allocations: no ordinary room or other duty.
    for(const clinic of shift.specialClinics.filter(x=>['WBC','ANC','CMC'].includes(x.kind))){
     const doctor=clinic.doctor;
