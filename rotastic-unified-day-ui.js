@@ -32,9 +32,9 @@ body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lin
 body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines span{font-size:clamp(11px,2.3vw,14px)!important;line-height:1.3!important}
 @media(max-width:390px){body.rotastic-rota-view-active .rotastic-day-sheet-head{padding-left:37px!important;padding-right:37px!important;column-gap:7px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-key{min-width:76px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-header-main{gap:6px!important}}
 `;document.head.appendChild(style);
-const normalize=n=>String(n||'').toLowerCase().replace(/\s*\([^)]*\)/g,'').replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|qaisark)$/,'qaisar');
+const normalize=n=>String(n||'').toLowerCase().replace(/\s*\([^)]*\)/g,'').replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar').replace(/^(abdulgafoork|agafoor)$/,'agafoor').replace(/^(abdulrashids|arashid)$/,'arashid').replace(/^(aminullahz|amin)$/,'amin').replace(/^(salahm|saleh)$/,'saleh');
 const valid=n=>/^dr\.?\s/i.test(String(n||''));
-function names(v,out){if(typeof v==='string'){if(valid(v))out.push(v)}else if(Array.isArray(v)){v.forEach(x=>names(x,out))}else if(v&&typeof v==='object'){if(v.doctor||v.name)names(v.doctor||v.name,out);else Object.values(v).forEach(x=>names(x,out))}}
+function names(v,out){if(typeof v==='string'){if(valid(v))out.push(v.replace(/\\s*\\([^)]*\\).*$/,''))}else if(Array.isArray(v)){v.forEach(x=>names(x,out))}else if(v&&typeof v==='object'){if(v.doctor||v.name)names(v.doctor||v.name,out);else Object.values(v).forEach(x=>names(x,out))}}
 function count(day,p){const sh=day?.[p];if(!sh)return 0;const found=[];
  for(const key of ['rooms','med','fed','ped','timed1Doc','timed2Doc','ancDoc','cmcDoc','wbcDoc','iucdDoc','sdiDoc','smokingDoc','noRoomDocs','specialAssignments'])names(sh[key],found);
  // Code Blue is a duty carried out by already rostered doctors, not an extra headcount.
