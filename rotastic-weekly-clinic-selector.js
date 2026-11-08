@@ -7,7 +7,7 @@ const CLINICS=[
  {id:'iud',label:'IUD / IUCD',fields:['iudDoc','iucdDoc'],patterns:[/\bIUD\b|\bIUCD\b/i]},
  {id:'sdi',label:'SDI',fields:['sdiDoc'],patterns:[/\bSDI\b|subdermal/i]},
  {id:'smoking',label:'Smoking Cessation',fields:['smokingDoc'],patterns:[/smoking\s*cessation/i]},
- {id:'cmc',label:'CMC',fields:['cmcDoc'],patterns:[/\bCMC\b/i]}
+ {id:'cmc',label:'CMC',fields:['cmcDoc'],patterns:[/\bCMC\b|\bNCD\b/i]}
 ];
 const state={...Object.fromEntries(CLINICS.map(c=>[c.id,true]))};
 const enabled=id=>state[id]!==false;
@@ -35,6 +35,17 @@ function makeBox(){
  box.querySelectorAll('input[data-clinic]').forEach(i=>i.addEventListener('change',()=>{state[i.dataset.clinic]=i.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}}));return box;
 }
 function installUI(){
+ // Legacy planner checkbox is labelled NCD but now controls CMC.
+ for(const label of document.querySelectorAll('label')){
+  if(!/^NCD$/i.test((label.textContent||'').trim()))continue;
+  const input=label.querySelector('input[type="checkbox"]');
+  if(!input)continue;
+  label.childNodes.forEach(n=>{if(n.nodeType===Node.TEXT_NODE)n.textContent=n.textContent.replace(/\bNCD\b/g,'CMC')});
+  for(const span of label.querySelectorAll('span'))if(/^NCD$/i.test(span.textContent.trim()))span.textContent='CMC';
+  input.dataset.clinic='cmc';
+  if(!input.dataset.rotasticCmcBound){input.dataset.rotasticCmcBound='1';input.addEventListener('change',()=>{state.cmc=input.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}})}
+ }
+
  let box=document.getElementById('rotastic-weekly-clinics');const btn=findGenerateButton();if(!btn)return false;
  if(!box)box=makeBox();
  /* Put the selector immediately before the actual Generate control. If the button is nested in a small action wrapper, insert before that wrapper instead. */
