@@ -34,8 +34,8 @@ body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lin
 body.rotastic-rota-view-active .rotastic-day-sheet:not(.rotastic-day-expanded) .rotastic-day-shifts{display:none!important}
 body.rotastic-rota-view-active .rotastic-day-sheet-head{cursor:pointer}
 body.rotastic-rota-view-active .rotastic-day-sheet-head:focus-visible{outline:2px solid #67e8f9}
-body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-day-shifts{display:block!important;width:100%!important}
-body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-shift-panel{width:100%!important;max-width:none!important}
+body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-day-shifts{display:flex!important;flex-direction:column!important;width:100%!important}
+body.rotastic-rota-view-active #scheduleMatrixContainer{width:100%!important;max-width:100%!important;margin-inline:0!important;box-sizing:border-box!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet{width:100%!important;max-width:none!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-shift-panel{width:100%!important;max-width:none!important;box-sizing:border-box!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;visibility:visible!important}
 body.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;width:auto!important}
 body.rotastic-rota-view-active .rotastic-day-weather-icon.moon{color:#c7d2fe!important;filter:drop-shadow(0 0 8px rgba(129,140,248,.75))!important}
 body.rotastic-rota-view-active .rotastic-day-weather-icon.sun{color:#fbbf24!important;filter:drop-shadow(0 0 8px rgba(251,191,36,.6))!important}
@@ -49,17 +49,24 @@ function count(day,p){const sh=day?.[p];if(!sh)return 0;const found=[];
  const seen=new Set(found.map(normalize).filter(Boolean));
  return [...seen].filter(k=>!window.rotasticDoctorIsOnDisplayedLeave?.(found.find(n=>normalize(n)===k),day,p)).length;
 }
-let active=0,expanded=false;
+let active=0,expanded=true,initialized=false;
 function update(){
  const root=document.getElementById('scheduleMatrixContainer');if(!root||!document.body.classList.contains('rotastic-rota-view-active'))return;
  const days=window.currentSchedule||[];const sheets=[...root.querySelectorAll('.rotastic-day-sheet')];if(!days.length||!sheets.length)return;
+ if(!initialized){
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Qatar',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const match=days.findIndex(d=>(d.isoDate||d.date)===today);
+  const current=Number.isInteger(window.activeDayIndex)?window.activeDayIndex:-1;
+  active=current>=0&&current<days.length?current:(match>=0?match:0);
+  initialized=true;
+ }
  if(sheets.length===1){const date=sheets[0].querySelector('.rotastic-day-sheet-head')?.textContent||'';const idx=days.findIndex(d=>date.includes(d.isoDate||d.date));if(idx>=0)active=idx;else if(Number.isInteger(window.activeDayIndex))active=window.activeDayIndex}
  active=Math.max(0,Math.min(days.length-1,active));
  for(const [i,sheet] of sheets.entries()){
   if(sheets.length>1)sheet.style.display=i===active?'':'none';
   sheet.classList.toggle('rotastic-day-expanded',expanded);
   const header=sheet.querySelector('.rotastic-day-sheet-head');
-  if(header&&!header.dataset.rotasticExpandBound){header.dataset.rotasticExpandBound='1';header.setAttribute('role','button');header.setAttribute('tabindex','0');header.addEventListener('click',e=>{if(e.target.closest('.rotastic-day-nav-arrow'))return;expanded=!expanded;update()});header.addEventListener('keydown',e=>{if(e.target!==header||!['Enter',' '].includes(e.key))return;e.preventDefault();expanded=!expanded;update()})}
+  if(header&&!header.dataset.rotasticExpandBound){header.dataset.rotasticExpandBound='1';header.setAttribute('role','button');header.setAttribute('tabindex','0');header.addEventListener('click',e=>{if(e.target.closest('.rotastic-day-nav-arrow'))return;expanded=true;update()});header.addEventListener('keydown',e=>{if(e.target!==header||!['Enter',' '].includes(e.key))return;e.preventDefault();expanded=!expanded;update()})}
   if(header)header.setAttribute('aria-expanded',String(expanded));
   const day=sheets.length===1?days[active]:days[i];if(!day)continue;
   const head=sheet.querySelector('.rotastic-day-sheet-head');if(!head)continue;
@@ -78,7 +85,7 @@ function go(dir){
  const next=active+dir,days=window.currentSchedule||[];
  if(next<0||next>=days.length)return;
  const oldY=window.scrollY,oldX=window.scrollX;
- active=next;expanded=false;
+ active=next;expanded=true;
  if(typeof window.filterDay==='function')window.filterDay(next);
  else if(typeof window.setActiveDayIndex==='function')window.setActiveDayIndex(next);
  else if(typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView()}
