@@ -46,7 +46,7 @@ function names(v,out){if(typeof v==='string'){if(valid(v))out.push(v.replace(/\\
 function assigned(day,p){
  const sh=day?.[p];if(!sh)return new Map();
  const found=[];for(const field of ['rooms','med','fed','ped','timed1Doc','timed2Doc','ancDoc','cmcDoc','ncdDoc','wbcDoc','wicDoc','hearingDoc','htDoc','iucdDoc','sdiDoc','smokingDoc','isolationDoc','noRoomDocs','specialAssignments'])names(sh[field],found);
- const result=new Map();for(const n of found){const k=normalize(n);if(k&&!result.has(k))result.set(k,n)}return result;
+ // Emergency and clinic roles can repeat room doctors; Set-like map counts each doctor once. Code Blue roles are not additional staff.\n const result=new Map();for(const n of found){const k=normalize(n);if(k&&!result.has(k))result.set(k,n)}return result;
 }
 function leaveSet(day,p){
  const out=new Set(),add=n=>{const k=normalize(typeof n==='string'?n:(n?.doctor||n?.doc||n?.name||''));if(k)out.add(k)};
@@ -63,10 +63,6 @@ function stats(day,p){
  const roster=assigned(day,p),leave=leaveSet(day,p);
  const working=[...roster].filter(([k,n])=>!leave.has(k)&&!window.rotasticDoctorIsOnDisplayedLeave?.(n,day,p));
  return {working:working.length,leave:leave.size,keys:new Set(working.map(([k])=>k))};
-}
-function todayStats(day){
- const am=stats(day,'am'),pm=stats(day,'pm');
- return new Set([...am.keys,...pm.keys]).size;
 }
 
 let active=0,expanded=true,initialized=false;
