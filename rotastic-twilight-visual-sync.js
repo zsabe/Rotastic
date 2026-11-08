@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 if(window.__rotasticTwilightVisualSync)return;window.__rotasticTwilightVisualSync=true;
-const key=v=>String(v||'').toLowerCase().replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
+const key=v=>String(v||'').toLowerCase().replace(/\\s*\\([^)]*\\)/g,'').replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar').replace(/^(ganim|ghanim|gshafi)$/,'gshafi').replace(/^(abdulgafoork|agafoor)$/,'agafoor').replace(/^(abdulrashids|arashid)$/,'arashid');
 const css=document.createElement('style');css.textContent=`
 body.rotastic-rota-view-active .rotastic-twilight-doctor{font-size:11px!important}
 @media(max-width:430px){body.rotastic-rota-view-active .rotastic-twilight-doctor{font-size:10px!important}}
@@ -16,7 +16,7 @@ function sync(){
  const sheets=[...root.querySelectorAll('.rotastic-day-sheet')];
  for(const [i,sheet] of sheets.entries()){
   const heading=sheet.querySelector('.rotastic-day-sheet-head')?.textContent||'';
-  const day=days.find(d=>heading.includes(d.isoDate||d.date))||days[i];if(!day)continue;
+  const day=days.find(d=>heading.includes(d.isoDate||'__unknown__')||heading.includes(d.date||'__unknown__'))||days[Number.isInteger(window.activeDayIndex)?window.activeDayIndex:i]||days[i];if(!day)continue;
   for(const [panelIndex,panel] of [...sheet.querySelectorAll('.rotastic-shift-panel')].entries()){
    const p=panel.dataset.shiftPeriod|| (panel.classList.contains('rotastic-shift-pm')?'pm':panelIndex===0?'am':'pm');
    const shift=day[p];if(!shift)continue;
@@ -24,9 +24,9 @@ function sync(){
    // The Twilight panel lists doctors across the day; match room cards to the actual assigned doctor.
    const both=new Set([...actual,...['am','pm'].flatMap(period=>[day[period]?.timed1Doc,day[period]?.timed2Doc]).map(key).filter(Boolean)]);
    for(const card of panel.querySelectorAll('.rotastic-room-card-new')){
-    const room=card.dataset.room,name=shift.rooms?.[room];
+    const room=card.dataset.room;const raw=shift.rooms?.[room];const name=typeof raw==='string'?raw:(raw?.doctor||raw?.name||'');const displayed=card.querySelector('.rotastic-room-card-name')?.textContent||'';
     const number=card.querySelector('.rotastic-room-card-number');if(!number)continue;
-    const should=actual.has(key(name)) || both.has(key(name)) && !actual.size;
+    const should=[name,displayed].some(n=>actual.has(key(n))||both.has(key(n)));
     const badges=[...number.querySelectorAll('.rotastic-room-number-t')];
     if(!should)badges.forEach(b=>b.remove());
     else if(!badges.length){const badge=document.createElement('span');badge.className='rotastic-room-number-t';badge.title='Twilight';badge.setAttribute('aria-label','Twilight');badge.textContent='T';number.appendChild(badge)}
