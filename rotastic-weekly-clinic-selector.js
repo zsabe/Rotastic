@@ -35,6 +35,19 @@ function makeBox(){
  box.querySelectorAll('input[data-clinic]').forEach(i=>i.addEventListener('change',()=>{state[i.dataset.clinic]=i.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}}));return box;
 }
 function installUI(){
+ const legacy=document.getElementById('weeklyClinicNCD');
+ if(legacy){
+  const label=legacy.closest('label');
+  const name=label?.querySelector('span');
+  if(name&&name.textContent.trim()!=='CMC')name.textContent='CMC';
+  if(!legacy.dataset.rotasticCmcBound){
+   legacy.dataset.rotasticCmcBound='1';
+   legacy.addEventListener('change',()=>{state.cmc=legacy.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}});
+  }
+  // The original NCD checkbox is the CMC control used by the Excel generator.
+  if(legacy.checked!==enabled('cmc'))legacy.checked=enabled('cmc');
+ }
+
  // Legacy planner checkbox is labelled NCD but now controls CMC.
  for(const label of document.querySelectorAll('label')){
   if(!/^NCD$/i.test((label.textContent||'').trim()))continue;
