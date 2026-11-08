@@ -3,6 +3,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<style>
+/* CSS-only last-resort splash release, even if app JavaScript stops running. */
+@keyframes rotastic-splash-emergency-release{0%,98%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden;pointer-events:none}}
+#rotasticOpeningSplash{animation:rotastic-splash-emergency-release 6s steps(1,end) 1 forwards!important}
+#rotasticOpeningSplash.rotastic-splash-hide{display:none!important}
+</style>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <meta content="#090d16" name="theme-color"/>
 <meta content="dark" name="color-scheme"/>
