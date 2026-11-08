@@ -24,7 +24,7 @@ const cbIdentity=n=>{
  };
  return aliases[k]||k;
 };
-const blockedCB=n=>['abdulgafoor','maher','salah','zaid'].includes(first(n))||/^mohammed\\s/i.test(n.replace(/^dr\\.?\\s*/i,''));
+const blockedCB=n=>['abdulgafoor','salah','zaid'].includes(first(n));
 const blockedER=n=>first(n)==='zaid';
 const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
 const normaliseOff=(input,dayIndex)=>Array.isArray(input)?input:(input?.[dayIndex]||[]);
