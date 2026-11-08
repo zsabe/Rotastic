@@ -35,6 +35,10 @@ function makeBox(){
  box.querySelectorAll('input[data-clinic]').forEach(i=>i.addEventListener('change',()=>{state[i.dataset.clinic]=i.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}}));return box;
 }
 function installUI(){
+ // Rename the original planner control, including after dynamic re-renders.
+ const original=document.querySelector('#rotasticWeeklyClinicControls #weeklyClinicNCD');
+ if(original){const label=original.closest('label');if(label){for(const node of label.querySelectorAll('span'))if(/\\bNCD\\b/i.test(node.textContent))node.textContent=node.textContent.replace(/\\bNCD\\b/gi,'CMC');for(const node of label.childNodes)if(node.nodeType===3&&/\\bNCD\\b/i.test(node.nodeValue))node.nodeValue=node.nodeValue.replace(/\\bNCD\\b/gi,'CMC')}}
+
  const legacy=document.getElementById('weeklyClinicNCD');
  if(legacy){
   const label=legacy.closest('label');
