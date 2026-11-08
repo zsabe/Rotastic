@@ -20,6 +20,21 @@ function emptyRoom(sh,d){if(!sh?.rooms)return'';if(abdul(d))return !doctorOf(sh.
 function cover(day){let changed=0;const leave=leaveSet(day);for(const p of ['am','pm']){const sh=day?.[p];if(!sh?.rooms)continue;const roster=inferGroup(sh);for(const d of roster){if(leave.has(key(d))||hasDoctor(sh,d))continue;let unavailable=false;try{if(typeof window.rotasticDoctorUnavailable==='function')unavailable=!!window.rotasticDoctorUnavailable(d,dateOf(day),p)}catch(_){}if(unavailable)continue;const r=emptyRoom(sh,d);if(r){sh.rooms[r]=d;changed++}}}return changed}
 function ancSlot(sh){if(!sh||typeof sh!=='object')return null;for(const k of Object.keys(sh))if(/^anc$|anc.?doc|antenatal/i.test(k))return{obj:sh,key:k};return null}
 function sabaAnc(days){for(const wanted of [0,1])for(const day of days){const raw=dateOf(day);if(!raw)continue;const dt=new Date(raw+'T12:00:00');if(dt.getDay()!==wanted)continue;const leave=leaveSet(day);if(leave.has(key('Dr Saba T.')))continue;for(const p of ['am','pm']){const sh=day?.[p];if(!sh)continue;const roster=inferGroup(sh);if(!roster.some(saba))continue;const slot=ancSlot(sh);if(!slot)continue;let changed=0;if(!saba(doctorOf(slot.obj[slot.key]))){slot.obj[slot.key]='Dr Saba T.';changed++}if(sh.rooms&&'32' in sh.rooms&&!saba(doctorOf(sh.rooms['32']))){for(const r of Object.keys(sh.rooms))if(saba(doctorOf(sh.rooms[r])))sh.rooms[r]='';sh.rooms['32']='Dr Saba T.';changed++}return changed}}return 0}
-function enforce(schedule){const root=schedule||window.currentSchedule,days=Array.isArray(root)?root:Array.isArray(root?.days)?root.days:[];let n=0;for(const d of days)n+=cover(d);if(typeof window.rotasticEnforceLatestSchedulingRules==='function')n+=window.rotasticEnforceLatestSchedulingRules(root)||0;return n}
+function removeDuplicateRooms(day){
+ const seen=new Set();let changed=0;
+ // Room 9 is the fixed AM room for Dr Moursi; preserve it before other allocations.
+ const am=day?.am?.rooms;
+ if(am){for(const r of Object.keys(am).sort((a,b)=>Number(a)-Number(b))){
+  const d=doctorOf(am[r]),k=key(d);if(!/^dr\\.?\\s/i.test(d)||!k)continue;
+  if(seen.has(k)){am[r]='-';changed++}else seen.add(k);
+ }}
+ const pm=day?.pm?.rooms;
+ if(pm){for(const r of Object.keys(pm).sort((a,b)=>Number(a)-Number(b))){
+  const d=doctorOf(pm[r]),k=key(d);if(!/^dr\\.?\\s/i.test(d)||!k)continue;
+  if(seen.has(k)){pm[r]='-';changed++}else seen.add(k);
+ }}
+ return changed;
+}
+function enforce(schedule){const root=schedule||window.currentSchedule,days=Array.isArray(root)?root:Array.isArray(root?.days)?root.days:[];let n=0;for(const d of days)n+=cover(d);if(typeof window.rotasticEnforceLatestSchedulingRules==='function')n+=window.rotasticEnforceLatestSchedulingRules(root)||0;for(const d of days)n+=removeDuplicateRooms(d);return n}
 window.rotasticEnforceFullRosterCoverage=enforce;window.ROTASTIC_FULL_ROSTER_RULES=Object.freeze({everyWorkingDoctorAssigned:true,leaveExcluded:true,permanentNoShiftExcluded:['Dr Fahima N.'],ancSessions:['Monday AM','Tuesday AM','Tuesday PM','Thursday AM']});setInterval(()=>{const n=enforce(window.currentSchedule);if(n)window.renderSchedule?.()},700);
 })();
