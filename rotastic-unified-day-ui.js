@@ -19,6 +19,18 @@ body.rotastic-rota-view-active .rotastic-shift-notice{display:flex!important;ali
 body.rotastic-rota-view-active .rotastic-shift-notice .rotastic-shift-day-total{display:none!important}
 body.rotastic-rota-view-active .rotastic-shift-notice *{min-width:0!important}
 @media(max-width:420px){body.rotastic-rota-view-active .rotastic-day-header-lines strong{font-size:13px!important}body.rotastic-rota-view-active .rotastic-shift-notice{font-size:11px!important}}
+/* Balanced three-zone header: small animated icon, readable details, compact legend. */
+body.rotastic-rota-view-active .rotastic-day-sheet-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;column-gap:16px!important;padding:14px 48px!important;min-height:92px!important;box-sizing:border-box!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-header-main{display:flex!important;align-items:center!important;justify-content:flex-start!important;width:auto!important;min-width:0!important;flex:initial!important;gap:12px!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-key{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:7px!important;position:static!important;margin:0!important;min-width:92px!important;max-width:130px!important;font-size:11px!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-key>span{display:flex!important;align-items:center!important;gap:7px!important;white-space:nowrap!important;font-size:11px!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-weather-icon{font-size:22px!important;width:30px!important;height:32px!important;flex:0 0 30px!important;animation:rotastic-celestial-float 3.8s ease-in-out infinite!important;transform-origin:center}
+@keyframes rotastic-celestial-float{0%,100%{transform:translateY(2px) rotate(-9deg);opacity:.9;filter:drop-shadow(0 0 3px rgba(250,204,21,.35))}50%{transform:translateY(-3px) rotate(7deg);opacity:1;filter:drop-shadow(0 0 9px rgba(250,204,21,.65))}}
+@media(prefers-reduced-motion:reduce){body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-weather-icon{animation:none!important}}
+body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines{min-width:0!important;gap:5px!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines strong{font-size:clamp(14px,2.8vw,19px)!important;line-height:1.2!important;white-space:normal!important;overflow-wrap:normal!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines span{font-size:clamp(11px,2.3vw,14px)!important;line-height:1.3!important}
+@media(max-width:390px){body.rotastic-rota-view-active .rotastic-day-sheet-head{padding-left:37px!important;padding-right:37px!important;column-gap:7px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-key{min-width:76px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-header-main{gap:6px!important}}
 `;document.head.appendChild(style);
 const normalize=n=>String(n||'').toLowerCase().replace(/\s*\([^)]*\)/g,'').replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|qaisark)$/,'qaisar');
 const valid=n=>/^dr\.?\s/i.test(String(n||''));
