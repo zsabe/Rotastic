@@ -35,18 +35,26 @@ body.rotastic-rota-view-active .rotastic-day-sheet:not(.rotastic-day-expanded) .
 body.rotastic-rota-view-active .rotastic-day-sheet-head{cursor:pointer;margin-top:16px!important}
 body.rotastic-rota-view-active .rotastic-day-sheet-head:focus-visible{outline:2px solid #67e8f9}
 body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-day-shifts{display:flex!important;flex-direction:column!important;width:100%!important}
-body.rotastic-rota-view-active #scheduleMatrixContainer{width:100%!important;max-width:100%!important;margin-inline:0!important;box-sizing:border-box!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet{width:100%!important;max-width:none!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-shift-panel{width:100%!important;max-width:none!important;box-sizing:border-box!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;visibility:visible!important}
-body.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;width:auto!important}
+body.rotastic-rota-view-active #scheduleMatrixContainer{width:100%!important;max-width:100%!important;margin-inline:0!important;box-sizing:border-box!important}
+body.rotastic-rota-view-active .rotastic-day-sheet{width:100%!important;max-width:none!important;margin-inline:0!important}
+body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-shift-panel{width:100%!important;max-width:none!important;box-sizing:border-box!important}
+body.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;visibility:visible!important}
+body.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;width:100%!important;box-sizing:border-box!important}
+body.rotastic-rota-view-active .rotastic-shift-fit-grid{display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(0,.8fr)!important;width:100%!important;align-items:start!important;gap:10px!important}
+body.rotastic-rota-view-active .rotastic-shift-fit-col{min-width:0!important;width:100%!important}
+body.rotastic-rota-view-active .rotastic-day-shifts,body.rotastic-rota-view-active .rotastic-shift-panel{overflow:visible!important}
+@media(max-width:430px){body.rotastic-rota-view-active .rotastic-shift-fit-grid{gap:7px!important}body.rotastic-rota-view-active .rotastic-shift-panel{padding-inline:8px!important}}
 body.rotastic-rota-view-active .rotastic-day-weather-icon.moon{color:#c7d2fe!important;filter:drop-shadow(0 0 8px rgba(129,140,248,.75))!important}
 body.rotastic-rota-view-active .rotastic-day-weather-icon.sun{color:#fbbf24!important;filter:drop-shadow(0 0 8px rgba(251,191,36,.6))!important}
 `;document.head.appendChild(style);
 const normalize=n=>String(n||'').toLowerCase().replace(/\s*\([^)]*\)/g,'').replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar').replace(/^(abdulgafoork|agafoor)$/,'agafoor').replace(/^(abdulrashids|arashid)$/,'arashid').replace(/^(aminullahz|amin)$/,'amin').replace(/^(salahm|saleh)$/,'saleh');
 const valid=n=>/^dr\.?\s/i.test(String(n||''));
-function names(v,out){if(typeof v==='string'){if(valid(v))out.push(v.replace(/\\s*\\([^)]*\\).*$/,''))}else if(Array.isArray(v)){v.forEach(x=>names(x,out))}else if(v&&typeof v==='object'){if(v.doctor||v.name)names(v.doctor||v.name,out);else Object.values(v).forEach(x=>names(x,out))}}
+function names(v,out){if(typeof v==='string'){if(valid(v))out.push(v.replace(/\s*\([^)]*\).*$/,''))}else if(Array.isArray(v)){v.forEach(x=>names(x,out))}else if(v&&typeof v==='object'){if(v.doctor||v.name)names(v.doctor||v.name,out);else Object.values(v).forEach(x=>names(x,out))}}
 function assigned(day,p){
  const sh=day?.[p];if(!sh)return new Map();
  const found=[];for(const field of ['rooms','med','fed','ped','timed1Doc','timed2Doc','ancDoc','cmcDoc','ncdDoc','wbcDoc','wicDoc','hearingDoc','htDoc','iucdDoc','sdiDoc','smokingDoc','isolationDoc','noRoomDocs','specialAssignments'])names(sh[field],found);
- // Emergency and clinic roles can repeat room doctors; Set-like map counts each doctor once. Code Blue roles are not additional staff.\n const result=new Map();for(const n of found){const k=normalize(n);if(k&&!result.has(k))result.set(k,n)}return result;
+ // Emergency and clinic roles can repeat room doctors; Set-like map counts each doctor once. Code Blue roles are not additional staff.
+ const result=new Map();for(const n of found){const k=normalize(n);if(k&&!result.has(k))result.set(k,n)}return result;
 }
 function leaveSet(day,p){
  const out=new Set(),add=n=>{const k=normalize(typeof n==='string'?n:(n?.doctor||n?.doc||n?.name||''));if(k)out.add(k)};
@@ -92,6 +100,9 @@ function update(){
    const p=panel.dataset.shiftPeriod|| (panel.classList.contains('rotastic-shift-pm')?'pm':j===0?'am':'pm');
    const notice=panel.querySelector('.rotastic-shift-notice');if(!notice)continue;
    const values=stats(day,p);
+   const stableKey=(day.isoDate||day.date||'')+'|'+p+'|'+[...assigned(day,p).keys()].sort().join(',')+'|'+[...leaveSet(day,p)].sort().join(',');
+   if(notice.dataset.rotasticCountSignature===stableKey)continue;
+   notice.dataset.rotasticCountSignature=stableKey;
    const label=[...notice.querySelectorAll('span')].find(e=>/total on duty/i.test(e.textContent));
    if(label?.nextElementSibling&&label.nextElementSibling.textContent!==String(values.working))label.nextElementSibling.textContent=String(values.working);
    const leaveLabel=[...notice.querySelectorAll('span')].find(e=>/on leave/i.test(e.textContent));
