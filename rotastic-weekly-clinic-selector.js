@@ -35,12 +35,21 @@ function makeBox(){
  box.querySelectorAll('input[data-clinic]').forEach(i=>i.addEventListener('change',()=>{state[i.dataset.clinic]=i.checked;window.ROTASTIC_WEEKLY_CLINICS={...state}}));return box;
 }
 function renameGeneratorNCD(){
- const input=document.getElementById('weeklyClinicNCD');
- if(input){const label=input.closest('label');if(label){const spans=label.querySelectorAll('span');spans.forEach(span=>{if(/\\bNCD\\b/i.test(span.textContent))span.textContent=span.textContent.replace(/\\bNCD\\b/gi,'CMC')});}}
- // The generator includes several labels, not just the weekly checkbox.
- const root=document.getElementById('rotasticWeeklyClinicControls')||input?.closest('section')||input?.closest('.rounded-xl');
- if(root){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while((node=walker.nextNode())){if(node.parentElement?.closest('script,style,textarea,input'))continue;if(/\\bNCD\\b/i.test(node.nodeValue))node.nodeValue=node.nodeValue.replace(/\\bNCD\\b/gi,'CMC')}}
+ // Rename the original Generate-tab label directly, not a second copy of the selector.
+ const root=document.getElementById('tabGenerate')||document.getElementById('tabGenerator')||document.getElementById('rotasticWeeklyClinicControls')?.parentElement||document;
+ const legacy=document.getElementById('weeklyClinicNCD');
+ if(legacy){const label=legacy.closest('label');if(label){
+   for(const span of label.querySelectorAll('span'))span.textContent=span.textContent.replace(/\\bNCD\\b/gi,'CMC');
+   for(const node of label.childNodes)if(node.nodeType===3)node.nodeValue=node.nodeValue.replace(/\\bNCD\\b/gi,'CMC');
+ }}
+ // Handle generator text inserted later by legacy rendering.
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;
+ while((node=walker.nextNode())){
+   if(node.parentElement?.closest('script,style,textarea,option,[contenteditable="true"]'))continue;
+   if(/\\bNCD\\b/i.test(node.nodeValue))node.nodeValue=node.nodeValue.replace(/\\bNCD\\b/gi,'CMC');
+ }
 }
+
 function installUI(){
  renameGeneratorNCD();
  // Rename the original planner control, including after dynamic re-renders.
