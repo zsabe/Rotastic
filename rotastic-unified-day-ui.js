@@ -101,8 +101,8 @@ function update(){
    const leaveLabel=[...notice.querySelectorAll('span')].find(e=>/on leave/i.test(e.textContent));
    if(leaveLabel?.nextElementSibling&&leaveLabel.nextElementSibling.textContent!==String(values.leave))leaveLabel.nextElementSibling.textContent=String(values.leave);
    let daily=notice.querySelector('.rotastic-total-working-today');
-   if(!daily){daily=document.createElement('span');daily.className='rotastic-total-working-today uppercase tracking-wider font-black text-slate-600';daily.textContent='Total working today';const value=document.createElement('strong');value.className='rotastic-total-working-today-value text-teal-300';notice.append(daily,value)}
-   const dailyValue=notice.querySelector('.rotastic-total-working-today-value');if(dailyValue)dailyValue.textContent=String(todayStats(day));
+   if(!daily){daily=document.createElement('span');daily.className='rotastic-total-working-today uppercase tracking-wider font-black text-slate-600';daily.textContent='Total working on shift';const value=document.createElement('strong');value.className='rotastic-total-working-today-value text-teal-300';notice.append(daily,value)}
+   const dailyValue=notice.querySelector('.rotastic-total-working-today-value');if(dailyValue)dailyValue.textContent=String(values.working);
    const extra=notice.querySelector('.rotastic-shift-day-total');if(extra)extra.remove();
   }
  }
