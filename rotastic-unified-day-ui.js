@@ -31,6 +31,14 @@ body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lin
 body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines strong{font-size:clamp(14px,2.8vw,19px)!important;line-height:1.2!important;white-space:normal!important;overflow-wrap:normal!important}
 body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines span{font-size:clamp(11px,2.3vw,14px)!important;line-height:1.3!important}
 @media(max-width:390px){body.rotastic-rota-view-active .rotastic-day-sheet-head{padding-left:37px!important;padding-right:37px!important;column-gap:7px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-key{min-width:76px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-header-main{gap:6px!important}}
+body.rotastic-rota-view-active .rotastic-day-sheet:not(.rotastic-day-expanded) .rotastic-day-shifts{display:none!important}
+body.rotastic-rota-view-active .rotastic-day-sheet-head{cursor:pointer}
+body.rotastic-rota-view-active .rotastic-day-sheet-head:focus-visible{outline:2px solid #67e8f9}
+body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-day-shifts{display:block!important;width:100%!important}
+body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-shift-panel{width:100%!important;max-width:none!important}
+body.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;width:auto!important}
+body.rotastic-rota-view-active .rotastic-day-weather-icon.moon{color:#c7d2fe!important;filter:drop-shadow(0 0 8px rgba(129,140,248,.75))!important}
+body.rotastic-rota-view-active .rotastic-day-weather-icon.sun{color:#fbbf24!important;filter:drop-shadow(0 0 8px rgba(251,191,36,.6))!important}
 `;document.head.appendChild(style);
 const normalize=n=>String(n||'').toLowerCase().replace(/\s*\([^)]*\)/g,'').replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar').replace(/^(abdulgafoork|agafoor)$/,'agafoor').replace(/^(abdulrashids|arashid)$/,'arashid').replace(/^(aminullahz|amin)$/,'amin').replace(/^(salahm|saleh)$/,'saleh');
 const valid=n=>/^dr\.?\s/i.test(String(n||''));
@@ -41,7 +49,7 @@ function count(day,p){const sh=day?.[p];if(!sh)return 0;const found=[];
  const seen=new Set(found.map(normalize).filter(Boolean));
  return [...seen].filter(k=>!window.rotasticDoctorIsOnDisplayedLeave?.(found.find(n=>normalize(n)===k),day,p)).length;
 }
-let active=0;
+let active=0,expanded=false;
 function update(){
  const root=document.getElementById('scheduleMatrixContainer');if(!root||!document.body.classList.contains('rotastic-rota-view-active'))return;
  const days=window.currentSchedule||[];const sheets=[...root.querySelectorAll('.rotastic-day-sheet')];if(!days.length||!sheets.length)return;
@@ -49,6 +57,10 @@ function update(){
  active=Math.max(0,Math.min(days.length-1,active));
  for(const [i,sheet] of sheets.entries()){
   if(sheets.length>1)sheet.style.display=i===active?'':'none';
+  sheet.classList.toggle('rotastic-day-expanded',expanded);
+  const header=sheet.querySelector('.rotastic-day-sheet-head');
+  if(header&&!header.dataset.rotasticExpandBound){header.dataset.rotasticExpandBound='1';header.setAttribute('role','button');header.setAttribute('tabindex','0');header.addEventListener('click',e=>{if(e.target.closest('.rotastic-day-nav-arrow'))return;expanded=!expanded;update()});header.addEventListener('keydown',e=>{if(e.target!==header||!['Enter',' '].includes(e.key))return;e.preventDefault();expanded=!expanded;update()})}
+  if(header)header.setAttribute('aria-expanded',String(expanded));
   const day=sheets.length===1?days[active]:days[i];if(!day)continue;
   const head=sheet.querySelector('.rotastic-day-sheet-head');if(!head)continue;
   for(const [cls,dir] of [['prev',-1],['next',1]]){let btn=head.querySelector('.rotastic-day-nav-arrow.'+cls);if(!btn){btn=document.createElement('button');btn.type='button';btn.className='rotastic-day-nav-arrow '+cls;btn.textContent=dir<0?'‹':'›';head.append(btn)}btn.style.display='flex';btn.disabled=active+dir<0||active+dir>=days.length;btn.onclick=()=>go(dir)}
@@ -62,8 +74,20 @@ function update(){
   }
  }
 }
-function go(dir){const next=active+dir;const days=window.currentSchedule||[];if(next<0||next>=days.length)return;active=next;if(typeof window.filterDay==='function'){window.filterDay(next)}else if(typeof window.setActiveDayIndex==='function'){window.setActiveDayIndex(next)}else if(typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView()}update()}
-let start=null;document.addEventListener('touchstart',e=>{if(!e.target.closest?.('#scheduleMatrixContainer .rotastic-day-sheet-head'))return;start={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
+function go(dir){
+ const next=active+dir,days=window.currentSchedule||[];
+ if(next<0||next>=days.length)return;
+ const oldY=window.scrollY,oldX=window.scrollX;
+ active=next;expanded=false;
+ if(typeof window.filterDay==='function')window.filterDay(next);
+ else if(typeof window.setActiveDayIndex==='function')window.setActiveDayIndex(next);
+ else if(typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView()}
+ update();
+ // Re-rendering the day must not jump the page to the schedule.
+ requestAnimationFrame(()=>window.scrollTo({top:oldY,left:oldX,behavior:'instant'}));
+}
+
+let start=null;document.addEventListener('touchstart',e=>{if(!e.target.closest?.('#scheduleMatrixContainer .rotastic-day-sheet'))return;start={x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
 document.addEventListener('touchend',e=>{if(!start)return;const dx=e.changedTouches[0].clientX-start.x,dy=e.changedTouches[0].clientY-start.y;start=null;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.4)go(dx<0?1:-1)},{passive:true});
 let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})}).observe(document.documentElement,{subtree:true,childList:true});document.addEventListener('DOMContentLoaded',update);setTimeout(update,650);
 })();
