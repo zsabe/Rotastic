@@ -25,12 +25,12 @@ function removeDuplicateRooms(day){
  // Room 9 is the fixed AM room for Dr Moursi; preserve it before other allocations.
  const am=day?.am?.rooms;
  if(am){for(const r of Object.keys(am).sort((a,b)=>Number(a)-Number(b))){
-  const d=doctorOf(am[r]),k=key(d);if(!/^dr\\.?\\s/i.test(d)||!k)continue;
+  const d=doctorOf(am[r]),k=key(d);if(!/^dr\.?\s/i.test(d)||!k)continue;
   if(seen.has(k)){am[r]='-';changed++}else seen.add(k);
  }}
  const pm=day?.pm?.rooms;
  if(pm){for(const r of Object.keys(pm).sort((a,b)=>Number(a)-Number(b))){
-  const d=doctorOf(pm[r]),k=key(d);if(!/^dr\\.?\\s/i.test(d)||!k)continue;
+  const d=doctorOf(pm[r]),k=key(d);if(!/^dr\.?\s/i.test(d)||!k)continue;
   if(seen.has(k)){pm[r]='-';changed++}else seen.add(k);
  }}
  return changed;
