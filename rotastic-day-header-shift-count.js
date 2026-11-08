@@ -47,17 +47,7 @@ function update(){
    [...head.children].filter(x=>x!==main&&!x.classList.contains('rotastic-day-key')).forEach(x=>x.style.display='none');
    head.dataset.rotasticHeaderSignature=signature;
   }
-  for(const panel of sheet.querySelectorAll('.rotastic-shift-panel')){
-   const period=panel.dataset.shiftPeriod|| (panel.classList.contains('rotastic-shift-pm')?'pm':'am');
-   const sh=day[period];if(!sh)continue;
-   const raw=window.rotasticGetShiftGroupDoctors?.(day,period,true)||[];
-   const cohort=new Map(raw.filter(valid).map(n=>[key(n),n]));
-   const extras=[...Object.values(sh.rooms||{}),sh.med,sh.fed,sh.ped,sh.wbcDoc,sh.ancDoc,sh.cmcDoc,sh.timed1Doc,sh.timed2Doc,...(sh.noRoomDocs||[]),...Object.values(period==='am'?day.cbAM||{}:day.cbPM||{})];
-   extras.filter(valid).forEach(n=>cohort.set(key(n),n));
-   const count=[...cohort.values()].filter(n=>!window.rotasticDoctorIsOnDisplayedLeave?.(n,day)).length;
-   const notice=panel.querySelector('.rotastic-shift-notice');
-   if(notice){const title=[...notice.querySelectorAll('span')].find(e=>/total on duty/i.test(e.textContent));const value=title?.nextElementSibling;if(value&&value.textContent!==String(count))value.textContent=String(count);const total=notice.querySelector('.rotastic-shift-day-total');if(total&&total.textContent!=='Shift total '+count)total.textContent='Shift total '+count}
-  }
+
  });
 }
 let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})};
