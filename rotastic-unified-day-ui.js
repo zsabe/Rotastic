@@ -32,7 +32,7 @@ body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lin
 body.rotastic-rota-view-active .rotastic-day-sheet-head .rotastic-day-header-lines span{font-size:clamp(11px,2.3vw,14px)!important;line-height:1.3!important}
 @media(max-width:390px){body.rotastic-rota-view-active .rotastic-day-sheet-head{padding-left:37px!important;padding-right:37px!important;column-gap:7px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-key{min-width:76px!important}body.rotastic-rota-view-active .rotastic-day-sheet-head>.rotastic-day-header-main{gap:6px!important}}
 body.rotastic-rota-view-active .rotastic-day-sheet:not(.rotastic-day-expanded) .rotastic-day-shifts{display:none!important}
-body.rotastic-rota-view-active .rotastic-day-sheet-head{cursor:pointer}
+body.rotastic-rota-view-active .rotastic-day-sheet-head{cursor:pointer;margin-top:16px!important}
 body.rotastic-rota-view-active .rotastic-day-sheet-head:focus-visible{outline:2px solid #67e8f9}
 body.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-day-shifts{display:flex!important;flex-direction:column!important;width:100%!important}
 body.rotastic-rota-view-active #scheduleMatrixContainer{width:100%!important;max-width:100%!important;margin-inline:0!important;box-sizing:border-box!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet{width:100%!important;max-width:none!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet.rotastic-day-expanded .rotastic-shift-panel{width:100%!important;max-width:none!important;box-sizing:border-box!important}\nbody.rotastic-rota-view-active .rotastic-day-sheet .rotastic-twilight-panel{display:block!important;visibility:visible!important}
@@ -43,12 +43,32 @@ body.rotastic-rota-view-active .rotastic-day-weather-icon.sun{color:#fbbf24!impo
 const normalize=n=>String(n||'').toLowerCase().replace(/\s*\([^)]*\)/g,'').replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar').replace(/^(abdulgafoork|agafoor)$/,'agafoor').replace(/^(abdulrashids|arashid)$/,'arashid').replace(/^(aminullahz|amin)$/,'amin').replace(/^(salahm|saleh)$/,'saleh');
 const valid=n=>/^dr\.?\s/i.test(String(n||''));
 function names(v,out){if(typeof v==='string'){if(valid(v))out.push(v.replace(/\\s*\\([^)]*\\).*$/,''))}else if(Array.isArray(v)){v.forEach(x=>names(x,out))}else if(v&&typeof v==='object'){if(v.doctor||v.name)names(v.doctor||v.name,out);else Object.values(v).forEach(x=>names(x,out))}}
-function count(day,p){const sh=day?.[p];if(!sh)return 0;const found=[];
- for(const key of ['rooms','med','fed','ped','timed1Doc','timed2Doc','ancDoc','cmcDoc','wbcDoc','iucdDoc','sdiDoc','smokingDoc','noRoomDocs','specialAssignments'])names(sh[key],found);
- // Code Blue is a duty carried out by already rostered doctors, not an extra headcount.
- const seen=new Set(found.map(normalize).filter(Boolean));
- return [...seen].filter(k=>!window.rotasticDoctorIsOnDisplayedLeave?.(found.find(n=>normalize(n)===k),day,p)).length;
+function assigned(day,p){
+ const sh=day?.[p];if(!sh)return new Map();
+ const found=[];for(const field of ['rooms','med','fed','ped','timed1Doc','timed2Doc','ancDoc','cmcDoc','ncdDoc','wbcDoc','wicDoc','hearingDoc','htDoc','iucdDoc','sdiDoc','smokingDoc','isolationDoc','noRoomDocs','specialAssignments'])names(sh[field],found);
+ const result=new Map();for(const n of found){const k=normalize(n);if(k&&!result.has(k))result.set(k,n)}return result;
 }
+function leaveSet(day,p){
+ const out=new Set(),add=n=>{const k=normalize(typeof n==='string'?n:(n?.doctor||n?.doc||n?.name||''));if(k)out.add(k)};
+ const records=window.getDisplayedLeaveDoctorsForDay?.(day)||day?.leaves||day?.leaveDoctors||[];
+ if(Array.isArray(records))records.forEach(add);
+ try{const records=JSON.parse(localStorage.getItem('rotastic_leave_submissions')||'[]');const date=day?.isoDate||'';
+ for(const item of records){if(!item?.startDate||date<item.startDate||date>(item.endDate||item.startDate))continue;
+ const status=String(item.status||'').toLowerCase();if(/reject|cancel|withdraw|declin|pending|await|request/.test(status)&&String(item.type||'').toLowerCase()!=='sick')continue;
+ const shift=String(item.shift||'').toLowerCase();if(p&&shift&&!/all|both/.test(shift)&&!(p==='am'?/am|09:00|9-4/.test(shift):/pm|14:00|16:00|2-8/.test(shift)))continue;add(item.doc);
+ }}catch(_){}
+ return out;
+}
+function stats(day,p){
+ const roster=assigned(day,p),leave=leaveSet(day,p);
+ const working=[...roster].filter(([k,n])=>!leave.has(k)&&!window.rotasticDoctorIsOnDisplayedLeave?.(n,day,p));
+ return {working:working.length,leave:leave.size,keys:new Set(working.map(([k])=>k))};
+}
+function todayStats(day){
+ const am=stats(day,'am'),pm=stats(day,'pm');
+ return new Set([...am.keys,...pm.keys]).size;
+}
+
 let active=0,expanded=true,initialized=false;
 function update(){
  const root=document.getElementById('scheduleMatrixContainer');if(!root||!document.body.classList.contains('rotastic-rota-view-active'))return;
@@ -75,8 +95,14 @@ function update(){
   for(const [j,panel] of [...sheet.querySelectorAll('.rotastic-shift-panel')].entries()){
    const p=panel.dataset.shiftPeriod|| (panel.classList.contains('rotastic-shift-pm')?'pm':j===0?'am':'pm');
    const notice=panel.querySelector('.rotastic-shift-notice');if(!notice)continue;
-   const total=count(day,p);const label=[...notice.querySelectorAll('span')].find(e=>/total on duty/i.test(e.textContent));
-   if(label?.nextElementSibling&&label.nextElementSibling.textContent!==String(total))label.nextElementSibling.textContent=String(total);
+   const values=stats(day,p);
+   const label=[...notice.querySelectorAll('span')].find(e=>/total on duty/i.test(e.textContent));
+   if(label?.nextElementSibling&&label.nextElementSibling.textContent!==String(values.working))label.nextElementSibling.textContent=String(values.working);
+   const leaveLabel=[...notice.querySelectorAll('span')].find(e=>/on leave/i.test(e.textContent));
+   if(leaveLabel?.nextElementSibling&&leaveLabel.nextElementSibling.textContent!==String(values.leave))leaveLabel.nextElementSibling.textContent=String(values.leave);
+   let daily=notice.querySelector('.rotastic-total-working-today');
+   if(!daily){daily=document.createElement('span');daily.className='rotastic-total-working-today uppercase tracking-wider font-black text-slate-600';daily.textContent='Total working today';const value=document.createElement('strong');value.className='rotastic-total-working-today-value text-teal-300';notice.append(daily,value)}
+   const dailyValue=notice.querySelector('.rotastic-total-working-today-value');if(dailyValue)dailyValue.textContent=String(todayStats(day));
    const extra=notice.querySelector('.rotastic-shift-day-total');if(extra)extra.remove();
   }
  }
