@@ -3,30 +3,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<script id="rotastic-startup-safety-v1">
-(function(){
-  function dismissSplash(){
-    var splash=document.getElementById('rotasticOpeningSplash');
-    if(!splash)return;
-    splash.classList.add('rotastic-splash-hide');
-    splash.style.setProperty('display','none','important');
-    splash.style.setProperty('pointer-events','none','important');
-    splash.setAttribute('aria-hidden','true');
-    window.__rotasticSplashDismissed=true;
-  }
-  // Register before other application scripts, so later initialization errors
-  // cannot prevent the welcome screen from being dismissed.
-  setTimeout(dismissSplash,4500);
-  window.addEventListener('load',function(){setTimeout(dismissSplash,1200);},{once:true});
-})();
-</script>
 <style>
 /* CSS-only last-resort splash release, even if app JavaScript stops running. */
 @keyframes rotastic-splash-emergency-release{0%,98%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden;pointer-events:none}}
 #rotasticOpeningSplash{animation:rotastic-splash-emergency-release 6s steps(1,end) 1 forwards!important}
 #rotasticOpeningSplash.rotastic-splash-hide{display:none!important}
-.rota-no-room-tag{font-size:.78em;font-weight:700;color:#fbbf24;opacity:.85;white-space:nowrap}
-.rotastic-no-room-list{margin-top:8px;font-size:11px;line-height:1.5;color:#cbd5e1;text-align:center}
 </style>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <meta content="#090d16" name="theme-color"/>
@@ -47,7 +28,7 @@
 <meta content="telephone=no" name="format-detection"/>
 <title>ROTASTIC — Abu Nakhla Physician Duty Scheduler</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /*
 ROTASTIC PUSH DEPLOYMENT NOTE
@@ -65,14 +46,14 @@ window.ROTASTIC_PUSH_SUBSCRIBE_ENDPOINT = window.ROTASTIC_PUSH_SUBSCRIBE_ENDPOIN
 window.ROTASTIC_PUSH_BROADCAST_ENDPOINT = window.ROTASTIC_PUSH_BROADCAST_ENDPOINT || 'https://lodhylphktopwqlcvcvf.supabase.co/functions/v1/rotastic-push';
 </script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Allura&family=Dancing+Script:wght@500;600&family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -13665,19 +13646,6 @@ function isDoctorPriorityForShift(docName, isoDate, shiftPeriod) {
   });
 }
 
-// Shows "(No room)" beside a physician who is on duty in a shift but has neither a
-// clinic room nor a clinic assignment (WBC / ANC / NCD / etc.) in that same shift.
-function rotasticNoRoomTagHtml(name, isoDate, period) {
-  try {
-    const day = (currentSchedule || []).find(function(d){ return d && d.isoDate === isoDate; });
-    const key = String(period || '').toUpperCase() === 'PM' ? 'pm' : 'am';
-    const shift = day && day[key];
-    const doctor = canonicalRotaName(cleanDoctorName(name));
-    if (!shift || !doctor || !isRealDoctor(doctor)) return '';
-    return doctorHasAssignedRoomOrClinic(shift, doctor) ? '' : ' <span class="rota-no-room-tag">(No room)</span>';
-  } catch (e) { return ''; }
-}
-
 function renderDocBadgeWithSiren(docName, isoDate, shiftPeriod) {
   if (!docName || docName === '-' || String(docName).indexOf('Unused') === 0) return '-';
 
@@ -13696,7 +13664,7 @@ function renderDocBadgeWithSiren(docName, isoDate, shiftPeriod) {
   ].filter(Boolean).join(' ');
   const selfAttrs = isSelf ? ' title="Your assignment" aria-label="Your assignment: ' + cleanName.replace(/"/g, '&quot;') + '"' : '';
   const displayName = rotasticDisplayDoctorName(cleanName);
-  return `<span class="rota-doctor-name ${stateClasses}"${selfAttrs}>${displayName}${markers}${rotasticNoRoomTagHtml(cleanName, isoDate, shiftPeriod)}</span>`;
+  return `<span class="rota-doctor-name ${stateClasses}"${selfAttrs}>${displayName}${markers}</span>`;
 }
 
 function toggleDocExpand(el) {
@@ -16591,8 +16559,8 @@ function enforceFinalTwilightAssignments() {
     const pmGroupNo = getGroupForPeriod(dayIndex, 'PM', selected);
     const amBlocked = twilightBlockedDoctors(day.am, day.cbAM);
     const pmBlocked = twilightBlockedDoctors(day.pm, day.cbPM);
-    const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !rotasticIsFemalePhysician(doctor) && !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
-    const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !rotasticIsFemalePhysician(doctor) && !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
+    const amCandidates = plannedCandidates(amGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !amBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
+    const pmCandidates = plannedCandidates(pmGroupNo, day).filter(function(doctor){ return !rotasticIsFemaleTwilightDoctor(doctor) && !pmBlocked.has(canonicalRotaName(doctor)) && !dutyExempt(doctor, 'twilight', day); });
 
     // The signed "Notices" counts include the active cohort plus legitimate
     // non-group doctors actually rostered in that shift (for example Moursi).
@@ -17185,7 +17153,7 @@ function renderDayTwilightDoctors(day) {
       return `<div class="rotastic-twilight-slot rotastic-twilight-slot-missing"><span class="rotastic-twilight-badge">T</span><span class="rotastic-twilight-doctor">Not assigned</span></div>`;
     }
     const timeLabel = item.period === 'AM' ? '9–4' : '2–8';
-    return `<div class="rotastic-twilight-slot"><span class="rotastic-twilight-badge" title="Twilight" aria-label="Twilight">T</span><strong class="rotastic-twilight-doctor">${rotasticDisplayDoctorName(item.name)}${rotasticNoRoomTagHtml(item.name, day.isoDate, item.period)}</strong><span class="rotastic-twilight-period">${timeLabel}</span></div>`;
+    return `<div class="rotastic-twilight-slot"><span class="rotastic-twilight-badge" title="Twilight" aria-label="Twilight">T</span><strong class="rotastic-twilight-doctor">${rotasticDisplayDoctorName(item.name)}</strong><span class="rotastic-twilight-period">${timeLabel}</span></div>`;
   }).join('');
   return `<section class="rotastic-twilight-panel" aria-label="Twilight doctors"><div class="rotastic-twilight-panel-title">Twilight doctors</div><div class="rotastic-twilight-slots">${slots}</div></section>`;
 }
@@ -17459,15 +17427,6 @@ function renderShiftCard(s, period, roomPill) {
   const shiftLeaveCount = getShiftLeaveCount(s, period);
   const dayLeaveCount = getDayDisplayedLeaveCount(s);
 
-  // Physicians in this shift's cohort who could not be given a room are listed
-  // explicitly, so nobody silently disappears from the rota.
-  const noRoomNames = Array.from(new Set((sh.noRoomDocs || []).map(function(v){
-    return cleanDoctorName(String(v || '').replace(/\s*\(No room[^)]*\)\s*$/i, ''));
-  }).filter(function(n){ return n && n !== '-'; })));
-  const noRoomBlock = noRoomNames.length
-    ? `<div class="rotastic-no-room-list">${noRoomNames.map(function(n){ return `<span class="rota-doctor-name">${rotasticDisplayDoctorName(n)} <span class="rota-no-room-tag">(No room)</span></span>`; }).join(' · ')}</div>`
-    : '';
-
   const emergencyBlock = `
     <div class="rotastic-shift-fit-col">
       <div class="rotastic-section-title flex items-center gap-2 uppercase tracking-[.12em] font-black text-orange-200/85"><span class="h-px flex-1 bg-orange-400/15"></span><span>Emergency Duty</span><span class="h-px flex-1 bg-orange-400/15"></span></div>
@@ -17494,7 +17453,6 @@ function renderShiftCard(s, period, roomPill) {
         <div class="rotastic-room-grid text-slate-400">
           ${[9,10,12,13,14,39,21,22,24,25,26,27].map(r => roomPill(r, sh.rooms[r], periodLabel)).join('')}
         </div>
-        ${noRoomBlock}
       </div>
     </div>`;
 
@@ -23868,13 +23826,6 @@ function renderOpeningTypewriterBriefing(data, totalDurationMs, recurring, persi
 
   if (chars.length) {
     typeNext();
-    setTimeout(function(){
-      if (!detail.isConnected || index >= chars.length) return;
-      detail.textContent = detailText;
-      index = chars.length;
-      if (headlineTickerTimer) clearTimeout(headlineTickerTimer);
-      finishGreeting();
-    }, 2800);
   } else {
     finishGreeting();
   }
@@ -26320,7 +26271,7 @@ body.rotastic-rota-view-active .rotastic-room-grid .rotastic-room-self .rota-doc
     });
   }
   window.rotasticFitRoomNamesV199=fit;
-  /* Disabled global observer: fit runs on resize and user interaction instead. */
+  new MutationObserver(function(){requestAnimationFrame(fit)}).observe(document.body,{childList:true,subtree:true});
   window.addEventListener('resize',function(){setTimeout(fit,30)});
   document.addEventListener('click',function(){setTimeout(fit,70)},true);
   setTimeout(fit,250);
@@ -26337,7 +26288,7 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
 @media(max-width:430px){body.rotastic-rota-view-active .rotastic-room-grid{gap:6px!important;}body.rotastic-rota-view-active .rotastic-room-card-new{min-height:64px!important;padding:20px 8px 7px!important;}body.rotastic-rota-view-active .rotastic-room-card-name{font-size:10.4px!important;}body.rotastic-rota-view-active .rotastic-room-card-clinic{font-size:7px!important;}}
 </style>
 <script id="rotastic-v200-fit-rebuilt-room-names">
-(function(){function fit(){document.querySelectorAll('.rotastic-room-card-name').forEach(function(el){el.style.fontSize='';var size=parseFloat(getComputedStyle(el).fontSize)||11,min=7.5,g=0;while(el.scrollWidth>el.clientWidth+1&&size>min&&g<30){size-=.25;el.style.fontSize=size+'px';g++;}});}var mo=new MutationObserver(function(){requestAnimationFrame(fit);});function start(){var root=document.getElementById('scheduleMatrixContainer')||document.body;/* Avoid expensive DOM observer loops on mobile. */ fit();}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();window.addEventListener('resize',function(){requestAnimationFrame(fit);});})();
+(function(){function fit(){document.querySelectorAll('.rotastic-room-card-name').forEach(function(el){el.style.fontSize='';var size=parseFloat(getComputedStyle(el).fontSize)||11,min=7.5,g=0;while(el.scrollWidth>el.clientWidth+1&&size>min&&g<30){size-=.25;el.style.fontSize=size+'px';g++;}});}var mo=new MutationObserver(function(){requestAnimationFrame(fit);});function start(){var root=document.getElementById('scheduleMatrixContainer')||document.body;mo.observe(root,{childList:true,subtree:true});fit();}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();window.addEventListener('resize',function(){requestAnimationFrame(fit);});})();
 </script>
 
 
@@ -26411,7 +26362,7 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
 .rotastic-rota-matrix-shell{margin:0 0 16px}.rrm-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}.rrm-toolbar-left,.rrm-toolbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rrm-toolbar label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8}.rrm-toolbar select,.rrm-btn{background:#0b1220;color:#e2e8f0;border:1px solid rgba(100,116,139,.5);border-radius:10px;padding:8px 10px;font-size:11px;font-weight:800}.rrm-btn{cursor:pointer}.rrm-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(148,163,184,.13);border-radius:16px;background:rgba(2,6,23,.22)}.rrm-table{border-collapse:separate;border-spacing:0;min-width:max-content;width:100%;font-size:11px}.rrm-table th,.rrm-table td{min-width:94px;height:48px;padding:5px 7px;text-align:center;border-right:1px solid rgba(148,163,184,.10);border-bottom:1px solid rgba(148,163,184,.10);white-space:nowrap}.rrm-table thead th{position:sticky;top:0;z-index:4;background:#111a2b;color:#e2e8f0}.rrm-table .rrm-name{position:sticky;left:0;z-index:3;min-width:158px;max-width:190px;text-align:left;background:#101827;font-weight:900;box-shadow:8px 0 16px rgba(0,0,0,.16)}.rrm-table thead .rrm-name{z-index:6}.rrm-table tbody tr:nth-child(even) td:not(.rrm-name){background:rgba(255,255,255,.018)}.rrm-day{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8}.rrm-date{display:block;font-size:14px;font-weight:900;margin-top:2px}.rrm-pill{display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;padding:5px 7px;border-radius:9px;background:rgba(20,184,166,.11);border:1px solid rgba(45,212,191,.18);color:#ccfbf1;font-weight:800}.rrm-empty{opacity:.25}.rrm-today{box-shadow:inset 0 2px 0 #2dd4bf,inset 0 -2px 0 rgba(45,212,191,.45)}.rrm-weekend{background:rgba(148,163,184,.035)}.rrm-note{font-size:10px;color:#64748b}.rrm-no-rota{padding:18px;color:#94a3b8;text-align:center}.rotastic-hide-week-select{display:none!important}@media(max-width:700px){.rrm-table th,.rrm-table td{min-width:82px;height:45px}.rrm-table .rrm-name{min-width:132px;max-width:150px}}
 </style>
 <script id="rotastic-rota-matrix-v5-js">
-(function(){var busy=false,chosen='1';function same(a,b){try{return typeof doctorMatches==='function'?doctorMatches(a,b):String(a||'').toLowerCase()===String(b||'').toLowerCase()}catch(e){return false}}function rules(){try{return typeof getAutoRotaRules==='function'?getAutoRotaRules():null}catch(e){return null}}function days(){return Array.isArray(window.currentSchedule)?window.currentSchedule:[]}function labelKey(path){var p=path.join('.'),per=/^am\b/i.test(p)?'AM':(/^pm\b/i.test(p)?'PM':''),room=p.match(/rooms\.(\d+)/i);if(room)return(per?per+' ':'')+'R'+room[1];if(/cbAM/i.test(p))return'AM CB';if(/cbPM/i.test(p))return'PM CB';if(/twilight/i.test(p))return'Twilight';var last=String(path[path.length-1]||'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' ');return((per?per+' ':'')+last).trim().toUpperCase()}function assignments(day,doctor){var out=[];if(!day)return out;try{if(Array.isArray(day.leaves)&&day.leaves.some(function(x){return same(typeof x==='string'?x:(x&&x.name),doctor)}))out.push('AL')}catch(e){}function walk(v,path){if(v==null)return;if(typeof v==='string'){if(same(v,doctor))out.push(labelKey(path));return}if(Array.isArray(v)){v.forEach(function(x,i){walk(x,path.concat(String(i))) });return}if(typeof v==='object'){Object.keys(v).forEach(function(k){if(k!=='leaves')walk(v[k],path.concat(k))})}}['am','pm','cbAM','cbPM','twilight','twilightDoctors'].forEach(function(k){if(day[k]!=null)walk(day[k],[k])});return Array.from(new Set(out.filter(Boolean)))}function dateObj(day,i){var raw=day&&(day.isoDate||day.date);if(raw){var d=new Date(String(raw).slice(0,10)+'T12:00:00');if(!isNaN(d))return d}var d2=new Date();d2.setDate(d2.getDate()+i);return d2}function hideWeek(){var s=document.getElementById('plannerWeekSelect');if(s&&s.parentElement)s.parentElement.classList.add('rotastic-hide-week-select')}function root(){var cal=document.getElementById('weeklyLeaveCalendar');return cal&&(cal.closest('.clean-card')||cal.parentElement)}function esc(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}function build(){if(busy)return;busy=true;try{hideWeek();var r=root();if(!r)return;var old=r.querySelector('.rotastic-rota-matrix-shell');if(old)old.remove();var ds=days(),rr=rules(),members=rr?(chosen==='1'?rr.group1:rr.group2):[],shell=document.createElement('div');shell.className='rotastic-rota-matrix-shell';var bar=document.createElement('div');bar.className='rrm-toolbar';bar.innerHTML='<div class="rrm-toolbar-left"><label>Display group</label><select aria-label="Rota Planner group"><option value="1">Group 1</option><option value="2">Group 2</option></select><span class="rrm-note">Scroll right for more dates</span></div>';shell.appendChild(bar);var sel=bar.querySelector('select');sel.value=chosen;sel.onchange=function(){chosen=this.value;build()};var wrap=document.createElement('div');wrap.className='rrm-wrap';if(!ds.length||!members.length){wrap.innerHTML='<div class="rrm-no-rota">'+(!ds.length?'No released/generated rota is currently available.':'No physicians found for this group.')+'</div>'}else{var h='<table class="rrm-table"><thead><tr><th class="rrm-name">Physician</th>',today=new Date().toDateString();ds.forEach(function(day,i){var d=dateObj(day,i),c=(d.toDateString()===today?' rrm-today':'')+([5,6].indexOf(d.getDay())>=0?' rrm-weekend':'');h+='<th class="'+c+'"><span class="rrm-day">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</span><span class="rrm-date">'+d.getDate()+'</span></th>'});h+='</tr></thead><tbody>';members.forEach(function(name){h+='<tr><td class="rrm-name">'+esc(name)+'</td>';ds.forEach(function(day,i){var a=assignments(day,name),d=dateObj(day,i),c=(d.toDateString()===today?' rrm-today':'')+([5,6].indexOf(d.getDay())>=0?' rrm-weekend':'');h+='<td class="'+c+(a.length?'':' rrm-empty')+'">'+(a.length?'<span class="rrm-pill" title="'+esc(a.join(' · '))+'">'+esc(a.join(' · '))+'</span>':'—')+'</td>'});h+='</tr>'});h+='</tbody></table>';wrap.innerHTML=h}shell.appendChild(wrap);var cal=document.getElementById('weeklyLeaveCalendar');if(cal&&cal.parentElement)cal.parentElement.insertBefore(shell,cal);else r.appendChild(shell);var bPng=bar.querySelector('[data-x="png"]');if(bPng)bPng.onclick=function(){exportMatrix(shell,'png')};var bPdf=bar.querySelector('[data-x="pdf"]');if(bPdf)bPdf.onclick=function(){exportMatrix(shell,'pdf')}}finally{busy=false}}async function exportMatrix(shell,type){var target=shell.querySelector('.rrm-wrap');if(!target||typeof html2canvas!=='function')return;var group='Group '+chosen,clone=document.createElement('div');clone.style.cssText='position:fixed;left:-20000px;top:0;width:1500px;padding:42px;background:#fff;color:#172033;font-family:Arial,sans-serif;z-index:-1';clone.innerHTML='<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:24px"><div><div style="font-size:12px;font-weight:900;letter-spacing:.18em;color:#14b8a6">ROTASTIC</div><div style="font-size:30px;font-weight:900;margin-top:4px">Physician Rota Planner</div><div style="font-size:13px;color:#64748b;margin-top:5px">Abu Nakhla Health Centre · '+group+'</div></div><div style="font-size:12px;color:#64748b">'+new Date().toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})+'</div></div>';var c=target.cloneNode(true);c.style.overflow='visible';clone.appendChild(c);document.body.appendChild(clone);Array.from(clone.querySelectorAll('table,th,td')).forEach(function(e){e.style.color='#172033';e.style.background='#fff';e.style.borderColor='#e5e7eb'});Array.from(clone.querySelectorAll('.rrm-name')).forEach(function(e){e.style.position='static';e.style.background='#f8fafc'});Array.from(clone.querySelectorAll('.rrm-pill')).forEach(function(e){e.style.background='#e6fffb';e.style.color='#115e59';e.style.border='1px solid #99f6e4'});try{var canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true});if(type==='png'){var a=document.createElement('a');a.download='ROTASTIC-'+group.replace(' ','-')+'-Rota.png';a.href=canvas.toDataURL('image/png');a.click()}else if(window.jspdf&&window.jspdf.jsPDF){var pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'}),img=canvas.toDataURL('image/jpeg',.95),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),ratio=Math.min((pw-36)/canvas.width,(ph-36)/canvas.height);pdf.addImage(img,'JPEG',18,18,canvas.width*ratio,canvas.height*ratio);pdf.save('ROTASTIC-'+group.replace(' ','-')+'-Rota.pdf')}}finally{clone.remove()}}function go(){build();setTimeout(build,700);setTimeout(build,1800)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();document.addEventListener('click',function(){setTimeout(build,180)},true);window.addEventListener('rotastic-rota-released',function(){setTimeout(build,100)})})();
+(function(){var busy=false,chosen='1';function same(a,b){try{return typeof doctorMatches==='function'?doctorMatches(a,b):String(a||'').toLowerCase()===String(b||'').toLowerCase()}catch(e){return false}}function rules(){try{return typeof getAutoRotaRules==='function'?getAutoRotaRules():null}catch(e){return null}}function days(){return Array.isArray(window.currentSchedule)?window.currentSchedule:[]}function labelKey(path){var p=path.join('.'),per=/^am\b/i.test(p)?'AM':(/^pm\b/i.test(p)?'PM':''),room=p.match(/rooms\.(\d+)/i);if(room)return(per?per+' ':'')+'R'+room[1];if(/cbAM/i.test(p))return'AM CB';if(/cbPM/i.test(p))return'PM CB';if(/twilight/i.test(p))return'Twilight';var last=String(path[path.length-1]||'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' ');return((per?per+' ':'')+last).trim().toUpperCase()}function assignments(day,doctor){var out=[];if(!day)return out;try{if(Array.isArray(day.leaves)&&day.leaves.some(function(x){return same(typeof x==='string'?x:(x&&x.name),doctor)}))out.push('AL')}catch(e){}function walk(v,path){if(v==null)return;if(typeof v==='string'){if(same(v,doctor))out.push(labelKey(path));return}if(Array.isArray(v)){v.forEach(function(x,i){walk(x,path.concat(String(i))) });return}if(typeof v==='object'){Object.keys(v).forEach(function(k){if(k!=='leaves')walk(v[k],path.concat(k))})}}['am','pm','cbAM','cbPM','twilight','twilightDoctors'].forEach(function(k){if(day[k]!=null)walk(day[k],[k])});return Array.from(new Set(out.filter(Boolean)))}function dateObj(day,i){var raw=day&&(day.isoDate||day.date);if(raw){var d=new Date(String(raw).slice(0,10)+'T12:00:00');if(!isNaN(d))return d}var d2=new Date();d2.setDate(d2.getDate()+i);return d2}function hideWeek(){var s=document.getElementById('plannerWeekSelect');if(s&&s.parentElement)s.parentElement.classList.add('rotastic-hide-week-select')}function root(){var cal=document.getElementById('weeklyLeaveCalendar');return cal&&(cal.closest('.clean-card')||cal.parentElement)}function esc(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}function build(){if(busy)return;busy=true;try{hideWeek();var r=root();if(!r)return;var old=r.querySelector('.rotastic-rota-matrix-shell');if(old)old.remove();var ds=days(),rr=rules(),members=rr?(chosen==='1'?rr.group1:rr.group2):[],shell=document.createElement('div');shell.className='rotastic-rota-matrix-shell';var bar=document.createElement('div');bar.className='rrm-toolbar';bar.innerHTML='<div class="rrm-toolbar-left"><label>Display group</label><select aria-label="Rota Planner group"><option value="1">Group 1</option><option value="2">Group 2</option></select><span class="rrm-note">Scroll right for more dates</span></div>';shell.appendChild(bar);var sel=bar.querySelector('select');sel.value=chosen;sel.onchange=function(){chosen=this.value;build()};var wrap=document.createElement('div');wrap.className='rrm-wrap';if(!ds.length||!members.length){wrap.innerHTML='<div class="rrm-no-rota">'+(!ds.length?'No released/generated rota is currently available.':'No physicians found for this group.')+'</div>'}else{var h='<table class="rrm-table"><thead><tr><th class="rrm-name">Physician</th>',today=new Date().toDateString();ds.forEach(function(day,i){var d=dateObj(day,i),c=(d.toDateString()===today?' rrm-today':'')+([5,6].indexOf(d.getDay())>=0?' rrm-weekend':'');h+='<th class="'+c+'"><span class="rrm-day">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</span><span class="rrm-date">'+d.getDate()+'</span></th>'});h+='</tr></thead><tbody>';members.forEach(function(name){h+='<tr><td class="rrm-name">'+esc(name)+'</td>';ds.forEach(function(day,i){var a=assignments(day,name),d=dateObj(day,i),c=(d.toDateString()===today?' rrm-today':'')+([5,6].indexOf(d.getDay())>=0?' rrm-weekend':'');h+='<td class="'+c+(a.length?'':' rrm-empty')+'">'+(a.length?'<span class="rrm-pill" title="'+esc(a.join(' · '))+'">'+esc(a.join(' · '))+'</span>':'—')+'</td>'});h+='</tr>'});h+='</tbody></table>';wrap.innerHTML=h}shell.appendChild(wrap);var cal=document.getElementById('weeklyLeaveCalendar');if(cal&&cal.parentElement)cal.parentElement.insertBefore(shell,cal);else r.appendChild(shell);bar.querySelector('[data-x="png"]').onclick=function(){exportMatrix(shell,'png')};bar.querySelector('[data-x="pdf"]').onclick=function(){exportMatrix(shell,'pdf')}}finally{busy=false}}async function exportMatrix(shell,type){var target=shell.querySelector('.rrm-wrap');if(!target||typeof html2canvas!=='function')return;var group='Group '+chosen,clone=document.createElement('div');clone.style.cssText='position:fixed;left:-20000px;top:0;width:1500px;padding:42px;background:#fff;color:#172033;font-family:Arial,sans-serif;z-index:-1';clone.innerHTML='<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:24px"><div><div style="font-size:12px;font-weight:900;letter-spacing:.18em;color:#14b8a6">ROTASTIC</div><div style="font-size:30px;font-weight:900;margin-top:4px">Physician Rota Planner</div><div style="font-size:13px;color:#64748b;margin-top:5px">Abu Nakhla Health Centre · '+group+'</div></div><div style="font-size:12px;color:#64748b">'+new Date().toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})+'</div></div>';var c=target.cloneNode(true);c.style.overflow='visible';clone.appendChild(c);document.body.appendChild(clone);Array.from(clone.querySelectorAll('table,th,td')).forEach(function(e){e.style.color='#172033';e.style.background='#fff';e.style.borderColor='#e5e7eb'});Array.from(clone.querySelectorAll('.rrm-name')).forEach(function(e){e.style.position='static';e.style.background='#f8fafc'});Array.from(clone.querySelectorAll('.rrm-pill')).forEach(function(e){e.style.background='#e6fffb';e.style.color='#115e59';e.style.border='1px solid #99f6e4'});try{var canvas=await html2canvas(clone,{scale:2,backgroundColor:'#ffffff',useCORS:true});if(type==='png'){var a=document.createElement('a');a.download='ROTASTIC-'+group.replace(' ','-')+'-Rota.png';a.href=canvas.toDataURL('image/png');a.click()}else if(window.jspdf&&window.jspdf.jsPDF){var pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'}),img=canvas.toDataURL('image/jpeg',.95),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),ratio=Math.min((pw-36)/canvas.width,(ph-36)/canvas.height);pdf.addImage(img,'JPEG',18,18,canvas.width*ratio,canvas.height*ratio);pdf.save('ROTASTIC-'+group.replace(' ','-')+'-Rota.pdf')}}finally{clone.remove()}}function go(){build();setTimeout(build,700);setTimeout(build,1800)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();document.addEventListener('click',function(){setTimeout(build,180)},true);window.addEventListener('rotastic-rota-released',function(){setTimeout(build,100)})})();
 </script>
 <script>
 /* Startup watchdog: independent of app initialization and animation callbacks. */
