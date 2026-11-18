@@ -138,7 +138,7 @@ function generate(options={}){
    if(wbc&&(Object.values(shift.rooms).includes(wbc.doctor)||shift.twilight.includes(wbc.doctor)||Object.values(shift.er).includes(wbc.doctor)||Object.values(shift.codeBlue).includes(wbc.doctor)||shift.specialClinics.some(x=>x!==wbc&&x.doctor===wbc.doctor)))errors.push(dates[i]+' '+session+': WBC doctor double-booked');
    if(shift.specialClinics.some(x=>x.kind==='CMC')&&shift.specialClinics.some(x=>x.kind==='ANC'))errors.push(dates[i]+' '+session+': Room 32 cannot host ANC and CMC together');
    const audit=contract.audit({dayIndex:i,session,assignments:[...assigned,...shift.specialClinics.map(x=>x.doctor),...shift.noClinic].map(doctor=>({doctor})),off,leave});
-   if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n));
+   if(!audit.ok)errors.push(...audit.errors,...audit.missing.map(n=>dates[i]+' '+session+': missing '+n),...audit.unknown.map(n=>dates[i]+' '+session+': unknown physician '+n));
    shift.audit=audit;
    day.shifts[session]=shift;
   }
