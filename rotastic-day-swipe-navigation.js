@@ -29,7 +29,9 @@ function update(){
 function go(dir){const days=window.currentSchedule||[];const next=current+dir;if(next<0||next>=days.length)return;current=next;
  const root=document.getElementById('scheduleMatrixContainer');
  if(root?.querySelectorAll('.rotastic-day-sheet').length===1){
-  if(typeof window.filterDay==='function'){window.filterDay(next);return}\n  if(typeof window.activeDayIndex==='number'&&typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView();return}\n  // Prefer the app's own day filter so the correct data is rendered.
+  if(typeof window.filterDay==='function'){window.filterDay(next);return}
+  if(typeof window.activeDayIndex==='number'&&typeof window.renderScheduleView==='function'){window.activeDayIndex=next;window.renderScheduleView();return}
+  // Prefer the app's own day filter so the correct data is rendered.
   const buttons=[...document.querySelectorAll('[data-day-index],.rotastic-day-tab')];
   const match=buttons.find(b=>Number(b.dataset.dayIndex)===next);
   if(match){match.click();return}
