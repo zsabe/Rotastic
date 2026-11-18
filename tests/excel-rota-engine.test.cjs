@@ -21,8 +21,10 @@ assert.equal(result.days.length,5);
 for(const day of result.days)for(const shift of Object.values(day.shifts)){
  assert.equal(shift.unassigned.length,0);
  assert(shift.audit.ok);
- const all=[...Object.values(shift.rooms),...shift.twilight,...shift.specialClinics.map(x=>x.doctor)];
- assert.equal(new Set(all).size,all.length,'no double clinic/twilight assignment');
+ const all=[...Object.values(shift.rooms),...shift.specialClinics.map(x=>x.doctor)];
+ assert.equal(new Set(shift.twilight).size,shift.twilight.length,'unique Twilight duties');
+ assert(shift.twilight.every(n=>Object.values(shift.rooms).includes(n)),'Twilight duty retains consultation room');
+ assert.equal(new Set(all).size,all.length,'no double primary clinic assignment');
  assert.equal(new Set(Object.values(shift.er)).size,3,'ER roles unique');
  assert.equal(new Set(Object.values(shift.codeBlue)).size,3,'Code Blue roles unique');
  assert(!all.some(n=>/gani|ghani|bilal/i.test(n)),'OFF/leave doctors absent');
