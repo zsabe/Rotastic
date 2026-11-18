@@ -26,7 +26,7 @@ const cbIdentity=n=>{
 };
 const blockedCB=n=>['abdulgafoor','salah','zaid'].includes(first(n));
 const blockedER=n=>first(n)==='zaid';
-const nameKey=n=>String(n).toLowerCase().replace(/^dr\\.?\\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
+const nameKey=n=>String(n).toLowerCase().replace(/^dr\.?\s*/,'').replace(/[^a-z0-9]/g,'').replace(/^(najahp|najahpandit|npandit)$/,'najah').replace(/^(ghanim|ganim|gshafi)$/,'gshafi').replace(/^(muhammadk|mohammedk|mohammadk|mohamedk|qaisark)$/,'qaisar');
 const normaliseOff=(input,dayIndex)=>Array.isArray(input)?input:(input?.[dayIndex]||[]);
 function generate(options={}){
  const weekStart=options.weekStart||'2026-11-01';
