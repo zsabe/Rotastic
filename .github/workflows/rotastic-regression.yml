@@ -1,0 +1,41 @@
+name: ROTASTIC regression
+on:
+  push:
+    branches: [annual-leave-integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript files
+        run: for f in *.js; do node --check "$f" || exit 1; done
+      - name: Check inline scripts
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import subprocess, tempfile
+          class Scripts(HTMLParser):
+              active=False
+              chunks=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='script' and not a.get('src') and a.get('type','') in ('','text/javascript','application/javascript','module'):
+                      self.active=True; self.chunks=[]; self.module=a.get('type')=='module'
+              def handle_data(self,data):
+                  if self.active: self.chunks.append(data)
+              def handle_endtag(self,tag):
+                  if tag=='script' and self.active:
+                      self.active=False
+                      with tempfile.NamedTemporaryFile(suffix='.mjs' if self.module else '.js') as f:
+                          f.write(''.join(self.chunks).encode()); f.flush(); subprocess.run(['node','--check',f.name],check=True)
+          Scripts().feed(Path('index.html').read_text())
+          PY
+      - name: Existing rota engine regression
+        run: node tests/excel-rota-engine.test.cjs
