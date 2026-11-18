@@ -23824,11 +23824,8 @@ function renderOpeningTypewriterBriefing(data, totalDurationMs, recurring, persi
     headlineTickerTimer = setTimeout(typeNext, delay);
   };
 
-  if (chars.length) {
-    typeNext();
-  } else {
-    finishGreeting();
-  }
+  detail.textContent = detailText;
+  finishGreeting();
 
   if (!persistent) {
     scheduleSickTakeoverInterrupt();
@@ -26355,7 +26352,7 @@ body.rotastic-rota-view-active .rotastic-room-self-new{border-color:rgba(34,211,
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance);else enhance();
   document.addEventListener('click',function(e){if(e.target&&/Rota Planner/i.test(txt(e.target)))setTimeout(enhance,80);},true);
-  new MutationObserver(function(){setTimeout(enhance,20);}).observe(document.documentElement,{childList:true,subtree:true});
+  var pendingEnhance=null; new MutationObserver(function(records){if(!records.some(function(r){return Array.from(r.addedNodes).some(function(n){return n.nodeType===1 && (n.matches('table,#rotaPlanner,#rotaPlannerView,[data-rota-planner]') || n.querySelector('table,#rotaPlanner,#rotaPlannerView,[data-rota-planner]'));});}))return; if(pendingEnhance!==null)return; pendingEnhance=setTimeout(function(){pendingEnhance=null;enhance();},80);}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 <style id="rotastic-rota-matrix-v5">
