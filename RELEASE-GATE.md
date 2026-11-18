@@ -1,0 +1,4 @@
+# Release gate
+This branch is not approved for production. Existing prototype embeds roster and eligibility; replace with validated versioned workbook-derived configuration before enabling generation. Missing eligibility is a blocking error, not inferred from assignments.
+Required: session availability; fixed schedules and rooms; Twilight staffing; separate primary and ER/CB duties; targeted absence replacement; protected publication; coordinator and lead only generator access; compact clinic/session removal, doctor removal, shift lead editor, persistent doctor rules and supernumerary exclusions; validated natural language commands; leave capacity three per group/day with audited lead override; authenticated UI and privacy tests.
+No real physician records or credentials belong in this public repository.
