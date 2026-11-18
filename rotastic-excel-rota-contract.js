@@ -23,7 +23,8 @@ function audit(input){
    const name=typeof a==='string'?a:a?.doctor;
    if(!name||/^(tbd|to be determined|pending)$/i.test(name)) {errors.push('Unfilled assignment');continue;}
    const k=identity(name);
-   if(!allKeys.has(k)&&k!=='moursi'&&k!=='mmoursi')unknown.push(name);
+   const fixedNajah=k==='najah'&&((dayIndex===0&&session==='PM')||((dayIndex===1||dayIndex===2)&&session==='PM')||((dayIndex===3||dayIndex===4)&&session==='AM'));
+   if(!allKeys.has(k)&&k!=='moursi'&&k!=='mmoursi'&&!fixedNajah)unknown.push(name);
    if(excluded.has(k))errors.push(name+' is OFF/leave but assigned');
    if(allKeys.has(k)&&!eligible.some(n=>identity(n)===k))errors.push(name+' belongs to the other group');
    if(!seen.has(k))seen.set(k,[]);
