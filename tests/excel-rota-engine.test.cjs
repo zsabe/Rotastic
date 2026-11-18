@@ -38,3 +38,10 @@ const missing=audit({dayIndex:0,session:'AM',assignments:[],off:offByDate['2026-
 assert.equal(missing.ok,false);
 assert(missing.missing.length>0);
 console.log('Excel-first prototype tests passed; workbook execution and UI/export parity still unverified.');
+
+// Najah identity regression: aliases accepted only in fixed sessions.
+for(const name of ['Dr Najah','Dr. Najah P.','Dr Najah Pandit','npandit']){
+ assert.equal(audit({dayIndex:0,session:'PM',assignments:[name]}).unknown.length,0);
+ assert.equal(audit({dayIndex:0,session:'AM',assignments:[name]}).unknown.length,1);
+ assert(audit({dayIndex:0,session:'PM',assignments:[name],leave:['Dr Najah Pandit']}).errors.some(e=>e.includes('OFF/leave')));
+}
